@@ -14,4 +14,4 @@ cd /data/scratch/btx915/00Illumina_RawReads/
 fastqc *fastq.gz
 
 # move files to the result directory after run
-mv *fastqc* /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/01Quality_Control_fastqc/
+mv *fastqc* /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/00Quality_Control_fastqc/

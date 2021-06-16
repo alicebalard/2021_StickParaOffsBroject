@@ -7,7 +7,7 @@
 
 # Quality control of the raw sequence reads from the bisulfite-treated samples was done with FASTQC v0.11.9 (Andrews 2010)
 Code: S01_fastqc.sh
-Output: /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/01Quality_Control_fastqc/
+Output: /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/00Quality_Control_fastqc/
 
 # Run multiQC v1.10.1 for having one report (will be done at different steps)
 Code: multiqc .
@@ -17,9 +17,5 @@ Output: /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/01Quality_Control_fastqc/
 
 trimgalore/0.6.5(default) on apocrita
 cutadapt (conda loaded) v1.18
-
-
-
-
 
 # in 02Trimmed_Reads/Cutadapt cut in A, B and C folder 18 + 18 + 17 = 53 samples
