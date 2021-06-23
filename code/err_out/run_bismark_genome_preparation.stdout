@@ -1,0 +1,420 @@
+Path to genome folder specified as: /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/03RefGenome/
+Aligner to be used: >> Bowtie 2 << (default)
+Bismark Genome Preparation - Step I: Preparing folders
+
+Path to genome folder specified as: /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/03RefGenome/
+Aligner to be used: >> Bowtie 2 << (user-defined)
+Bismark Genome Preparation - Step I: Preparing folders
+
+Created Bisulfite Genome folder /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/03RefGenome/Bisulfite_Genome/
+Created Bisulfite Genome folder /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/03RefGenome/Bisulfite_Genome/CT_conversion/
+Created Bisulfite Genome folder /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/03RefGenome/Bisulfite_Genome/GA_conversion/
+Bismark Genome Preparation - Step II: Bisulfite converting reference genome
+
+conversions performed:
+chromosome	C->T	G->A
+Gy_chrI	6446987	6450541
+Gy_chrII	5138184	5143871
+Gy_chrIII	3925985	3921064
+Gy_chrIV	7401589	7369709
+Gy_chrV	3503487	3507369
+Gy_chrVI	4137322	4135071
+Gy_chrVII	6446073	6427164
+Gy_chrVIII	4032476	4025007
+Gy_chrIX	4788489	4780891
+Gy_chrX	3610260	3615348
+Gy_chrXI	3952735	3948615
+Gy_chrXII	4263085	4242791
+Gy_chrXIII	4526382	4510659
+Gy_chrXIV	3520944	3517721
+Gy_chrXV	3857849	3865738
+Gy_chrXVI	4187784	4178071
+Gy_chrXVII	4419980	4435579
+Gy_chrXVIII	3485845	3480553
+Gy_chrXIX	4574741	4571884
+Gy_chrXX	4183014	4185327
+Gy_chrXXI	3237431	3226190
+Gy_chrM	4378	2730
+Gy_chrUn	9045263	9046952
+
+Total number of conversions performed:
+C->T:	102690283
+G->A:	102588845
+Please be aware that this process can - depending on genome size - take several hours!
+
+Parent process: Starting to index C->T converted genome with the following command:
+
+bowtie2-build  -f genome_mfa.CT_conversion.fa BS_CT
+
+Child process: Starting to index G->A converted genome with the following command:
+
+bowtie2-build  -f genome_mfa.GA_conversion.fa BS_GA
+
+Settings:
+  Output files: "BS_CT.*.bt2"
+  Line rate: 6 (line is 64 bytes)
+  Lines per side: 1 (side is 64 bytes)
+  Offset rate: 4 (one in 16)
+  FTable chars: 10
+  Strings: unpacked
+  Max bucket size: default
+  Max bucket size, sqrt multiplier: default
+  Max bucket size, len divisor: 4
+  Difference-cover sample period: 1024
+  Endianness: little
+  Actual local endianness: little
+  Sanity checking: disabled
+  Assertions: disabled
+  Random seed: 0
+  Sizeofs: void*:8, int:4, long:8, size_t:8
+Input files DNA, FASTA:
+  genome_mfa.CT_conversion.fa
+Reading reference sizes
+Settings:
+  Output files: "BS_GA.*.bt2"
+  Line rate: 6 (line is 64 bytes)
+  Lines per side: 1 (side is 64 bytes)
+  Offset rate: 4 (one in 16)
+  FTable chars: 10
+  Strings: unpacked
+  Max bucket size: default
+  Max bucket size, sqrt multiplier: default
+  Max bucket size, len divisor: 4
+  Difference-cover sample period: 1024
+  Endianness: little
+  Actual local endianness: little
+  Sanity checking: disabled
+  Assertions: disabled
+  Random seed: 0
+  Sizeofs: void*:8, int:4, long:8, size_t:8
+Input files DNA, FASTA:
+  genome_mfa.GA_conversion.fa
+Reading reference sizes
+  Time reading reference sizes: 00:00:07
+Calculating joined length
+Writing header
+Reserving space for joined string
+Joining reference sequences
+  Time reading reference sizes: 00:00:07
+Calculating joined length
+Writing header
+Reserving space for joined string
+Joining reference sequences
+  Time to join reference sequences: 00:00:04
+bmax according to bmaxDivN setting: 114505084
+Using parameters --bmax 85878813 --dcv 1024
+  Doing ahead-of-time memory usage test
+  Time to join reference sequences: 00:00:04
+bmax according to bmaxDivN setting: 114505084
+Using parameters --bmax 85878813 --dcv 1024
+  Doing ahead-of-time memory usage test
+  Passed!  Constructing with these parameters: --bmax 85878813 --dcv 1024
+Constructing suffix-array element generator
+Building DifferenceCoverSample
+  Building sPrime
+  Passed!  Constructing with these parameters: --bmax 85878813 --dcv 1024
+Constructing suffix-array element generator
+Building DifferenceCoverSample
+  Building sPrime
+  Building sPrimeOrder
+  Building sPrimeOrder
+  V-Sorting samples
+  V-Sorting samples
+  V-Sorting samples time: 00:00:18
+  Allocating rank array
+  Ranking v-sort output
+  V-Sorting samples time: 00:00:18
+  Allocating rank array
+  Ranking v-sort output
+  Ranking v-sort output time: 00:00:04
+  Invoking Larsson-Sadakane on ranks
+  Ranking v-sort output time: 00:00:04
+  Invoking Larsson-Sadakane on ranks
+  Invoking Larsson-Sadakane on ranks time: 00:00:09
+  Sanity-checking and returning
+Building samples
+Reserving space for 12 sample suffixes
+Generating random suffixes
+QSorting 12 sample offsets, eliminating duplicates
+QSorting sample offsets, eliminating duplicates time: 00:00:00
+Multikey QSorting 12 samples
+  (Using difference cover)
+  Multikey QSorting samples time: 00:00:00
+Calculating bucket sizes
+Splitting and merging
+  Splitting and merging time: 00:00:00
+Avg bucket size: 4.5802e+08 (target: 85878812)
+Converting suffix-array elements to index image
+Allocating ftab, absorbFtab
+Entering Ebwt loop
+Getting block 1 of 1
+  No samples; assembling all-inclusive block
+  Invoking Larsson-Sadakane on ranks time: 00:00:09
+  Sanity-checking and returning
+Building samples
+Reserving space for 12 sample suffixes
+Generating random suffixes
+QSorting 12 sample offsets, eliminating duplicates
+QSorting sample offsets, eliminating duplicates time: 00:00:00
+Multikey QSorting 12 samples
+  (Using difference cover)
+  Multikey QSorting samples time: 00:00:00
+Calculating bucket sizes
+Splitting and merging
+  Splitting and merging time: 00:00:00
+Avg bucket size: 4.5802e+08 (target: 85878812)
+Converting suffix-array elements to index image
+Allocating ftab, absorbFtab
+Entering Ebwt loop
+Getting block 1 of 1
+  No samples; assembling all-inclusive block
+  Sorting block of length 458020336 for bucket 1
+  (Using difference cover)
+  Sorting block of length 458020336 for bucket 1
+  (Using difference cover)
+  Sorting block time: 00:05:36
+Returning block of 458020337 for bucket 1
+  Sorting block time: 00:05:39
+Returning block of 458020337 for bucket 1
+Exited Ebwt loop
+fchr[A]: 0
+fchr[C]: 126276201
+fchr[G]: 126276201
+fchr[T]: 228865046
+fchr[$]: 458020336
+Exiting Ebwt::buildToDisk()
+Returning from initFromVector
+Wrote 156891439 bytes to primary EBWT file: BS_CT.1.bt2
+Wrote 114505092 bytes to secondary EBWT file: BS_CT.2.bt2
+Re-opening _in1 and _in2 as input streams
+Returning from Ebwt constructor
+Headers:
+    len: 458020336
+    bwtLen: 458020337
+    sz: 114505084
+    bwtSz: 114505085
+    lineRate: 6
+    offRate: 4
+    offMask: 0xfffffff0
+    ftabChars: 10
+    eftabLen: 20
+    eftabSz: 80
+    ftabLen: 1048577
+    ftabSz: 4194308
+    offsLen: 28626272
+    offsSz: 114505088
+    lineSz: 64
+    sideSz: 64
+    sideBwtSz: 48
+    sideBwtLen: 192
+    numSides: 2385523
+    numLines: 2385523
+    ebwtTotLen: 152673472
+    ebwtTotSz: 152673472
+    color: 0
+    reverse: 0
+Total time for call to driver() for forward index: 00:07:18
+Reading reference sizes
+Exited Ebwt loop
+fchr[A]: 0
+fchr[C]: 228865046
+fchr[G]: 331555329
+fchr[T]: 331555329
+fchr[$]: 458020336
+Exiting Ebwt::buildToDisk()
+Returning from initFromVector
+Wrote 156891439 bytes to primary EBWT file: BS_GA.1.bt2
+Wrote 114505092 bytes to secondary EBWT file: BS_GA.2.bt2
+Re-opening _in1 and _in2 as input streams
+Returning from Ebwt constructor
+Headers:
+    len: 458020336
+    bwtLen: 458020337
+    sz: 114505084
+    bwtSz: 114505085
+    lineRate: 6
+    offRate: 4
+    offMask: 0xfffffff0
+    ftabChars: 10
+    eftabLen: 20
+    eftabSz: 80
+    ftabLen: 1048577
+    ftabSz: 4194308
+    offsLen: 28626272
+    offsSz: 114505088
+    lineSz: 64
+    sideSz: 64
+    sideBwtSz: 48
+    sideBwtLen: 192
+    numSides: 2385523
+    numLines: 2385523
+    ebwtTotLen: 152673472
+    ebwtTotSz: 152673472
+    color: 0
+    reverse: 0
+Total time for call to driver() for forward index: 00:07:23
+Reading reference sizes
+  Time reading reference sizes: 00:00:06
+Calculating joined length
+Writing header
+Reserving space for joined string
+Joining reference sequences
+  Time reading reference sizes: 00:00:06
+Calculating joined length
+Writing header
+Reserving space for joined string
+Joining reference sequences
+  Time to join reference sequences: 00:00:05
+  Time to reverse reference sequence: 00:00:00
+bmax according to bmaxDivN setting: 114505084
+Using parameters --bmax 85878813 --dcv 1024
+  Doing ahead-of-time memory usage test
+  Passed!  Constructing with these parameters: --bmax 85878813 --dcv 1024
+Constructing suffix-array element generator
+Building DifferenceCoverSample
+  Building sPrime
+  Building sPrimeOrder
+  V-Sorting samples
+  Time to join reference sequences: 00:00:04
+  Time to reverse reference sequence: 00:00:01
+bmax according to bmaxDivN setting: 114505084
+Using parameters --bmax 85878813 --dcv 1024
+  Doing ahead-of-time memory usage test
+  Passed!  Constructing with these parameters: --bmax 85878813 --dcv 1024
+Constructing suffix-array element generator
+Building DifferenceCoverSample
+  Building sPrime
+  Building sPrimeOrder
+  V-Sorting samples
+  V-Sorting samples time: 00:00:18
+  Allocating rank array
+  Ranking v-sort output
+  V-Sorting samples time: 00:00:18
+  Allocating rank array
+  Ranking v-sort output
+  Ranking v-sort output time: 00:00:05
+  Invoking Larsson-Sadakane on ranks
+  Ranking v-sort output time: 00:00:04
+  Invoking Larsson-Sadakane on ranks
+  Invoking Larsson-Sadakane on ranks time: 00:00:09
+  Sanity-checking and returning
+Building samples
+Reserving space for 12 sample suffixes
+Generating random suffixes
+QSorting 12 sample offsets, eliminating duplicates
+QSorting sample offsets, eliminating duplicates time: 00:00:00
+Multikey QSorting 12 samples
+  (Using difference cover)
+  Multikey QSorting samples time: 00:00:00
+Calculating bucket sizes
+Splitting and merging
+  Splitting and merging time: 00:00:00
+Avg bucket size: 4.5802e+08 (target: 85878812)
+Converting suffix-array elements to index image
+Allocating ftab, absorbFtab
+Entering Ebwt loop
+Getting block 1 of 1
+  No samples; assembling all-inclusive block
+  Sorting block of length 458020336 for bucket 1
+  (Using difference cover)
+  Invoking Larsson-Sadakane on ranks time: 00:00:09
+  Sanity-checking and returning
+Building samples
+Reserving space for 12 sample suffixes
+Generating random suffixes
+QSorting 12 sample offsets, eliminating duplicates
+QSorting sample offsets, eliminating duplicates time: 00:00:00
+Multikey QSorting 12 samples
+  (Using difference cover)
+  Multikey QSorting samples time: 00:00:00
+Calculating bucket sizes
+Splitting and merging
+  Splitting and merging time: 00:00:00
+Avg bucket size: 4.5802e+08 (target: 85878812)
+Converting suffix-array elements to index image
+Allocating ftab, absorbFtab
+Entering Ebwt loop
+Getting block 1 of 1
+  No samples; assembling all-inclusive block
+  Sorting block of length 458020336 for bucket 1
+  (Using difference cover)
+  Sorting block time: 00:05:36
+Returning block of 458020337 for bucket 1
+  Sorting block time: 00:05:39
+Returning block of 458020337 for bucket 1
+Exited Ebwt loop
+fchr[A]: 0
+fchr[C]: 126276201
+fchr[G]: 126276201
+fchr[T]: 228865046
+fchr[$]: 458020336
+Exiting Ebwt::buildToDisk()
+Returning from initFromVector
+Wrote 156891439 bytes to primary EBWT file: BS_CT.rev.1.bt2
+Wrote 114505092 bytes to secondary EBWT file: BS_CT.rev.2.bt2
+Re-opening _in1 and _in2 as input streams
+Returning from Ebwt constructor
+Headers:
+    len: 458020336
+    bwtLen: 458020337
+    sz: 114505084
+    bwtSz: 114505085
+    lineRate: 6
+    offRate: 4
+    offMask: 0xfffffff0
+    ftabChars: 10
+    eftabLen: 20
+    eftabSz: 80
+    ftabLen: 1048577
+    ftabSz: 4194308
+    offsLen: 28626272
+    offsSz: 114505088
+    lineSz: 64
+    sideSz: 64
+    sideBwtSz: 48
+    sideBwtLen: 192
+    numSides: 2385523
+    numLines: 2385523
+    ebwtTotLen: 152673472
+    ebwtTotSz: 152673472
+    color: 0
+    reverse: 1
+Total time for backward call to driver() for mirror index: 00:07:20
+Exited Ebwt loop
+fchr[A]: 0
+fchr[C]: 228865046
+fchr[G]: 331555329
+fchr[T]: 331555329
+fchr[$]: 458020336
+Exiting Ebwt::buildToDisk()
+Returning from initFromVector
+Wrote 156891439 bytes to primary EBWT file: BS_GA.rev.1.bt2
+Wrote 114505092 bytes to secondary EBWT file: BS_GA.rev.2.bt2
+Re-opening _in1 and _in2 as input streams
+Returning from Ebwt constructor
+Headers:
+    len: 458020336
+    bwtLen: 458020337
+    sz: 114505084
+    bwtSz: 114505085
+    lineRate: 6
+    offRate: 4
+    offMask: 0xfffffff0
+    ftabChars: 10
+    eftabLen: 20
+    eftabSz: 80
+    ftabLen: 1048577
+    ftabSz: 4194308
+    offsLen: 28626272
+    offsSz: 114505088
+    lineSz: 64
+    sideSz: 64
+    sideBwtSz: 48
+    sideBwtLen: 192
+    numSides: 2385523
+    numLines: 2385523
+    ebwtTotLen: 152673472
+    ebwtTotSz: 152673472
+    color: 0
+    reverse: 1
+Total time for backward call to driver() for mirror index: 00:07:19
