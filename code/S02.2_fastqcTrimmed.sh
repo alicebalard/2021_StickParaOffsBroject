@@ -4,14 +4,16 @@
 #$ -l h_rt=240:0:0
 #$ -cwd
 #$ -j y
+#$ -o /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/00Quality_Control_fastqc/QCtrimmedReads_cutadapt/run_fastqc_Alice.stdout 
+#$ -e /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/00Quality_Control_fastqc/QCtrimmedReads_cutadapt/run_fastqc_Alice.stderr
 
 #Run fastqc for quality check of raw reads
 
 module load fastqc
 
-cd /data/scratch/btx915/01Trimmed_Reads/
+cd /data/scratch/btx915/01TrimmedReads_cutadapt/
 
-fastqc *trimmed.fq.gz
+fastqc *trimmed_cutadapt.fastq.gz
 
 # move files to the result directory after run
-mv *fastqc* /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/00Quality_Control_fastqc/QCtrimmedReads/.
+mv *fastqc* /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/00Quality_Control_fastqc/QCtrimmedReads_cutadapt/. 
