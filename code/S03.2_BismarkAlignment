@@ -1,8 +1,8 @@
 #!/bin/bash
 #Bisulphite sequence alignment of trimmed data on reference gynogen
 #$ -N bismark_alignment
-#$ -o run_bismark_alignment.stdout
-#$ -e run_bismark_alignment.stderr
+#$ -o /data/scratch/btx915/04Bismark_alignment_afterCutadapt/run_bismark_alignment.stdout
+#$ -e /data/scratch/btx915/04Bismark_alignment_afterCutadapt/run_bismark_alignment.stderr
 #$ -cwd
 #$ -V
 #$ -l h_rt=240:00:00
@@ -12,9 +12,13 @@
 module load bismark/0.22.1
 module load bowtie2/2.4.1
 
-READS_DIR=/data/scratch/btx915/01Trimmed_Reads
+READS_DIR=/data/scratch/btx915/01TrimmedReads_cutadapt
 PATH2GEN=/data/scratch/btx915/03RefGenome
-OUTDIR=/data/scratch/btx915/04Bismark_alignment
+OUTDIR=/data/scratch/btx915/04Bismark_alignment_afterCutadapt
+
+cd $READS_DIR
+
+ls -1 *trimmed_cutadapt.fastq.gz > list_of_files.txt
 
 cd $OUTDIR
 
@@ -24,4 +28,4 @@ for file in `ls $READS_DIR/$INPUT_FILE`
 do bismark --genome $PATH2GEN $file; echo $file; done
 
 ## Extract mapping efficiency file:
-for file in /data/scratch/btx915/04Bismark_alignment/*report.txt; do filename=$(echo "${file##*/}") ;  map=$(grep "Mapping efficiency:" $file) ; echo "$filename $map" ; done > Report_mapping_efficiency.txt
+for file in $OUTDIR/*report.txt; do filename=$(echo "${file##*/}") ;  map=$(grep "Mapping efficiency:" $file) ; echo "$filename $map" ; done > Report_mapping_efficiency.txt

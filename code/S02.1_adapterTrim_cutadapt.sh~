@@ -1,0 +1,37 @@
+#!/bin/bash
+#Trimming RRBS raw illumina data
+#$ -N cutadapt
+#$ -o run_cutadapt.stdout
+#$ -e run_cutadapt.stderr
+#$ -cwd
+#$ -V
+#$ -l h_rt=96:00:00
+#$ -l h_vmem=32G
+
+module load cutadapt/1.13
+
+OUTDIR=/data/SBCS-EizaguirreLab/RRBS/StickPara_Broject/02Trimmed_Reads/Cutadapt
+cd $OUTDIR
+
+DATA_DIR=/data/SBCS-EizaguirreLab/RRBS/StickPara_Broject/00Illumina_RawReads/TheRest5
+
+#cutadapt removes adapter sequences from high-throughput sequencing reads.
+# Usage:  cutadapt -a ADAPTER [options] [-o output.fastq] input.fastq
+
+
+for file in `ls $DATA_DIR/*.fastq.gz`
+do
+        newname=`basename $file | sed -e "s/.fastq.gz/_trimmed_cutadapt.fastq.gz/"`
+       #cutadapt -e 0.1 -q 20 -m 20 -O 1 -a NNAGATCGGAAGAGCACAC -a AGATCGGAAGAGCACAC -a ATCGGAAGAGCACAC -o $OUTDIR/!file!.trimmed_cutadapt.fastq.gz 
+!file!.fastq.gz
+        cutadapt -e 0.1 -q 20 -m 20 -O 1 -a NNAGATCGGAAGAGCACAC -a AGATCGGAAGAGCACAC -a ATCGGAAGAGCACAC  -o $OUTDIR/"$newname" $file
+        echo $file
+        echo $newname
+done
+
+
+## Mel 
+
+
+cutadapt -e 0.1 -q 20 -m 20 -O 1 -a NNAGATCGGAAGAGCACAC -a AGATCGGAAGAGCACAC -a ATCGGAAGAGCACAC -o !file!.trimmed_cutadapt.fastq.gz 
+/sfs/fs1/work-geomar5/smomw324/02RRBS/00raw_IKMB/!file!.fastq.gz 
