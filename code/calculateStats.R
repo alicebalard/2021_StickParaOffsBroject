@@ -12,37 +12,35 @@ file <- read.csv("../data/multiqc_report_rawReads_generalstats.csv")
 mapp <- read.table(file = "../data/Report_mapping_efficiency.txt")
 #####################################
 
+# Nbr samples: 144
+nrow(file)
+
+# Mean nbr of million reads: 11.1
 mean(file$M.Seqs)
 
-# 95% confidence interval
+# 95% confidence interval: 0.36
 qnorm(0.975)*sd(file$M.Seqs)/sqrt(nrow(file))
 
+# Plot mapping efficiency by reads number:
 file$SampleName = gsub("_R1_001", "", file$Sample.Name)
-
-
-
 mappDat <- data.frame(SampleName = gsub("_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt", "", mapp$V1),
                       MappingEfficiency = as.numeric(gsub("%", "", mapp$V4)))
 
 hist(mappDat$MappingEfficiency, breaks = 100)
 
-table(mappDat$MappingEfficiency < 60)
-
-# Mean and 95% confidence interval
+# Mean and 95% confidence interval: 71.9 +/-0.59
 mean(mappDat$MappingEfficiency)
 qnorm(0.975)*sd(mappDat$MappingEfficiency)/sqrt(nrow(mappDat))
 
-## Both
+## plot:
 AllDF <- merge(file, mappDat)
 AllDF$SampleID <- sub('.*_', '', sub('_L00.*', '',  AllDF$SampleName))
 
-PA <- ggplot(AllDF, aes(x=M.Seqs, y=MappingEfficiency, label = SampleID))+
+ggplot(AllDF, aes(x=M.Seqs, y=MappingEfficiency, label = SampleID))+
   geom_point() +
   geom_label_repel() +
   theme_bw()+
   theme(legend.position = "none")
-
-PA
 
 # Not ideal samples would be:
 AllDF[AllDF$MappingEfficiency < 60 | AllDF$M.Seqs < 5,]
