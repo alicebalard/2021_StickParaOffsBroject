@@ -1,7 +1,17 @@
 library(ggplot2)
 library(ggrepel)
 
+############ Data loading ############
+# Kostas previous results to compare and have the data
+Kostas <- readxl::read_xlsx("../data/Kostas_G2_info.xlsx")
+
+# Raw reads quality check
 file <- read.csv("../data/multiqc_report_rawReads_generalstats.csv") 
+
+# Mapping efficiency after Bismark
+mapp <- read.table(file = "../data/Report_mapping_efficiency.txt")
+#####################################
+
 mean(file$M.Seqs)
 
 # 95% confidence interval
@@ -9,10 +19,9 @@ qnorm(0.975)*sd(file$M.Seqs)/sqrt(nrow(file))
 
 file$SampleName = gsub("_R1_001", "", file$Sample.Name)
 
-# Mapping efficiency after Bismark
-mapp <- read.table(file = "../data/Report_mapping_efficiency.txt")
 
-mappDat <- data.frame(SampleName = gsub("_R1_001_trimmed_bismark_bt2_SE_report.txt", "", mapp$V1),
+
+mappDat <- data.frame(SampleName = gsub("_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt", "", mapp$V1),
                       MappingEfficiency = as.numeric(gsub("%", "", mapp$V4)))
 
 hist(mappDat$MappingEfficiency, breaks = 100)
@@ -33,32 +42,14 @@ PA <- ggplot(AllDF, aes(x=M.Seqs, y=MappingEfficiency, label = SampleID))+
   theme_bw()+
   theme(legend.position = "none")
 
-# Kostas previous results to compare
-Kostas <- read.csv("G2_info_Kostas.csv")
-## he marked in the xls sheet for either low reads or bad mapping: 
-Kostas$tagged <- "white"
-Kostas$tagged[Kostas$ID %in% c("S110", "S142", "S118", "S22", "S12", "S31", "S41", "S73", "S36")] <- "red"
+PA
 
-PK <- ggplot(Kostas, aes(x=MReads, y=Mapping, label = ID))+
-  geom_point() +
-  geom_label_repel(aes(fill=tagged)) +
-  scale_fill_manual(values = c("red", "white")) +
-  theme_bw() +
-  theme(legend.position = "none")
+# Not ideal samples would be:
+AllDF[AllDF$MappingEfficiency < 60 | AllDF$M.Seqs < 5,]
+notIdeal <- AllDF[AllDF$MappingEfficiency < 60 | AllDF$M.Seqs < 5,"SampleID"]
 
-library(cowplot)
-cowplot::plot_grid(PA, PK, labels = c("Alice", "Kostas"), nrow = 2)
-
-a <- AllDF[AllDF$SampleID %in% Kostas$ID[Kostas$tagged %in% "red"], c("SampleID","M.Seqs", "MappingEfficiency")]
-a <-a[order(as.numeric(gsub("S","", a$SampleID))),]
-
-b <- Kostas[Kostas$tagged %in% "red", c("ID", "MReads", "Mapping")]
-names(b) <- names(a)
-b <-b[order(as.numeric(gsub("S","", b$SampleID))),]
-
-a$obs <- "Alice"
-b$obs <- "Kostas"
-cbind(a,b)
-
-a$SampleID
-
+Kostas[Kostas$ID %in% notIdeal,]
+# S12 is a NE-control offspring, to be removed for bad quality
+# the 2 other samples with rather low read counts have an ok quality,
+# and belong to 2 different groups (E_control, NE_exposed) so it should
+# not bias the further steps too much
