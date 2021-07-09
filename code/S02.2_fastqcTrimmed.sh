@@ -14,6 +14,3 @@ module load fastqc
 cd /data/scratch/btx915/01TrimmedReads_cutadapt/
 
 fastqc *trimmed_cutadapt.fastq.gz
-
-# move files to the result directory after run
-mv *fastqc* /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/00Quality_Control_fastqc/QCtrimmedReads_cutadapt/. 

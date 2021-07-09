@@ -1,9 +1,0 @@
-Variable OMP_NUM_THREADS has been set to 1
-[INFO   ]         multiqc : This is MultiQC v1.10.1
-[INFO   ]         multiqc : Template    : default
-[INFO   ]         multiqc : Searching   : /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/00Quality_Control_fastqc/QCtrimmedReads
-Searching   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 288/288  [INFO   ]          fastqc : Found 144 reports
-[INFO   ]         multiqc : Compressing plot data
-[INFO   ]         multiqc : Report      : multiqc_report.html
-[INFO   ]         multiqc : Data        : multiqc_data
-[INFO   ]         multiqc : MultiQC complete
