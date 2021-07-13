@@ -1,3 +1,4 @@
+
 #!/bin/bash
 # produces tab delimited files with content-specific methylation information
 # Bismark Methylation Extractor
@@ -8,6 +9,7 @@
 #$ -V
 #$ -l h_rt=240:00:00
 #$ -l h_vmem=36G
+#$ -t 1-144
 
 module load bismark
 module load samtools
@@ -17,5 +19,11 @@ OUTDIR=/data/scratch/btx915/04Bismark_MethylationExtraction
 
 cd $DATA_DIR
 
-for file in `ls *trimmed_cutadapt_bismark_bt2.sam.gz`; 
-do bismark_methylation_extractor -o $OUTDIR -s --bedGraph --counts --report $file ; done
+ls -1 *trimmed_cutadapt_bismark_bt2.sam.gz > list_of_files.txt
+
+# Select the correct line of list of files at each iteration
+INPUT_FILE=$(sed -n "${SGE_TASK_ID}p" list_of_files.txt)
+
+bismark_methylation_extractor -o $OUTDIR -s --bedGraph --counts --report $DATA_DIR/$INPUT_FILE
+
+

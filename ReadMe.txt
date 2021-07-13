@@ -1,19 +1,21 @@
 ## Alice Balard
 ## 25th of May 2021
 
-############## DATA ################
-[btx915@frontend8:/data/SBCS-EizaguirreLab/Alice/StickParaBroOff]
-├── 01TrimmedReads_cutadapt
-├── 02RefGenome
-├── 03Bismark_alignment
+############## DATA ORGANISATION  ################
+[btx915@frontend8:/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/]
+├── Data
+│   ├── 01TrimmedReads_cutadapt
+│   ├── 02RefGenome
+│   └── 03Bismark_alignment
 ├── GIT_StickParaOffsBroject
-├── Kostas_G2_info.xlsx
-└── QualityControl 
-                 ├── QC00_RawReads_fastqc
-                 └── QC01_TrimmedReads_fastqc
+│   ├── code
+│   ├── data
+│   └── ReadMe.txt
+└── QualityControl
+    ├── QC00_RawReads_fastqc
+    └── QC01_TrimmedReads_fastqc
 
-########## SCRIPTS ################
-[btx915@frontend8:/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code]
+########## SCRIPTS (within GIT_StickParaOffsBroject/code) ################
 ├── calculateStats.R
 ├── ReadMe.txt
 ├── S00_multiQC_generateReports.sh
