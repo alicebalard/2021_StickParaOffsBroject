@@ -8,14 +8,23 @@
 #$ -V
 #$ -l h_rt=240:00:00
 #$ -l h_vmem=36G
+#$ -t 1-144
+#$ -tc 5
 
 module load bismark
 module load samtools
 
-DATA_DIR=/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/03Bismark_alignment
+DATA_DIR=/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/03Bismark_alignment
 OUTDIR=/data/scratch/btx915/04Bismark_MethylationExtraction
 
-cd $DATA_DIR
+cd $OUTDIR
 
-for file in `ls *trimmed_cutadapt_bismark_bt2.sam.gz`; 
-do bismark_methylation_extractor -o $OUTDIR -s --bedGraph --counts --report $file ; done
+# Create the files to loop over:
+ls -1 $DATA_DIR/*trimmed_cutadapt_bismark_bt2.sam.gz > list_of_files.txt
+
+# Select the correct line of list of files at each iteration
+INPUT_FILE=$(sed -n "${SGE_TASK_ID}p" list_of_files.txt)
+
+bismark_methylation_extractor -o $OUTDIR -s --bedGraph --counts --report $INPUT_FILE
+
+

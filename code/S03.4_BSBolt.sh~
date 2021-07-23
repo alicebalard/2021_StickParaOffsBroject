@@ -1,0 +1,12 @@
+#!/bin/bash
+#$ -cwd
+#$ -j y
+#$ -pe smp 1
+#$ -l h_rt=1:0:0
+#$ -l h_vmem=1G
+
+module load anaconda3
+conda activate myenv
+
+# RRBS Index, MSPI Cut Format, 40bp Lower Fragment Bound, and 400bp Upper Fragment Bound
+python3 -m bsbolt Index -G /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/02RefGenome/Gynogen_pchrom_assembly_all.fasta -DB /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB -rrbs -rrbs-cut-format C-CGG -rrbs-lower 40 -rrbs-upper 400
