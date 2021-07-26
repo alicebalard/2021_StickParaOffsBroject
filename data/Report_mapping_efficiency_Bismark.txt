@@ -18,6 +18,7 @@ G04889-L1_S17_L001_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt Mapping eff
 G04890-L1_S18_L001_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt Mapping efficiency:	66.4%
 G04891-L1_S19_L002_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt Mapping efficiency:	73.7%
 G04892-L1_S20_L002_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt Mapping efficiency:	69.0%
+G04893-L1_S21_L002_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt Mapping efficiency:	65.1%
 G04894-L1_S22_L002_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt Mapping efficiency:	73.1%
 G04895-L1_S23_L002_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt Mapping efficiency:	64.9%
 G04896-L1_S24_L002_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt Mapping efficiency:	74.2%
