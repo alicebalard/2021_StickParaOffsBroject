@@ -1,0 +1,1007 @@
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04879-L1_S7_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1935.558 sec; CPU: 1781.252 sec
+Alignment Complete: Time 0:32:16
+------------------------------
+Total Reads: 8204576
+Mappability: 85.866 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04880-L1_S8_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2023.675 sec; CPU: 1849.319 sec
+Alignment Complete: Time 0:33:44
+------------------------------
+Total Reads: 9422514
+Mappability: 84.731 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04873-L1_S1_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2473.987 sec; CPU: 2272.244 sec
+Alignment Complete: Time 0:41:14
+------------------------------
+Total Reads: 10802092
+Mappability: 83.726 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04877-L1_S5_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2505.125 sec; CPU: 2298.668 sec
+Alignment Complete: Time 0:41:45
+------------------------------
+Total Reads: 11178806
+Mappability: 84.450 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04874-L1_S2_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2671.654 sec; CPU: 2454.537 sec
+Alignment Complete: Time 0:44:32
+------------------------------
+Total Reads: 10007967
+Mappability: 83.446 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04876-L1_S4_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2689.120 sec; CPU: 2468.984 sec
+Alignment Complete: Time 0:44:49
+------------------------------
+Total Reads: 11455144
+Mappability: 85.367 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04875-L1_S3_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2792.979 sec; CPU: 2591.407 sec
+Alignment Complete: Time 0:46:33
+------------------------------
+Total Reads: 11123284
+Mappability: 82.522 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04882-L1_S10_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3009.056 sec; CPU: 2791.316 sec
+Alignment Complete: Time 0:50:09
+------------------------------
+Total Reads: 12000240
+Mappability: 81.675 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04878-L1_S6_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3082.654 sec; CPU: 2825.471 sec
+Alignment Complete: Time 0:51:23
+------------------------------
+Total Reads: 11478314
+Mappability: 86.107 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04884-L1_S12_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1075.490 sec; CPU: 978.776 sec
+Alignment Complete: Time 0:17:56
+------------------------------
+Total Reads: 5834025
+Mappability: 68.960 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04881-L1_S9_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3244.913 sec; CPU: 2969.610 sec
+Alignment Complete: Time 0:54:05
+------------------------------
+Total Reads: 14254137
+Mappability: 85.977 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04886-L1_S14_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2323.081 sec; CPU: 2128.188 sec
+Alignment Complete: Time 0:38:43
+------------------------------
+Total Reads: 10469147
+Mappability: 84.116 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04883-L1_S11_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2905.993 sec; CPU: 2671.399 sec
+Alignment Complete: Time 0:48:26
+------------------------------
+Total Reads: 12907061
+Mappability: 86.429 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04887-L1_S15_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2264.841 sec; CPU: 2075.704 sec
+Alignment Complete: Time 0:37:45
+------------------------------
+Total Reads: 8308266
+Mappability: 86.396 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04889-L1_S17_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2197.680 sec; CPU: 2028.992 sec
+Alignment Complete: Time 0:36:38
+------------------------------
+Total Reads: 9211819
+Mappability: 82.910 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04885-L1_S13_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2573.297 sec; CPU: 2349.537 sec
+Alignment Complete: Time 0:42:53
+------------------------------
+Total Reads: 10038105
+Mappability: 88.067 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04890-L1_S18_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2080.520 sec; CPU: 1918.785 sec
+Alignment Complete: Time 0:34:41
+------------------------------
+Total Reads: 9497358
+Mappability: 81.220 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04888-L1_S16_L001_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2633.495 sec; CPU: 2414.686 sec
+Alignment Complete: Time 0:43:54
+------------------------------
+Total Reads: 10478821
+Mappability: 82.148 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04892-L1_S20_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2475.778 sec; CPU: 2265.912 sec
+Alignment Complete: Time 0:41:16
+------------------------------
+Total Reads: 12465730
+Mappability: 82.306 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04891-L1_S19_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2854.187 sec; CPU: 2615.367 sec
+Alignment Complete: Time 0:47:34
+------------------------------
+Total Reads: 11305648
+Mappability: 85.516 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04893-L1_S21_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2697.373 sec; CPU: 2476.597 sec
+Alignment Complete: Time 0:44:57
+------------------------------
+Total Reads: 11091180
+Mappability: 78.427 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04894-L1_S22_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1181.665 sec; CPU: 1072.922 sec
+Alignment Complete: Time 0:19:42
+------------------------------
+Total Reads: 5775648
+Mappability: 86.185 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04903-L1_S31_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1385.956 sec; CPU: 1263.532 sec
+Alignment Complete: Time 0:23:06
+------------------------------
+Total Reads: 6257189
+Mappability: 85.787 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04895-L1_S23_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2580.119 sec; CPU: 2385.776 sec
+Alignment Complete: Time 0:43:00
+------------------------------
+Total Reads: 11262015
+Mappability: 79.029 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04901-L1_S29_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1842.731 sec; CPU: 1685.997 sec
+Alignment Complete: Time 0:30:43
+------------------------------
+Total Reads: 9405795
+Mappability: 86.110 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04899-L1_S27_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2332.967 sec; CPU: 2142.399 sec
+Alignment Complete: Time 0:38:53
+------------------------------
+Total Reads: 11376217
+Mappability: 85.889 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04897-L1_S25_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2496.962 sec; CPU: 2293.420 sec
+Alignment Complete: Time 0:41:37
+------------------------------
+Total Reads: 11690428
+Mappability: 81.838 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04904-L1_S32_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1687.871 sec; CPU: 1529.353 sec
+Alignment Complete: Time 0:28:08
+------------------------------
+Total Reads: 8502453
+Mappability: 85.725 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04898-L1_S26_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2975.916 sec; CPU: 2745.823 sec
+Alignment Complete: Time 0:49:36
+------------------------------
+Total Reads: 11037208
+Mappability: 80.605 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04900-L1_S28_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2792.503 sec; CPU: 2526.591 sec
+Alignment Complete: Time 0:46:33
+------------------------------
+Total Reads: 12768680
+Mappability: 88.975 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04902-L1_S30_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2771.356 sec; CPU: 2521.927 sec
+Alignment Complete: Time 0:46:11
+------------------------------
+Total Reads: 10824988
+Mappability: 84.248 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04909-L1_S37_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1752.927 sec; CPU: 1606.740 sec
+Alignment Complete: Time 0:29:13
+------------------------------
+Total Reads: 7778243
+Mappability: 86.243 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04908-L1_S36_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1847.338 sec; CPU: 1708.815 sec
+Alignment Complete: Time 0:30:47
+------------------------------
+Total Reads: 8884905
+Mappability: 76.152 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04907-L1_S35_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1941.711 sec; CPU: 1787.805 sec
+Alignment Complete: Time 0:32:22
+------------------------------
+Total Reads: 9154859
+Mappability: 82.655 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04906-L1_S34_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2083.747 sec; CPU: 1918.319 sec
+Alignment Complete: Time 0:34:44
+------------------------------
+Total Reads: 9549069
+Mappability: 85.749 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04905-L1_S33_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2227.431 sec; CPU: 2034.888 sec
+Alignment Complete: Time 0:37:07
+------------------------------
+Total Reads: 10470071
+Mappability: 87.785 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04896-L1_S24_L002_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 4943.066 sec; CPU: 4537.269 sec
+Alignment Complete: Time 1:22:23
+------------------------------
+Total Reads: 19853870
+Mappability: 85.876 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04910-L1_S38_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2409.281 sec; CPU: 2198.876 sec
+Alignment Complete: Time 0:40:09
+------------------------------
+Total Reads: 11813284
+Mappability: 85.886 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04913-L1_S41_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1463.137 sec; CPU: 1336.325 sec
+Alignment Complete: Time 0:24:23
+------------------------------
+Total Reads: 6701724
+Mappability: 83.813 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04912-L1_S40_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2459.104 sec; CPU: 2233.240 sec
+Alignment Complete: Time 0:40:59
+------------------------------
+Total Reads: 10486319
+Mappability: 87.153 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04911-L1_S39_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3039.050 sec; CPU: 2785.119 sec
+Alignment Complete: Time 0:50:39
+------------------------------
+Total Reads: 11533176
+Mappability: 83.966 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04916-L1_S44_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1821.602 sec; CPU: 1656.374 sec
+Alignment Complete: Time 0:30:22
+------------------------------
+Total Reads: 9888355
+Mappability: 86.727 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04918-L1_S46_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1775.322 sec; CPU: 1624.545 sec
+Alignment Complete: Time 0:29:35
+------------------------------
+Total Reads: 8266574
+Mappability: 85.132 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04915-L1_S43_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2252.241 sec; CPU: 2069.171 sec
+Alignment Complete: Time 0:37:32
+------------------------------
+Total Reads: 11679131
+Mappability: 83.141 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04914-L1_S42_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2759.564 sec; CPU: 2525.719 sec
+Alignment Complete: Time 0:46:00
+------------------------------
+Total Reads: 13099208
+Mappability: 85.002 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04917-L1_S45_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2650.167 sec; CPU: 2435.086 sec
+Alignment Complete: Time 0:44:10
+------------------------------
+Total Reads: 12203768
+Mappability: 84.799 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04922-L1_S50_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2042.111 sec; CPU: 1859.701 sec
+Alignment Complete: Time 0:34:02
+------------------------------
+Total Reads: 9267243
+Mappability: 83.294 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04920-L1_S48_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2564.319 sec; CPU: 2340.441 sec
+Alignment Complete: Time 0:42:44
+------------------------------
+Total Reads: 12778634
+Mappability: 83.920 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04921-L1_S49_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2604.254 sec; CPU: 2387.022 sec
+Alignment Complete: Time 0:43:24
+------------------------------
+Total Reads: 11856015
+Mappability: 81.944 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04919-L1_S47_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3417.134 sec; CPU: 3138.883 sec
+Alignment Complete: Time 0:56:57
+------------------------------
+Total Reads: 13260440
+Mappability: 85.933 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04924-L1_S52_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2146.551 sec; CPU: 1961.723 sec
+Alignment Complete: Time 0:35:47
+------------------------------
+Total Reads: 11057943
+Mappability: 83.489 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04923-L1_S51_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2539.544 sec; CPU: 2329.580 sec
+Alignment Complete: Time 0:42:20
+------------------------------
+Total Reads: 10654558
+Mappability: 82.411 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04927-L1_S55_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1849.068 sec; CPU: 1692.132 sec
+Alignment Complete: Time 0:30:49
+------------------------------
+Total Reads: 8554296
+Mappability: 84.347 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04925-L1_S53_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2768.958 sec; CPU: 2538.631 sec
+Alignment Complete: Time 0:46:09
+------------------------------
+Total Reads: 12405614
+Mappability: 84.742 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04926-L1_S54_L003_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2764.265 sec; CPU: 2548.506 sec
+Alignment Complete: Time 0:46:04
+------------------------------
+Total Reads: 12887743
+Mappability: 83.963 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04928-L1_S56_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2251.121 sec; CPU: 2069.790 sec
+Alignment Complete: Time 0:37:31
+------------------------------
+Total Reads: 10116605
+Mappability: 83.011 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04929-L1_S57_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2028.104 sec; CPU: 1855.061 sec
+Alignment Complete: Time 0:33:48
+------------------------------
+Total Reads: 8770390
+Mappability: 80.189 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04933-L1_S61_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1822.186 sec; CPU: 1657.432 sec
+Alignment Complete: Time 0:30:22
+------------------------------
+Total Reads: 9251030
+Mappability: 87.255 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04931-L1_S59_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2509.760 sec; CPU: 2301.382 sec
+Alignment Complete: Time 0:41:50
+------------------------------
+Total Reads: 10316307
+Mappability: 83.397 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04930-L1_S58_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2767.592 sec; CPU: 2517.423 sec
+Alignment Complete: Time 0:46:08
+------------------------------
+Total Reads: 13554166
+Mappability: 85.704 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04932-L1_S60_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2602.887 sec; CPU: 2384.705 sec
+Alignment Complete: Time 0:43:23
+------------------------------
+Total Reads: 10331985
+Mappability: 86.273 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04935-L1_S63_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2128.225 sec; CPU: 1940.643 sec
+Alignment Complete: Time 0:35:28
+------------------------------
+Total Reads: 10344705
+Mappability: 87.585 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04937-L1_S65_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1990.102 sec; CPU: 1829.215 sec
+Alignment Complete: Time 0:33:10
+------------------------------
+Total Reads: 9531051
+Mappability: 86.040 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04936-L1_S64_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2296.101 sec; CPU: 2089.581 sec
+Alignment Complete: Time 0:38:16
+------------------------------
+Total Reads: 10694079
+Mappability: 88.614 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04934-L1_S62_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2851.711 sec; CPU: 2605.965 sec
+Alignment Complete: Time 0:47:32
+------------------------------
+Total Reads: 11645225
+Mappability: 87.697 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04938-L1_S66_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2209.741 sec; CPU: 2019.047 sec
+Alignment Complete: Time 0:36:50
+------------------------------
+Total Reads: 10403425
+Mappability: 87.461 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04942-L1_S70_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1542.811 sec; CPU: 1406.672 sec
+Alignment Complete: Time 0:25:43
+------------------------------
+Total Reads: 7188729
+Mappability: 86.050 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04940-L1_S68_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2207.711 sec; CPU: 2013.305 sec
+Alignment Complete: Time 0:36:48
+------------------------------
+Total Reads: 10803122
+Mappability: 87.315 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04939-L1_S67_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2889.624 sec; CPU: 2634.282 sec
+Alignment Complete: Time 0:48:10
+------------------------------
+Total Reads: 12337101
+Mappability: 87.474 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04941-L1_S69_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3203.950 sec; CPU: 2948.782 sec
+Alignment Complete: Time 0:53:24
+------------------------------
+Total Reads: 12850407
+Mappability: 83.049 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04943-L1_S71_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2790.387 sec; CPU: 2558.186 sec
+Alignment Complete: Time 0:46:30
+------------------------------
+Total Reads: 10992371
+Mappability: 85.572 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04946-L1_S74_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2520.810 sec; CPU: 2308.382 sec
+Alignment Complete: Time 0:42:01
+------------------------------
+Total Reads: 11318797
+Mappability: 85.261 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04945-L1_S73_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2655.837 sec; CPU: 2467.703 sec
+Alignment Complete: Time 0:44:16
+------------------------------
+Total Reads: 12192691
+Mappability: 74.375 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04944-L1_S72_L004_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3079.434 sec; CPU: 2845.908 sec
+Alignment Complete: Time 0:51:19
+------------------------------
+Total Reads: 13533121
+Mappability: 77.830 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04947-L1_S75_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2684.656 sec; CPU: 2472.618 sec
+Alignment Complete: Time 0:44:45
+------------------------------
+Total Reads: 10352261
+Mappability: 83.836 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04948-L1_S76_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2583.437 sec; CPU: 2387.324 sec
+Alignment Complete: Time 0:43:03
+------------------------------
+Total Reads: 11319625
+Mappability: 79.684 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04949-L1_S77_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2272.056 sec; CPU: 2075.109 sec
+Alignment Complete: Time 0:37:52
+------------------------------
+Total Reads: 11085648
+Mappability: 84.615 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04951-L1_S79_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1751.589 sec; CPU: 1619.387 sec
+Alignment Complete: Time 0:29:12
+------------------------------
+Total Reads: 7218033
+Mappability: 83.862 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04950-L1_S78_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2481.652 sec; CPU: 2271.827 sec
+Alignment Complete: Time 0:41:22
+------------------------------
+Total Reads: 12320070
+Mappability: 83.914 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04954-L1_S82_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2115.133 sec; CPU: 1944.960 sec
+Alignment Complete: Time 0:35:15
+------------------------------
+Total Reads: 9844150
+Mappability: 85.759 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04955-L1_S83_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2272.720 sec; CPU: 2092.313 sec
+Alignment Complete: Time 0:37:53
+------------------------------
+Total Reads: 10858377
+Mappability: 83.488 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04959-L1_S87_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2109.239 sec; CPU: 1918.598 sec
+Alignment Complete: Time 0:35:09
+------------------------------
+Total Reads: 10146504
+Mappability: 85.712 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04952-L1_S80_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3008.011 sec; CPU: 2737.061 sec
+Alignment Complete: Time 0:50:08
+------------------------------
+Total Reads: 11251408
+Mappability: 80.893 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04960-L1_S88_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2307.454 sec; CPU: 2129.914 sec
+Alignment Complete: Time 0:38:28
+------------------------------
+Total Reads: 10009818
+Mappability: 83.775 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04958-L1_S86_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2389.487 sec; CPU: 2180.581 sec
+Alignment Complete: Time 0:39:50
+------------------------------
+Total Reads: 10044262
+Mappability: 85.166 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04956-L1_S84_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2571.182 sec; CPU: 2354.430 sec
+Alignment Complete: Time 0:42:51
+------------------------------
+Total Reads: 11657957
+Mappability: 87.393 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04953-L1_S81_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3192.236 sec; CPU: 2933.990 sec
+Alignment Complete: Time 0:53:12
+------------------------------
+Total Reads: 12457559
+Mappability: 82.644 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04961-L1_S89_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2065.882 sec; CPU: 1895.409 sec
+Alignment Complete: Time 0:34:26
+------------------------------
+Total Reads: 9970426
+Mappability: 84.706 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04957-L1_S85_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2907.382 sec; CPU: 2665.409 sec
+Alignment Complete: Time 0:48:27
+------------------------------
+Total Reads: 11129266
+Mappability: 87.648 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04964-L1_S92_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1964.517 sec; CPU: 1778.517 sec
+Alignment Complete: Time 0:32:45
+------------------------------
+Total Reads: 9586125
+Mappability: 88.728 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04962-L1_S90_L005_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2284.898 sec; CPU: 2103.823 sec
+Alignment Complete: Time 0:38:05
+------------------------------
+Total Reads: 10727959
+Mappability: 81.289 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04966-L1_S94_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2007.062 sec; CPU: 1851.664 sec
+Alignment Complete: Time 0:33:27
+------------------------------
+Total Reads: 8297889
+Mappability: 84.915 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04963-L1_S91_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2523.612 sec; CPU: 2317.731 sec
+Alignment Complete: Time 0:42:04
+------------------------------
+Total Reads: 12082475
+Mappability: 84.259 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04967-L1_S95_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2240.896 sec; CPU: 2035.390 sec
+Alignment Complete: Time 0:37:21
+------------------------------
+Total Reads: 9427259
+Mappability: 85.556 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04968-L1_S96_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2266.126 sec; CPU: 2069.539 sec
+Alignment Complete: Time 0:37:46
+------------------------------
+Total Reads: 10330262
+Mappability: 86.376 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04965-L1_S93_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2460.937 sec; CPU: 2254.499 sec
+Alignment Complete: Time 0:41:01
+------------------------------
+Total Reads: 10924126
+Mappability: 86.271 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04970-L1_S98_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2417.278 sec; CPU: 2207.935 sec
+Alignment Complete: Time 0:40:17
+------------------------------
+Total Reads: 10523510
+Mappability: 86.030 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04971-L1_S99_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2295.942 sec; CPU: 2102.666 sec
+Alignment Complete: Time 0:38:16
+------------------------------
+Total Reads: 10110256
+Mappability: 87.009 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04969-L1_S97_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3389.471 sec; CPU: 3110.654 sec
+Alignment Complete: Time 0:56:30
+------------------------------
+Total Reads: 12808970
+Mappability: 84.665 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04973-L1_S101_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2152.921 sec; CPU: 1973.616 sec
+Alignment Complete: Time 0:35:53
+------------------------------
+Total Reads: 10274659
+Mappability: 86.222 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04972-L1_S100_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2564.004 sec; CPU: 2332.442 sec
+Alignment Complete: Time 0:42:44
+------------------------------
+Total Reads: 12034606
+Mappability: 85.085 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04975-L1_S103_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2209.293 sec; CPU: 2021.313 sec
+Alignment Complete: Time 0:36:49
+------------------------------
+Total Reads: 10723194
+Mappability: 87.133 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04974-L1_S102_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2423.131 sec; CPU: 2217.435 sec
+Alignment Complete: Time 0:40:23
+------------------------------
+Total Reads: 10607665
+Mappability: 86.999 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04976-L1_S104_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2235.009 sec; CPU: 2022.777 sec
+Alignment Complete: Time 0:37:15
+------------------------------
+Total Reads: 9309529
+Mappability: 87.433 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04977-L1_S105_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2181.018 sec; CPU: 1996.531 sec
+Alignment Complete: Time 0:36:21
+------------------------------
+Total Reads: 10564903
+Mappability: 87.421 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04982-L1_S110_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 707.512 sec; CPU: 645.977 sec
+Alignment Complete: Time 0:11:48
+------------------------------
+Total Reads: 3385313
+Mappability: 89.036 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04978-L1_S106_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2477.112 sec; CPU: 2259.113 sec
+Alignment Complete: Time 0:41:17
+------------------------------
+Total Reads: 10021775
+Mappability: 85.689 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04979-L1_S107_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2270.014 sec; CPU: 2073.825 sec
+Alignment Complete: Time 0:37:50
+------------------------------
+Total Reads: 11417946
+Mappability: 86.063 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04980-L1_S108_L006_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2514.626 sec; CPU: 2298.690 sec
+Alignment Complete: Time 0:41:55
+------------------------------
+Total Reads: 11523114
+Mappability: 84.353 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04990-L1_S118_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1050.833 sec; CPU: 945.284 sec
+Alignment Complete: Time 0:17:31
+------------------------------
+Total Reads: 5461107
+Mappability: 88.640 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04983-L1_S111_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2273.119 sec; CPU: 2058.865 sec
+Alignment Complete: Time 0:37:53
+------------------------------
+Total Reads: 10841805
+Mappability: 88.711 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04987-L1_S115_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2229.618 sec; CPU: 2036.979 sec
+Alignment Complete: Time 0:37:10
+------------------------------
+Total Reads: 10537195
+Mappability: 89.183 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04981-L1_S109_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3167.541 sec; CPU: 2886.562 sec
+Alignment Complete: Time 0:52:48
+------------------------------
+Total Reads: 12359162
+Mappability: 89.190 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04985-L1_S113_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2536.556 sec; CPU: 2314.686 sec
+Alignment Complete: Time 0:42:17
+------------------------------
+Total Reads: 11032307
+Mappability: 89.403 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04988-L1_S116_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2359.699 sec; CPU: 2143.567 sec
+Alignment Complete: Time 0:39:20
+------------------------------
+Total Reads: 11079161
+Mappability: 89.259 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04986-L1_S114_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2570.329 sec; CPU: 2327.831 sec
+Alignment Complete: Time 0:42:50
+------------------------------
+Total Reads: 10711152
+Mappability: 88.564 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04984-L1_S112_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3204.570 sec; CPU: 2930.033 sec
+Alignment Complete: Time 0:53:25
+------------------------------
+Total Reads: 15436642
+Mappability: 89.959 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04991-L1_S119_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2337.599 sec; CPU: 2134.401 sec
+Alignment Complete: Time 0:38:58
+------------------------------
+Total Reads: 9954191
+Mappability: 87.804 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04989-L1_S117_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2869.514 sec; CPU: 2591.081 sec
+Alignment Complete: Time 0:47:50
+------------------------------
+Total Reads: 12250227
+Mappability: 88.237 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04992-L1_S120_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2259.703 sec; CPU: 2040.103 sec
+Alignment Complete: Time 0:37:40
+------------------------------
+Total Reads: 12489186
+Mappability: 88.724 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04994-L1_S122_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2328.997 sec; CPU: 2126.459 sec
+Alignment Complete: Time 0:38:49
+------------------------------
+Total Reads: 11046568
+Mappability: 89.991 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04993-L1_S121_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2638.330 sec; CPU: 2389.217 sec
+Alignment Complete: Time 0:43:58
+------------------------------
+Total Reads: 12759355
+Mappability: 88.408 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04997-L1_S125_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2468.259 sec; CPU: 2251.771 sec
+Alignment Complete: Time 0:41:08
+------------------------------
+Total Reads: 11488586
+Mappability: 86.717 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04999-L1_S127_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1995.065 sec; CPU: 1833.770 sec
+Alignment Complete: Time 0:33:15
+------------------------------
+Total Reads: 9216203
+Mappability: 85.479 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05000-L1_S128_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2143.989 sec; CPU: 1957.462 sec
+Alignment Complete: Time 0:35:44
+------------------------------
+Total Reads: 9304493
+Mappability: 87.954 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04996-L1_S124_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2931.707 sec; CPU: 2674.254 sec
+Alignment Complete: Time 0:48:52
+------------------------------
+Total Reads: 13226904
+Mappability: 88.603 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04995-L1_S123_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3265.187 sec; CPU: 2989.961 sec
+Alignment Complete: Time 0:54:25
+------------------------------
+Total Reads: 12250992
+Mappability: 87.911 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05002-L1_S130_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1963.430 sec; CPU: 1780.522 sec
+Alignment Complete: Time 0:32:43
+------------------------------
+Total Reads: 10182025
+Mappability: 87.303 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G04998-L1_S126_L007_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3339.429 sec; CPU: 3038.694 sec
+Alignment Complete: Time 0:55:39
+------------------------------
+Total Reads: 13866418
+Mappability: 85.027 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05001-L1_S129_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 3093.607 sec; CPU: 2817.159 sec
+Alignment Complete: Time 0:51:34
+------------------------------
+Total Reads: 12562750
+Mappability: 86.605 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05003-L1_S131_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1817.048 sec; CPU: 1656.062 sec
+Alignment Complete: Time 0:30:17
+------------------------------
+Total Reads: 8493973
+Mappability: 88.668 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05004-L1_S132_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2282.018 sec; CPU: 2069.288 sec
+Alignment Complete: Time 0:38:02
+------------------------------
+Total Reads: 10927442
+Mappability: 86.957 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05006-L1_S134_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2090.843 sec; CPU: 1914.914 sec
+Alignment Complete: Time 0:34:51
+------------------------------
+Total Reads: 9548964
+Mappability: 88.839 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05005-L1_S133_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2273.997 sec; CPU: 2077.610 sec
+Alignment Complete: Time 0:37:54
+------------------------------
+Total Reads: 10367873
+Mappability: 87.977 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05010-L1_S138_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 1836.825 sec; CPU: 1662.426 sec
+Alignment Complete: Time 0:30:37
+------------------------------
+Total Reads: 9599877
+Mappability: 88.732 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05007-L1_S135_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2393.895 sec; CPU: 2171.223 sec
+Alignment Complete: Time 0:39:54
+------------------------------
+Total Reads: 10469965
+Mappability: 89.315 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05014-L1_S142_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 991.768 sec; CPU: 893.577 sec
+Alignment Complete: Time 0:16:32
+------------------------------
+Total Reads: 4753938
+Mappability: 89.716 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05009-L1_S137_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2572.430 sec; CPU: 2350.030 sec
+Alignment Complete: Time 0:42:52
+------------------------------
+Total Reads: 9657900
+Mappability: 89.408 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05008-L1_S136_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2935.223 sec; CPU: 2677.860 sec
+Alignment Complete: Time 0:48:55
+------------------------------
+Total Reads: 12807409
+Mappability: 89.494 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05012-L1_S140_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2181.818 sec; CPU: 1976.003 sec
+Alignment Complete: Time 0:36:22
+------------------------------
+Total Reads: 8883710
+Mappability: 89.159 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05011-L1_S139_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2611.047 sec; CPU: 2374.154 sec
+Alignment Complete: Time 0:43:31
+------------------------------
+Total Reads: 10641209
+Mappability: 88.244 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05015-L1_S143_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2403.229 sec; CPU: 2208.326 sec
+Alignment Complete: Time 0:40:03
+------------------------------
+Total Reads: 10781637
+Mappability: 86.320 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05016-L1_S144_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 2592.371 sec; CPU: 2372.662 sec
+Alignment Complete: Time 0:43:12
+------------------------------
+Total Reads: 12310406
+Mappability: 85.172 %
+--
+[main] CMD: /data/home/btx915/bin/myBSBolt/lib/python3.8/site-packages/bsbolt/External/BWA/bwa mem -Y -A 1 -B 4 -D 0.5 -E 1,1 -L 30,30 -T 10 -U 17 -W 0 -c 500 -d 100 -k 19 -m 50 -r 1.5 -t 1 -w 100 -y 20 -O 6,6 -h 100,200 -e 0.1 -l 0.5 -n 5 -Z 0.95 /data/scratch/btx915/BSBolt/Gynogen_pchrom_assembly_all_DB/BSB_ref.fa /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/01TrimmedReads_cutadapt/G05013-L1_S141_L008_R1_001_trimmed_cutadapt.fastq.gz
+[main] Real time: 4215.154 sec; CPU: 3882.138 sec
+Alignment Complete: Time 1:10:15
+------------------------------
+Total Reads: 19186152
+Mappability: 86.166 %
