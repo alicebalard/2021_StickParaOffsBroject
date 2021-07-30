@@ -1,0 +1,3 @@
+# Check that Bismark and BSBolt don't give insanely different results:
+for NUM in {1..100}; do echo $NUM; grep "Methylated / Total Observed CpG Cytosines:" MethylationCalling/methylation_stats_*S$NUM\_*trimmed_cutadapt.fastq.gz.bam.sorted.txt ; grep "C 
+methylated in CpG context:" ../04Bismark_MethylationExtraction/*S$NUM\_*splitting_report.txt; done

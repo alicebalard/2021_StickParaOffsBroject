@@ -32,8 +32,4 @@ INPUT_FILE=$(sed -n "${SGE_TASK_ID}p" list_of_files.txt)
 
 python3 -m bsbolt Align -DB $DATABASE -F1 $INPUT_FILE -O $OUTDIR/BSBoltAlignments_${INPUT_FILE##*/}
 
-# for INPUT_FILE in `ls $READS_DIR/*trimmed_cutadapt.fastq.gz`
-# do python3 -m bsbolt Align -DB $DATABASE -F1 $INPUT_FILE -O $OUTDIR/BSBoltAlignments_${INPUT_FILE##*/}
-# done
-
 deactivate
