@@ -9,11 +9,14 @@
 # if (!requireNamespace("BiocManager", quietly = TRUE))
 #    install.packages("BiocManager")
 
-# BiocManager::install("DSS")
+# BiocManager::install("DSS") -> better if biological variations?
+BiocManager::install("methylKit")
 
-library(DSS)
+library(methylKit)
+# https://bioconductor.riken.jp/packages/3.9/bioc/vignettes/methylKit/inst/doc/methylKit.html
 
 ### Part 1. Reproduce Kostas results
 
 ## "To analyze differential methylation, we used MethylKit R package v.1.5.0 (Akalin et al. 2012). Prior to DNA methylation analysis, we filtered CpG sites to process only those with sufficient coverage (10). Sites that were in the 99.9th percentile of coverage were removed to account for potential polymerase chain reaction bias. We kept only those methylated CpG sites observed in at least two individual fish. To test for DMSs and DMRs between treatments, we looked for sites that showed at least 15% differential fractional methylation between infected and control fish and q-values <0.01, using the SLIM method. We then kept only those sites that were present in at least 50% of the fish within the different treatment groups (infected and uninfected-control). To identify DMRs, we used the tileMethylCounts() function in MethylKit v.1.5.0 with a sliding window size of 100 bases and step size of 100 bases."
 
+# Step 1. Filter by coverage 10X
