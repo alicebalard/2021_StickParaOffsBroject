@@ -1,0 +1,27 @@
+#!/bin/bash
+# BSBolt clean output
+#$ -N BSBoltclean
+#$ -l h_rt=240:0:0
+#$ -j
+#$ -V
+#$ -l h_vmem=1G
+#$ -t 1-144
+#$ -tc 10
+
+INDIR=/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/04BSBolt_methCall/BSBolt/MethylationCalling
+OUTDIR=/data/scratch/btx915/BSBolt/MethylationCallingClean
+
+cd $OUTDIR
+
+# Create the files to loop over:
+ls -1 $INDIR/BSBoltMethCall* > list_of_files.txt
+
+# Select the correct line of list of files at each iteration
+INPUT_FILE=$(sed -n "${SGE_TASK_ID}p" list_of_files.txt)
+
+# Separate by C genomic context
+gzip -c -d $INPUT_FILE | tee
+>(awk -F $'\t' '{ if ($4=="CG")  { printf("%s\n", $0); } }' | gzip -c --best > $INPUT_FILE.CG.map.gz)
+>(awk -F $'\t' '{ if ($4=="CHG")  { printf("%s\n", $0); } }' | gzip -c --best > $INPUT_FILE.CHG.map.gz)
+>(awk -F $'\t' '{ if ($4=="CHH")  { printf("%s\n", $0); } }' | gzip -c --best > $INPUT_FILE.CHH.map.gz)
+>(awk -F $'\t' '{ if ($4!="CG" && $4!="CHG" && $4!="CHH")  { printf("%s\n", $0); } }' | gzip -c --best > $INPUT_FILE.unmap.gz) 

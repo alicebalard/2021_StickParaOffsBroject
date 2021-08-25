@@ -1,5 +1,6 @@
 library(ggplot2)
 library(ggrepel)
+library(readxl)
 
 ############ Data loading ############
 # Kostas previous results to compare and have the data
