@@ -1,0 +1,203 @@
+Loading R/4.0.2
+  Loading requirement: java/1.8.0_171-oracle
+Loading required package: GenomicRanges
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
+    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+New names:
+* No.Worms -> No.Worms...11
+* No.Worms -> No.Worms...23
+Received list of locations.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+methylation statistics per base
+summary:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   0.00   13.04   78.79   60.43   92.31  100.00 
+percentiles:
+        0%        10%        20%        30%        40%        50%        60% 
+  0.000000   0.000000   2.564103  38.461538  66.666667  78.787879  85.294118 
+       70%        80%        90%        95%        99%      99.5%      99.9% 
+ 90.476190  94.117647 100.000000 100.000000 100.000000 100.000000 100.000000 
+      100% 
+100.000000 
+
+
+   Control  E_control  E_exposed    Exposed NE_control NE_exposed 
+        14         29         29         14         30         28 
+uniting...
+uniting...

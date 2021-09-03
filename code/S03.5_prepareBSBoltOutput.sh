@@ -20,5 +20,5 @@ do
 	gzip -c -d $INPUT_FILE | (awk -F $'\t' '{ if ($4!="CG" && $4!="CHG" && $4!="CHH")  { printf("%s\n", $0); } }' | gzip -c --best > $DIR/MethylationCallingClean/${INPUT_FILE##*/}.unmap.gz)
 done 
 
-
+# Data moved to: /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/04BSBolt_methCall/BSBolt/MethylationCalling/Methylation_calling_splitted/
 
