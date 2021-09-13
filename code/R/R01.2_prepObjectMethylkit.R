@@ -17,8 +17,8 @@ library(readxl)
 dataPath="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/04BSBolt_methCall/BSBolt/MethylationCalling/Methylation_calling_splitted/formatCG4methylKit"
 
 temp = list.files(path=dataPath,
-                   pattern = ".CG4methylkit.txt",
-                   full.names = T)
+                  pattern = ".CG4methylkit.txt",
+                  full.names = T)
 
 ## Add metadata on treatments
 metadata <- readxl::read_xlsx("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/data/Kostas_G2_info.xlsx")
@@ -27,47 +27,138 @@ metadata$trtG1G2_NUM <- as.numeric(as.factor(metadata$trtG1G2))
 
 ### Make methylkit object
 myobj=methylKit::methRead(as.list(temp),
-               mincov=10,
-               sample.id=as.list(metadata$ID),
-               assembly="Gynogen_pchrom_assembly_all",
-               treatment=metadata$trtG1G2_NUM,
-               context="CpG")
+                          mincov=10,
+                          sample.id=as.list(metadata$ID),
+                          assembly="Gynogen_pchrom_assembly_all",
+                          treatment=metadata$trtG1G2_NUM,
+                          context="CpG")
 
-getMethylationStats(myobj[[2]],plot=FALSE,both.strands=FALSE)
+##############################################
+## In the following part (R01.2), we decided to remove several samples (N=7)
+## S12 (bad quality), S118 & S142 (very weird methylation profiles),
+## and Fam12 (N=4, only present in parental group)
+
+IDtoRm= c("S12", "S118", "S142", metadata$ID[metadata$Family %in% "Fam12"])
+
+## create a new methylRawList object
+print("Remove 7 samples")
+myobj=reorganize(
+    myobj,
+    sample.ids=metadata$ID[!metadata$ID %in% IDtoRm],
+    treatment=metadata$trtG1G2_NUM[!metadata$ID %in% IDtoRm])
 
 ## Filtering based on coverage:
 # It might be useful to filter samples based on coverage. Particularly, if our samples are suffering from PCR bias it would be useful to discard bases with very high read coverage. Furthermore, we would also like to discard bases that have low read coverage, a high enough read coverage will increase the power of the statistical tests. The code below filters a methylRawList and discards bases that have coverage below 10X and also discards the bases that have more than 99.9th percentile of coverage in each sample.
-
-filtered.myobj=filterByCoverage(myobj,lo.count=10,lo.perc=NULL,
-                                      hi.count=NULL,hi.perc=99.9)
+print("Filter")
+filtered.myobj=filterByCoverage(myobj, lo.count=10, lo.perc=NULL,
+                                hi.count=NULL, hi.perc=99.9)
 
 ## normalise the coverage
+print("Normalise")
 normFil.myobj=normalizeCoverage(filtered.myobj)
 
-###### remove S12 that has a very low coverage and weird fastQC plots
-## create a new methylRawList object
-normFil.myobj143=reorganize(normFil.myobj,
-                            sample.ids=metadata$ID[!metadata$ID %in% "S12"],
-                            treatment=metadata$trtG1G2_NUM[!metadata$ID %in% "S12"])
-
 ## MERGING SAMPLES: In order to do further analysis, we will need to get the bases covered in all samples. The following function will merge all samples to one object for base-pair locations that are covered in all samples. The unite() function will return a methylBase object which will be our main object for all comparative analysis. The methylBase object contains methylation information for regions/bases that are covered in all samples.
-table(metadata$trtG1G2)
 
-##### Control  E_control  E_exposed    Exposed NE_control NE_exposed 
-#        14         29         29         14         30         28 
+# table(metadata$trtG1G2[!metadata$ID %in% IDtoRm])
+#   Control  E_control  E_exposed    Exposed NE_control NE_exposed 
+#        12         29         29         12         28         27 
 
-## we kept for downstream analyses all CpG sites present in at least ten individuals per group:
-uniteCov10=unite(normFil.myobj143, min.per.group=10L)
+## we kept for downstream analyses all CpG sites present in at least 1 to 12 individuals per group, or in all individuals:
+print("Unite and store in a list")
+mylist_uniteCov=list()
+# for (i in 6:12L){ # done for 1 to 5, then 6 to 12
+#     uniteCov=unite(normFil.myobj, min.per.group=i, mc.cores=8)# try with 8 cores
+#     uniteCov=as(uniteCov,"methylBase")
+#     name=paste0("uniteCov_", as.character(i))
+#     mylist_uniteCov[[name]]=uniteCov
+# }
 
-uniteCov10_mem <- as(uniteCov10,"methylBase")
+## Add CpG present in ALL individuals
+uniteCov=unite(normFil.myobj, mc.cores=8)
+uniteCov=as(uniteCov,"methylBase")
+mylist_uniteCov[["uniteCov_ALL"]]=uniteCov
 
-save(uniteCov10_mem, file= "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/uniteCov10.RData")
+CpGALL=length(mylist_uniteCov$uniteCov_ALL$coverage1) # 47238
 
-## For correlation analyses (i.e. to test batch effects), we need no NA, so CpG present in ALL samples
-uniteCovALL=unite(normFil.myobj143)
+# Idea: plot number of retained CpG site by nbr of individuals sharing these CpG sites. Preparing file for that:
+print("Make DF")
+# CpGDF1_5=data.frame(lapply(mylist_uniteCov, function(x) length(x$coverage1)))
+# CpGDF1_5=t(CpGDF1_5)
+# CpGDF1_5=data.frame(NbrIndMin=as.numeric(gsub("uniteCov_", "", row.names(CpGDF1_5))),
+#                     NbrCpG=CpGDF1_5[,1])
+# 
+# CpGDF6_12=data.frame(lapply(mylist_uniteCov, function(x) length(x$coverage1)))
+# CpGDF6_12=t(CpGDF6_12)
+# CpGDF6_12=data.frame(NbrIndMin=as.numeric(gsub("uniteCov_", "", row.names(CpGDF6_12))),
+#                      NbrCpG=CpGDF6_12[,1])
+# 
+# CpGDF=rbind(CpGDF1_5, CpGDF6_12)
 
-uniteCovALL_mem <- as(uniteCovALL,"methylBase")
+print("Save object for plotting")
+save(CpGDF, file="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/CpGDF.RData")
 
-save(uniteCovALL_mem, file= "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/uniteCovALL.RData")
-     
+print("Save plot")
+plotCpGshared <- ggplot(CpGDF, aes(x=NbrIndMin, y=NbrCpG))+
+    geom_smooth(se = F, col = "red")+
+    geom_smooth(method = "lm", se = F, col = "black") +
+    geom_point() +
+    scale_x_continuous("Number of individual fish per treatment group sharing the same methylated CpG sites",
+                       labels = as.character(CpGDF$NbrIndMin), breaks = CpGDF$NbrIndMin)+
+    scale_y_continuous("Number of shared methylated CpG sites") +
+    theme_bw() +
+    geom_hline(yintercept=CpGALL)
+
+plotCpGshared
+
+pdf(file="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/plotCpGshared.pdf")
+plotCpGshared
+dev.off() 
+
+## After plotting, save uniteCov_6, ALL, 10 for further analyses
+
+uniteCov6_N137=mylist_uniteCov[["uniteCov_6"]]
+uniteCov10_N137=mylist_uniteCov[["uniteCov_10"]]
+uniteCovALL_N137=mylist_uniteCov[["uniteCov_ALL"]]
+
+save(uniteCov6_N137, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/uniteCov6_N137.RData")
+save(uniteCov10_N137, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/uniteCov10_N137.RData")
+save(uniteCovALL_N137, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/uniteCovALL_N137.RData")
+
+##### Previous analysis (before removing N=7 samples):
+
+# ## Filtering based on coverage:
+# It might be useful to filter samples based on coverage. Particularly, if our samples are suffering from PCR bias it would be useful to discard bases with very high read coverage. Furthermore, we would also like to discard bases that have low read coverage, a high enough read coverage will increase the power of the statistical tests. The code below filters a methylRawList and discards bases that have coverage below 10X and also discards the bases that have more than 99.9th percentile of coverage in each sample.
+#
+# filtered.myobj=filterByCoverage(myobj,lo.count=10,lo.perc=NULL,
+#                                      hi.count=NULL,hi.perc=99.9)
+#
+# ## normalise the coverage
+# normFil.myobj=normalizeCoverage(filtered.myobj)
+# 
+# ###### remove S12 that has a very low coverage and weird fastQC plots
+# ## create a new methylRawList object
+# normFil.myobj143=reorganize(normFil.myobj,
+#                             sample.ids=metadata$ID[!metadata$ID %in% "S12"],
+#                             treatment=metadata$trtG1G2_NUM[!metadata$ID %in% "S12"])
+# 
+# ## MERGING SAMPLES: In order to do further analysis, we will need to get the bases covered in all samples. The following function will merge all samples to one object for base-pair locations that are covered in all samples. The unite() function will return a methylBase object which will be our main object for all comparative analysis. The methylBase object contains methylation information for regions/bases that are covered in all samples.
+# table(metadata$trtG1G2)
+# 
+# ##### Control  E_control  E_exposed    Exposed NE_control NE_exposed 
+# #        14         29         29         14         30         28 
+# 
+# ## we kept for downstream analyses all CpG sites present in at least ten individuals per group:
+# uniteCov10=unite(normFil.myobj143, min.per.group=10L)
+# 
+# uniteCov10_mem <- as(uniteCov10,"methylBase")
+# 
+# save(uniteCov10_mem, file= "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/uniteCov10.RData")
+# 
+# ## For correlation analyses (i.e. to test batch effects), we need no NA, so CpG present in ALL samples
+# uniteCovALL=unite(normFil.myobj143)
+# 
+# uniteCovALL_mem <- as(uniteCovALL,"methylBase")
+# 
+# save(uniteCovALL_mem, file= "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/uniteCovALL.RData")
+
 ######### End of run
