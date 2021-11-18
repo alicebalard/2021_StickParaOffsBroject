@@ -192,3 +192,189 @@ uniting...
 uniting...
 uniting...
 uniting...
+Loading R/4.0.2
+  Loading requirement: java/1.8.0_171-oracle
+Loading required package: GenomicRanges
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: 'BiocGenerics'
+
+The following objects are masked from 'package:parallel':
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from 'package:stats':
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from 'package:base':
+
+    Filter, Find, Map, Position, Reduce, anyDuplicated, append,
+    as.data.frame, basename, cbind, colnames, dirname, do.call,
+    duplicated, eval, evalq, get, grep, grepl, intersect, is.unsorted,
+    lapply, mapply, match, mget, order, paste, pmax, pmax.int, pmin,
+    pmin.int, rank, rbind, rownames, sapply, setdiff, sort, table,
+    tapply, union, unique, unsplit, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: 'S4Vectors'
+
+The following object is masked from 'package:base':
+
+    expand.grid
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+New names:
+* No.Worms -> No.Worms...11
+* No.Worms -> No.Worms...23
+Received list of locations.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+/opt/sge_spool/8.6.12b/nxv41/job_scripts/2074490: line 12: 17862 Segmentation fault      Rscript /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/R01.2_prepObjectMethylkit.R

@@ -5,36 +5,58 @@ library(readxl)
 ############ Data loading ############
 # Kostas previous results to compare and have the data
 Kostas <- readxl::read_xlsx("../../data/Kostas_G2_info.xlsx")
+Kostas$SampleID <- Kostas$ID
 
-# Raw reads quality check
+## Raw reads quality check
 file <- read.csv("../../data/multiqc_general_stats_rawReads.txt") 
+file$SampleID = gsub("_L00.*","", gsub(".*-L1_","", file$Sample.Name))
+names(file) <- c("Sample.Name", "percent_duplicates_rawReads", "percent_GC_rawReads", "M.Seqs_rawReads", "SampleID")
 
-# Trimmed reads quality check
-fileT <- read.csv("../../data/multiqc_general_stats_trimmedReadsCutadapt.txt") 
+## Trimmed reads quality check
+fileT <- read.table("../../data/multiqc_general_stats_trimmedReadsCutadapt.txt", header = T) 
+names(fileT) <- gsub("FastQC_mqc.generalstats.fastqc.", "", names(fileT))
+fileT$SampleID = gsub("_L00.*","", gsub(".*-L1_","", fileT$Sample))
+names(fileT) <- c("Sample", "percent_duplicates_trimmedReads", "percent_gc_trimmedReads", "avg_sequence_length_trimmedReads", "percent_fails_trimmedReads", "total_sequences_trimmedReads", "SampleID") 
 
-# Mapping efficiency after Bismark
+## Mapping efficiency after Bismark
 mappBismarck <- read.table(file = "../../data/Report_mapping_efficiency_Bismark.txt")
-
-# Mapping efficiency after BSBolt
-mappBSBolt <- read.table(file = "../../data/Report_mapping_efficiency_BSBolt.txt")
-
-############## Data formatting #######################
-file$SampleName = gsub("_L00.*","",
-                       gsub(".*-L1_","", file$Sample.Name))
-
-mappDatBIS <- data.frame(SampleName = gsub("_L00*.","",
-                                           gsub(".*-L1_","", 
-                                                gsub("_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt", "", mappBismarck$V1))),
+mappDatBIS <- data.frame(SampleID = gsub("_L00*.","", gsub(".*-L1_","", gsub("_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt", "", mappBismarck$V1))),
                          MappingEfficiency = as.numeric(gsub("%", "", mappBismarck$V4)))
 
-mappDatBSB <- data.frame(SampleName = gsub("_L00*.","",
-                                           gsub(".*-L1_","",
-                                                gsub("_R1_001_trimmed_cutadapt.fastq.gz", "", mappBSBolt$V1))),
+## Mapping efficiency after BSBolt
+mappBSBolt <- read.table(file = "../../data/Report_mapping_efficiency_BSBolt.txt")
+mappDatBSB <- data.frame(SampleID = gsub("_L00*.","", gsub(".*-L1_","", gsub("_R1_001_trimmed_cutadapt.fastq.gz", "", mappBSBolt$V1))),
                          MappingEfficiency = as.numeric(mappBSBolt$V3))
 
-################# Data analyses #####################
+## Nbr of methylated sites:
+methylBSdf <- read.delim("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/04BSBolt_methCall/BSBolt/MethylationCalling/Methylation_stats/nbrMethylatedCpGperSample.txt", header = FALSE)
+names(methylBSdf) <- c("Sample_Name", "NbrMethylatedCpG")
+methylBSdf$SampleID <- gsub("_L00*.","", gsub(".*-L1_","", gsub("_R1_001", "", methylBSdf$Sample_Name)))
 
-# Nbr samples: 144
+## Merge metadata:
+fullMetadata <- merge(merge(merge(merge(methylBSdf, mappDatBSB), file), fileT),Kostas)
+fullMetadata <- fullMetadata[!names(fullMetadata) %in% c("Sample.Name", "Sample")]
+names(fullMetadata)[names(fullMetadata) %in% "MappingEfficiency"] <- "MappingEfficiency%BSBoldvsGynogen"
+
+## After exploration of raw data, we decide to remove 7 samples from (1) fam 12 (N=4, only in parents) and (2) with bad quality (S12, S118, S142)
+fullMetadata <- fullMetadata[!fullMetadata$Family %in% "Fam12",]
+fullMetadata <- fullMetadata[!fullMetadata$ID %in% c("S12", "S118", "S142"),]
+
+nrow(fullMetadata)
+
+## Export summary table:
+write.csv(fullMetadata, "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/data/fullMetadata137_Alice.csv", row.names=FALSE, quote=FALSE)
+
+head(fileT)
+
+########
+
+
+#######################################################
+## Nbr/Ratio of Methylated Sites in different groups ##
+#######################################################
+
+## Nbr samples: 144
 nrow(file)
 
 # Mean nbr of million reads: 11.1
@@ -42,6 +64,15 @@ mean(file$M.Seqs)
 
 # 95% confidence interval: 0.36
 qnorm(0.975)*sd(file$M.Seqs)/sqrt(nrow(file))
+
+
+
+
+
+
+#######################################
+## Comparison between the 2 aligners ##
+#######################################
 
 # Plot mapping efficiency by reads number:
 hist(mappDatBIS$MappingEfficiency, breaks = 100)
@@ -66,7 +97,7 @@ AllDFBIS <- AllDFBIS[,-6]
 
 AllDF <- merge(AllDFBIS, AllDFBSB)
 
-plotComparisonAligners <- ggplot(AllDF, aes(x=MappingEfficiencyBIS, y=MappingEfficiencyBSB, label = SampleName))+
+plotComparisonAligners <- ggplot(AllDF, aes(x=MappingEfficiencyBIS, y=MappingEfficiencyBSB, label = SampleID))+
   geom_point() +
   geom_label_repel() +
   theme_bw()+
@@ -83,7 +114,7 @@ png("plot_comparison_aligners.png")
 plotComparisonAligners
 dev.off()
 
-ggplot(AllDFBSB, aes(x=M.Seqs, y=MappingEfficiencyBSB, label = SampleName))+
+ggplot(AllDFBSB, aes(x=M.Seqs, y=MappingEfficiencyBSB, label = SampleID))+
   geom_point() +
   geom_label_repel() +
   theme_bw()+
@@ -94,7 +125,7 @@ AllDFBSB[AllDFBSB$SampleName %in% "S12",] # 68.96% mappability
 
 AllDFBSB$X..Dups <- as.numeric(gsub("%", "", AllDFBSB$X..Dups))
 
-ggplot(AllDFBSB, aes(x=X..Dups, y=MappingEfficiencyBSB, label = SampleName))+
+ggplot(AllDFBSB, aes(x=X..Dups, y=MappingEfficiencyBSB, label = SampleID))+
   geom_point() +
   geom_label_repel() +
   theme_bw()+

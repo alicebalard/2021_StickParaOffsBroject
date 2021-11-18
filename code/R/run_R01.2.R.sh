@@ -1,7 +1,5 @@
 #!/bin/bash
-#$ -pe smp 8
-#$ -l h_vmem=70G
-#$ -l highmem
+#$ -l h_vmem=10G
 #$ -l h_rt=1:0:0
 #$ -cwd
 #$ -j y
@@ -11,6 +9,4 @@
 
 module load R/4.0.2
 
-# Rscript /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/R01.2_prepObjectMethylkit.R
-
-Rscript /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/SUB.R
+Rscript /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/R01.2_prepObjectMethylkit.R
