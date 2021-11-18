@@ -1,0 +1,53 @@
+ID (Fish_ID)	Species	ID (Family_ID)	Date/Time	Treat	Sex	G. aculeatus TL [mm]	G. aculeatus m [g]	BCI	Head kidney m [g]	Liver m [g]	Testes m [g]	Resp burst act	Sperm [#/µl]
+S10	Gasterosteus aculeatus	Fam06	2013-10	Unexposed	male	40.0	1.043	0.36369	0.0067	0.0411	0.0141	4497526	
+S11	Gasterosteus aculeatus	Fam06	2013-10	Unexposed	male	40.0	0.657	-0.09848	0.0019	0.0226	0.0094	896457	
+S14	Gasterosteus aculeatus	Fam06	2013-10	Exposed	male	42.0	0.688	-0.22761	0.0021	0.0163	0.0011	1364347	
+S16	Gasterosteus aculeatus	Fam06	2013-03	Unexposed	male	43.0	0.931	-0.00965	0.0041	0.0188	0.0082	2834708	
+S17	Gasterosteus aculeatus	Fam06	2013-03	Exposed	male	39.0	0.732	0.10055	0.0026	0.0175	0.0077	1914101	
+S27	Gasterosteus aculeatus	Fam06	2013-10	Unexposed	male	41.0	0.824	0.03932	0.0046	0.0270	0.0047	1661739	
+S32	Gasterosteus aculeatus	Fam06	2013-10	Exposed	male	36.0	0.445	-0.10968	0.0020	0.0076	0.0014	1633257	
+S33	Gasterosteus aculeatus	Fam06	2013-10	Exposed	male	37.0	0.515	-0.06199	0.0023	0.0105	0.0004	360824	
+S35	Gasterosteus aculeatus	Fam06	2013-03	Unexposed	male	43.0	0.931	-0.00965	0.0039	0.0296	0.0070	918395	469.5
+S36	Gasterosteus aculeatus	Fam06	2013-03	Exposed	male	45.0	1.028	-0.07382	0.0015	0.0330	0.0074	2175423	187.1
+S48	Gasterosteus aculeatus	Fam11	2013-10	Unexposed	male	41.0	0.795	0.00349	0.0049	0.0261	0.0014	2826301	
+S52	Gasterosteus aculeatus	Fam11	2013-03	Exposed	male	45.0	1.046	-0.05646	0.0031	0.0372	0.0141	2862450	489.8
+S53	Gasterosteus aculeatus	Fam11	2013-03	Unexposed	male	44.0	1.057	0.03471	0.0069	0.0386	0.0118	4441521	369.4
+S65	Gasterosteus aculeatus	Fam17	2013-10	Exposed	male	33.0	0.371	0.02095	0.0015	0.0075	0.0003	1788800	
+S67	Gasterosteus aculeatus	Fam17	2013-10	Exposed	male	32.0	0.279	-0.15352	0.0008	0.0033			
+S68	Gasterosteus aculeatus	Fam17	2013-03	Unexposed	male	47.5	1.346	0.00152	0.0035	0.0455	0.0071	1565368	340.2
+S69	Gasterosteus aculeatus	Fam17	2013-03	Exposed	male	44.0	1.087	0.06270	0.0029	0.0360	0.0089	2648608	212.7
+S70	Gasterosteus aculeatus	Fam17	2013-03	Exposed	male	45.0	1.067	-0.03658	0.0017	0.0460	0.0119	7196948	353.3
+S71	Gasterosteus aculeatus	Fam17	2013-03	Unexposed	male	43.0	0.942	0.00210	0.0050	0.0322	0.0093	3672145	137.0
+S72	Gasterosteus aculeatus	Fam06	2013-03	Unexposed	male	43.0	0.922	-0.01936	0.0021	0.0329	0.0104	1964699	1090.3
+S73	Gasterosteus aculeatus	Fam06	2013-03	Exposed	male	42.0	0.895	0.03543	0.0034	0.0263	0.0102	2164264	1566.4
+S74	Gasterosteus aculeatus	Fam12	2013-03	Exposed	male	45.0	0.939	-0.16437	0.0035	0.0256	0.0101	3104499	1127.9
+S75	Gasterosteus aculeatus	Fam12	2013-03	Unexposed	male	44.0							
+S76	Gasterosteus aculeatus	Fam09	2013-03	Unexposed	male	43.0	1.141	0.19375	0.0043	0.0566	0.0113	2380350	1261.3
+S77	Gasterosteus aculeatus	Fam09	2013-03	Exposed	male	41.0	0.937	0.16783	0.0026	0.0237	0.0193	2160804	3437.8
+S78	Gasterosteus aculeatus	Fam11	2013-03	Unexposed	male	43.5	0.951	-0.02992	0.0078	0.0281	0.0121	1126103	386.7
+S79	Gasterosteus aculeatus	Fam11	2013-03	Exposed	male	44.0	1.129	0.10061	0.0056	0.0373	0.0109	985537	195.2
+S89	Gasterosteus aculeatus	Fam09	2013-10	Unexposed	male	42.0	0.826	-0.04480	0.0030	0.0247	0.0038	1053220	
+S90	Gasterosteus aculeatus	Fam09	2013-10	Unexposed	male	41.0	0.742	-0.06550	0.0023	0.0197	0.0013	961107	
+S91	Gasterosteus aculeatus	Fam09	2013-10	Unexposed	male	42.0	0.861	-0.00330	0.0022	0.0141	0.0082	1272249	
+S93	Gasterosteus aculeatus	Fam09	2013-10	Exposed	male	42.0	0.786	-0.09444	0.0029	0.0109	0.0033	1071964	
+S94	Gasterosteus aculeatus	Fam09	2013-03	Unexposed	male	43.0	1.002	0.06385	0.0032	0.0301	0.0118	2696928	1360.8
+S95	Gasterosteus aculeatus	Fam09	2013-03	Exposed	male	42.0							
+S101	Gasterosteus aculeatus	Fam09	2013-10	Unexposed	male	37.0	0.565	0.03066	0.0022	0.0138	0.0009	1449694	
+S102	Gasterosteus aculeatus	Fam09	2013-10	Unexposed	male	42.0	0.867	0.00364	0.0040	0.0404	0.0012	3482596	
+S104	Gasterosteus aculeatus	Fam09	2013-10	Exposed	male	40.0	0.659	-0.09544	0.0025	0.0199	0.0007	1921151	
+S105	Gasterosteus aculeatus	Fam09	2013-10	Exposed	male	35.0	0.447	-0.00402	0.0020	0.0117	0.0087	2815242	
+S107	Gasterosteus aculeatus	Fam09	2013-03	Unexposed	male	39.0	0.743	0.11546	0.0022	0.0190	0.0039	3289750	
+S108	Gasterosteus aculeatus	Fam09	2013-03	Exposed	male	44.0	1.076	0.05253	0.0012	0.0427	0.0119	1947850	
+S116	Gasterosteus aculeatus	Fam11	2013-10	Unexposed	male	38.0	0.638	0.05640	0.0044	0.0169	0.0029	951264	
+S119	Gasterosteus aculeatus	Fam11	2013-10	Unexposed	male	38.0	0.561	-0.07222	0.0015	0.0067	0.0033	632295	
+S123	Gasterosteus aculeatus	Fam11	2013-10	Exposed	male	34.0	0.363	-0.10807	0.0009	0.0047	0.0003	201479	
+S124	Gasterosteus aculeatus	Fam11	2013-03	Exposed	male	45.0	1.024	-0.07772	0.0058	0.0279	0.0157	3361759	
+S125	Gasterosteus aculeatus	Fam11	2013-03	Unexposed	male	43.0	0.919	-0.02262	0.0035	0.0264	0.0161	2456302	
+S126	Gasterosteus aculeatus	Fam12	2013-03	Unexposed	male	43.0	0.971	0.03242	0.0044	0.0360	0.0180	2697229	
+S127	Gasterosteus aculeatus	Fam12	2013-03	Exposed	male	41.0	0.816	0.02957	0.0042	0.0226	0.0131	2997537	
+S135	Gasterosteus aculeatus	Fam17	2013-10	Unexposed	male	31.0	0.331	0.13141	0.0036	0.0104	0.0001	299016	
+S136	Gasterosteus aculeatus	Fam17	2013-10	Unexposed	male	33.0	0.391	0.07346	0.0020	0.0126	0.0006	937141	
+S139	Gasterosteus aculeatus	Fam17	2013-10	Exposed	male	35.0	0.430	-0.04279	0.0039	0.0125	0.0001	1156073	
+S141	Gasterosteus aculeatus	Fam17	2013-10	Exposed	male	35.0	0.428	-0.04746	0.0011	0.0099	0.0005	335314	
+S143	Gasterosteus aculeatus	Fam17	2013-03	Unexposed	male	46.0	1.094	-0.09053	0.0059	0.0502	0.0083	3553671	171.6
+S144	Gasterosteus aculeatus	Fam17	2013-03	Exposed	male	45.0	1.228	0.10395	0.0041	0.0435	0.0131	2572607	233.6
