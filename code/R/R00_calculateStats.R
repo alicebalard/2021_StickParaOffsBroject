@@ -18,6 +18,13 @@ library(ggsignif) # plot significance
 Kostas <- readxl::read_xlsx("../../data/Kostas_G2_info.xlsx")
 Kostas$SampleID <- Kostas$ID
 
+## Metylation metadata merged with Kostas files
+fullMetadata <- read.csv("../../data/fullMetadata137_Alice.csv")
+## relevel treatments for graphs
+fullMetadata$trtG1G2 <- factor(as.factor(fullMetadata$trtG1G2), levels = c("Control", "Exposed","NE_control", "NE_exposed", "E_control", "E_exposed"  ))
+## family as factor for models
+fullMetadata$Family <- as.factor(fullMetadata$Family)
+
 rerun = FALSE
 
 if (rerun==TRUE){
@@ -133,59 +140,6 @@ if (DO_COMPA==TRUE){
   # not bias the further steps too much
 }
 
-#######################################################
-## Nbr/Ratio of Methylated Sites in different groups ##
-#######################################################
-fullMetadata <- read.csv("../../data/fullMetadata137_Alice.csv")
-## relevel treatments for graphs
-fullMetadata$trtG1G2 <- factor(as.factor(fullMetadata$trtG1G2), levels = c("Control", "Exposed","NE_control", "NE_exposed", "E_control", "E_exposed"  ))
-## family as factor for models
-fullMetadata$Family <- as.factor(fullMetadata$Family)
-
-## Nbr samples: 137
-nrow(fullMetadata)
-
-# Mean nbr of million reads: 11.2
-mean(fullMetadata$M.Seqs_rawReads)
-# 95% confidence interval: 0.35
-qnorm(0.975)*sd(fullMetadata$M.Seqs_rawReads)/sqrt(nrow(fullMetadata))
-
-# Average mapping efficiency +/-SD = 85.5% +/-0.47
-mean(fullMetadata$MappingEfficiency.BSBoldvsGynogen)
-qnorm(0.975)*sd(fullMetadata$MappingEfficiency.BSBoldvsGynogen)/sqrt(nrow(fullMetadata))
-
-# Is there a correlation between nbr of methylated sites and coverage? YES
-cor.test(fullMetadata$NbrMethylatedCpG,fullMetadata$M.Seqs_rawReads, method="pearson")
-## t = 14.296, df = 135, p-value < 2.2e-16; cor = 0.78
-ggplot(fullMetadata, aes(x=NbrMethylatedCpG, y=M.Seqs_rawReads, fill = trtG1G2))+
-  geom_point(pch=21, size = 3, alpha =.8)+
-  theme_minimal()
-
-#############################################################
-## Does RMS (ratio of methylated sites) differ per trt group? 
-## NO, and our new methylation calling + reference genome does not allow to reproduce 
-## Kostas results (even in a reduced dataset)
-fullMetadata$RMS <- fullMetadata$NbrMethylatedCpG / (fullMetadata$M.Seqs_rawReads*10e6)
-
-# simple lm, compare to null model: not signif
-anova(lm(RMS ~ outcome, data = fullMetadata)) 
-
-# with family as random factor: not significant
-mod <- lmer(RMS ~ outcome + (1|Family), data = fullMetadata)
-mod0 <- lmer(RMS ~ 1 + (1|Family), data = fullMetadata)
-anova(mod, mod0)
-
-ggplot(fullMetadata, aes(x = trtG1G2, y = RMS)) +
-  geom_boxplot() +
-  facet_wrap(.~Family)+
-  theme_minimal()
-
-## Infected and control all together by trt group
-ggplot(fullMetadata, aes(x = outcome, y = RMS, fill =outcome)) +
-  geom_boxplot() +
-  scale_fill_manual(values=c("grey","red")) +
-  theme_minimal()
-
 #####################################################################
 ## Compare fitness traits between the different offsprings groups ###
 ## Follow up of Sagonas 2020 & Ferre Ortega's master's dissertation #
@@ -256,4 +210,54 @@ ggplot(fullMetadata_offs, aes(x=trtG1G2, y = BCI))+
               y_position = 250, tip_length = 0, vjust=0.4) +
   theme_bw()
 
+#######################################################
+## Nbr/Ratio of Methylated Sites in different groups ##
+#######################################################
 
+## Nbr samples: 137
+nrow(fullMetadata)
+
+# Mean nbr of million reads: 11.2
+mean(fullMetadata$M.Seqs_rawReads)
+# 95% confidence interval: 0.35
+qnorm(0.975)*sd(fullMetadata$M.Seqs_rawReads)/sqrt(nrow(fullMetadata))
+
+# Average mapping efficiency +/-SD = 85.5% +/-0.47
+mean(fullMetadata$MappingEfficiency.BSBoldvsGynogen)
+qnorm(0.975)*sd(fullMetadata$MappingEfficiency.BSBoldvsGynogen)/sqrt(nrow(fullMetadata))
+
+# Is there a correlation between nbr of methylated sites and coverage? YES
+cor.test(fullMetadata$NbrMethylatedCpG,fullMetadata$M.Seqs_rawReads, method="pearson")
+## t = 14.296, df = 135, p-value < 2.2e-16; cor = 0.78
+ggplot(fullMetadata, aes(x=NbrMethylatedCpG, y=M.Seqs_rawReads, fill = trtG1G2))+
+  geom_point(pch=21, size = 3, alpha =.8)+
+  theme_minimal()
+
+##############################################################################
+## Does RMS (ratio of methylated sites) differ per trt group in offsprings? ##
+##############################################################################
+## NO, and our new methylation calling + reference genome does not allow to reproduce 
+## Kostas results (even in a reduced dataset)
+fullMetadata$RMS <- fullMetadata$NbrMethylatedCpG / (fullMetadata$M.Seqs_rawReads*10e6)
+fullMetadata_offs$RMS <- fullMetadata_offs$NbrMethylatedCpG / (fullMetadata_offs$M.Seqs_rawReads*10e6)
+
+# simple lm, compare to null model: not signif
+anova(lm(RMS ~ outcome, data = fullMetadata_offs)) 
+
+# with family as random factor: not significant
+mod <- lme(RMS ~ outcome, random= ~1|Family, data = fullMetadata_offs)
+anova(mod)
+
+ggplot(fullMetadata_offs, aes(x = outcome, y = RMS, fill =outcome)) +
+  geom_boxplot() +
+  scale_fill_manual(values=c("grey","red")) +
+  theme_minimal()
+
+## And per group? Not significant
+mod <- lme(RMS ~ trtG1G2, random= ~1|Family, data = fullMetadata_offs)
+anova(mod)
+
+ggplot(fullMetadata_offs, aes(x = trtG1G2, y = RMS)) +
+  geom_violin() +
+  geom_boxplot(width=.3) +
+  theme_minimal()
