@@ -1,0 +1,17 @@
+Loading samtools/1.10
+  Loading requirement: htslib/1.10.2 gcc/8.2.0
+samblaster: Version 0.1.26
+samblaster: Inputting from stdin
+samblaster: Outputting to stdout
+[M::bwa_idx_load_from_disk] read 0 ALT contigs
+[M::process] read 106336 sequences (10000046 bp)...
+[M::process] read 106396 sequences (10000094 bp)...
+[M::mem_process_seqs] Processed 106336 reads in 85.328 CPU sec, 85.369 real sec
+samblaster: Loaded 23 header sequence entries.
+samblaster: Can't find first and/or second of pair in sam block of length 1 for id: D00693R:26:CB0BJANXX:1:1106:2552:2108
+samblaster:    At location: *:0
+samblaster:    Are you sure the input is sorted by read ids?samblaster: Exiting early, the following stats are for processing preceeding the error
+samblaster: Marked           0 of         17 (0.000%) total read ids as duplicates using 1268k memory in 0.000S CPU seconds and 1M27S(87S) wall time.
+samblaster: Premature exit (return code 1).
+[E::hts_open_format] Failed to open file "my_output.bam" : No such file or directory
+samtools index: failed to open "my_output.bam": No such file or directory
