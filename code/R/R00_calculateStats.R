@@ -174,6 +174,9 @@ fullMetadata_offs$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|Family), da
 modTol <- lme(BCI ~ patTrt + patTrt:No.Worms,random=~1|Family,data=fullMetadata_offs)
 anova(modTol)
 
+## Or modTol <- lme(BCI ~ patTrt*No.Worms,random=~1|Family,data=fullMetadata_offs)
+
+
 myBCdf <- fullMetadata_offs %>% group_by(patTrt, No.Worms) %>% 
   summarise(BCI = mean(BCI)) %>% data.frame()
 ggplot(fullMetadata_offs, aes(x=No.Worms, y = BCI, group = patTrt, col = patTrt))+
@@ -261,3 +264,21 @@ ggplot(fullMetadata_offs, aes(x = trtG1G2, y = RMS)) +
   geom_violin() +
   geom_boxplot(width=.3) +
   theme_minimal()
+
+##########################################################################################
+## Does RMS (ratio of methylated sites) correlated with parasite load in infected fish? ##
+## -> NOPE
+modRMS <- lme(RMS ~ patTrt*No.Worms, random=~1|Family, data=fullMetadata_offs[fullMetadata_offs$No.Worms > 0,])
+anova(modRMS)
+
+plot(modRMS)
+
+myRMSdf <- fullMetadata_offs[fullMetadata_offs$No.Worms > 0,] %>% group_by(patTrt, No.Worms) %>% 
+  summarise(RMS = mean(RMS)) %>% data.frame()
+ggplot(fullMetadata_offs[fullMetadata_offs$No.Worms > 0,], aes(x=No.Worms, y = RMS, group = patTrt, col = patTrt))+
+  geom_point() + geom_line(data=myRMSdf)+
+  geom_point(data=myRMSdf, aes(fill = patTrt), col = "black", size = 3, pch = 21)+
+  scale_color_manual(values = c("gray", "red"))+
+  scale_fill_manual(values = c("gray", "red"))+
+  theme_bw()
+
