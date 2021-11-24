@@ -1,4 +1,5 @@
 #!/bin/bash
+#$ -pe smp 10
 #$ -l h_vmem=10G
 #$ -l h_rt=1:0:0
 #$ -cwd

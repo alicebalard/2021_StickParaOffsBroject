@@ -1,17 +1,21 @@
-## MethylKit analysis
+## MethylKit object preparation
 ## A. Balard
 ## 25th of August 2021
 
 ## R/4.0.2 to run
 library(methylKit)
 library(readxl)
+library(plyr) # for join (keep row order)
+library(dendextend) # The package dendextend contains many functions for changing the appearance of a dendrogram and for comparing dendrograms.
+library(ggplot2)
 
 ## Sources:
 ## https://www.bioconductor.org/packages/devel/bioc/vignettes/methylKit/inst/doc/methylKit.html
+## https://nbis-workshop-epigenomics.readthedocs.io/en/latest/content/tutorials/methylationSeq/Seq_Tutorial.html#load-datasets
+## /data/archive/archive-SBCS-EizaguirreLab/RRBS/StickPara_Broject_archive/08CompGenomes_mCextr/04RAnalyses_Methylome/methylbam_peichel...
 
-# https://nbis-workshop-epigenomics.readthedocs.io/en/latest/content/tutorials/methylationSeq/Seq_Tutorial.html#load-datasets
-
-# /data/archive/archive-SBCS-EizaguirreLab/RRBS/StickPara_Broject_archive/08CompGenomes_mCextr/04RAnalyses_Methylome/methylbam_peichel...
+## load custom functions
+source("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/customRfunctions.R")
 
 ##### Load prepared dataset #####
 dataPath="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/04BSBolt_methCall/BSBolt/MethylationCalling/Methylation_calling_splitted/formatCG4methylKit"
@@ -47,9 +51,9 @@ myobj=reorganize(
     sample.ids=metadata$ID[!metadata$ID %in% IDtoRm],
     treatment=metadata$trtG1G2_NUM[!metadata$ID %in% IDtoRm])
 
-#######################################################
-## Filtering, normalising and saving a united object ##
-#######################################################
+###############################
+## Filtering and normalising ##
+###############################
 
 ## Filtering based on coverage:
 # It might be useful to filter samples based on coverage. Particularly, if our samples are suffering from PCR bias it would be useful to discard bases with very high read coverage. Furthermore, we would also like to discard bases that have low read coverage, a high enough read coverage will increase the power of the statistical tests. The code below filters a methylRawList and discards bases that have coverage below 10X and also discards the bases that have more than 99.9th percentile of coverage in each sample.
@@ -61,15 +65,76 @@ filtered.myobj=filterByCoverage(myobj, lo.count=10, lo.perc=NULL,
 print("Normalise")
 normFil.myobj=normalizeCoverage(filtered.myobj)
 
-## MERGING SAMPLES: In order to do further analysis, we will need to get the bases covered in all samples. The following function will merge all samples to one object for base-pair locations that are covered in all samples. The unite() function will return a methylBase object which will be our main object for all comparative analysis. The methylBase object contains methylation information for regions/bases that are covered in all samples.
+#####################
+## MERGING SAMPLES ##
+#####################
+##In order to do further analysis, we will need to get the bases covered in all samples. The following function will merge all samples to one object for base-pair locations that are covered in all samples. The unite() function will return a methylBase object which will be our main object for all comparative analysis. The methylBase object contains methylation information for regions/bases that are covered in all samples.
 
 table(metadata$trtG1G2[!metadata$ID %in% IDtoRm])
 #   Control  E_control  E_exposed    Exposed NE_control NE_exposed 
 #        12         29         29         12         28         27 
 
+print("Add CpG present in ALL individuals")
+uniteCovALL=unite(normFil.myobj, mc.cores=8)
+uniteCovALL=as(uniteCovALL,"methylBase")
+
+## Sagonas et al. 2020. keep only those methyl-ated CpG sites observed in at least two individual fish after filtering and normalising
+uniteCov2=unite(normFil.myobj, min.per.group=2L, mc.cores=8)# try with 8 cores
+uniteCov2=as(uniteCov2,"methylBase")
+   
+## We save also DMS present in at least 6 fish
+uniteCov6=unite(normFil.myobj, min.per.group=6L, mc.cores=8)# try with 8 cores
+uniteCov6=as(uniteCov6,"methylBase")
+
+## And save in RData file for later analyses
+save(uniteCovALL, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL.RData")
+save(uniteCov2, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov2.RData")
+save(uniteCov6, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6.RData")
+
+########################################################################################
+## Remove reads from sex chromosome X ("Gy_chrXIX") and unmapped contigs ("Gy_chrUn") ##
+########################################################################################
+print("nbr CpG shared by all 137 samples:")
+length(uniteCovALL$chr) ## nbr CpG shared by all 137 samples: 47238
+
+print("nbr CpG shared by at least 2 animals:")
+length(uniteCov2$chr) ## nbr CpG shared by at least 6 animals: 1319604
+
+print("nbr CpG shared by at least 6 animals:")
+length(uniteCov6$chr) ## nbr CpG shared by at least 6 animals: 1319604
+
+print("nbr CpG per chrom shared by all 137 samples:")
+table(uniteCovALL$chr)
+## Gy_chrI    Gy_chrII   Gy_chrIII    Gy_chrIV    Gy_chrIX    Gy_chrUn     Gy_chrV    Gy_chrVI   Gy_chrVII  Gy_chrVIII     Gy_chrX 
+# 3147        2305        2088        3263        2171        2581        1983        1831        3138        1929        1892 
+# Gy_chrXI   Gy_chrXII  Gy_chrXIII   Gy_chrXIV   Gy_chrXIX    Gy_chrXV   Gy_chrXVI  Gy_chrXVII Gy_chrXVIII    Gy_chrXX   Gy_chrXXI 
+# 2323        2149        2085        1897         918        2258        1857        2127        1863        1714        1719 
+
+print("nbr CpG on sex chromosome of unmapped:") #3499
+nrow(uniteCovALL[uniteCovALL$chr %in% c("Gy_chrXIX", "Gy_chrUn"),])
+
+## Keep CpG apart from sex chromosome XIX and unmapped (comprise Y chr)
+uniteCovALL_woSexAndUnknowChr=uniteCovALL[!uniteCovALL$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
+uniteCov2_woSexAndUnknowChr=uniteCov6[!uniteCov2$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
+uniteCov6_woSexAndUnknowChr=uniteCov6[!uniteCov6$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
+
+#######################################
+## Saving point for further analyses ##
+#######################################
+save(uniteCovALL_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL_woSexAndUnknownChr.RData")
+save(uniteCov2_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov2_woSexAndUnknownChr.RData")
+save(uniteCov6_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6_woSexAndUnknowChr.RData")
+
+## Comparison with/without outliers: check that does not change the clustering
+pdf(file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/data/fig/clusterALLCpG_137fish.pdf", 
+    width = 20, height = 7)
+makePrettyMethCluster(uniteCovALL_final, metadata)
+dev.off()
+
+##################### Previous tests with ALL numbers of fish 1 to 12:
 ## we kept for downstream analyses all CpG sites present in at least 1 to 12 individuals per group, or in all individuals:
-print("Unite and store in a list")
-mylist_uniteCov=list()
+# print("Unite and store in a list")
+# mylist_uniteCov=list()
 # for (i in 6:12L){ # done for 1 to 5, then 6 to 12
 #     uniteCov=unite(normFil.myobj, min.per.group=i, mc.cores=8)# try with 8 cores
 #     uniteCov=as(uniteCov,"methylBase")
@@ -99,7 +164,7 @@ mylist_uniteCov=list()
 # CpGDF=rbind(CpGDF1_5, CpGDF6_12)
 
 # print("Save object for plotting")
-# save(CpGDF, file="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/CpGDF.RData")
+# save(CpGDF, file="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/plots/CpGDF.RData")
 
 # print("Save plot")
 # plotCpGshared <- ggplot(CpGDF, aes(x=NbrIndMin, y=NbrCpG))+
@@ -114,15 +179,6 @@ mylist_uniteCov=list()
 # 
 # plotCpGshared
 # 
-# pdf(file="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/plotCpGshared.pdf")
+# pdf(file="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/plots/plotCpGshared.pdf")
 # plotCpGshared
-# dev.off() 
-
-# ## After plotting, save uniteCov_6, ALL, 10 for further analyses
-# uniteCov6_N137=mylist_uniteCov[["uniteCov_6"]]
-# uniteCov10_N137=mylist_uniteCov[["uniteCov_10"]]
-# uniteCovALL_N137=mylist_uniteCov[["uniteCov_ALL"]]
-# 
-# save(uniteCov6_N137, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/uniteCov6_N137.RData")
-# save(uniteCov10_N137, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/uniteCov10_N137.RData")
-# save(uniteCovALL_N137, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/uniteCovALL_N137.RData")
+# dev.off()
