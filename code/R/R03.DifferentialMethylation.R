@@ -58,9 +58,10 @@ uniteCov2_woSexAndUnknowChr_PAR=reorganize(
   AL2MethylKitObj,
   sample.ids=fullMetadata_PAR$ID,
   treatment=fullMetadata_PAR$trtG1G2_NUM)
+
 ## Remove positions with only NA
 # methylBase object with 1772152 rows
-test <- getData(uniteCov2_woSexAndUnknowChr_PAR)
+test <- methylKit::getData(uniteCov2_woSexAndUnknowChr_PAR)
 A <- rowSums(is.na(test[grep("coverage", names(test))]))
 table(A)#600226 columns have only NAs! Remove that
 mynonNAcols <- which(rowSums(is.na(test[grep("coverage", names(test))]))!=24)
@@ -119,9 +120,9 @@ uniteCov2_woSexAndUnknowChr_OFF=reorganize(
 
 ## offspring:
 # pdf("../../data/fig/clusterALLCpG_offspings.pdf", width = 17, height = 7)
-makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr_OFF, fullMetadata_OFFS,
-                      my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
-                      my.cols.fam = c(1:4))
+# makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr_OFF, fullMetadata_OFFS,
+#                       my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
+#                       my.cols.fam = c(1:4))
 # dev.off()
 
 # creates a matrix containing percent methylation values
@@ -129,8 +130,10 @@ perc.meth=percMethylation(uniteCovALL_woSexAndUnknowChr_OFF)
 
 x=t(perc.meth)
 
-# creates a distance matrix. Check methods
-data.dist = dist(x, method = "euclidian", diag = FALSE, upper = FALSE)
+# creates a distance matrix. Method: Bray-Curtis, package vegan
+data.dist = vegdist(x, method="bray", binary=FALSE, diag=FALSE, upper=FALSE, na.rm = FALSE)
+
+summary(data.dist)
 
 # We use a PERMANOVA to test the hypothesis that paternal treatment,
 # family and sex induced changes in genome-wide methylation. 
@@ -139,12 +142,30 @@ data.dist = dist(x, method = "euclidian", diag = FALSE, upper = FALSE)
 
 ## Within each family, are paternal treatment, offspring treatment, sex and their interactions
 ## significantly influencing global methylation?
-perm <- how(nperm = 999) # 999 permutations
+perm <- how(nperm = 1000) # 1000 permutations
 setBlocks(perm) <- with(fullMetadata_OFFS, Family) # define the permutation structure
+
+## Full model
+adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permutations = perm)
+
+## remove the non significant interactions
 adonis2(data.dist ~ PAT + outcome + Sex, data = fullMetadata_OFFS, permutations = perm)
-# We found significant differences in global methylation due to 
-# paternal treatment (Adonis, P=0.001), and sex (Adonis, P=0.003)
-# but NOT offspring treatment and all interactions.
+
+## Remove 1 factor by turn - backwards simplification
+adonis2(data.dist ~ outcome + Sex, data = fullMetadata_OFFS, permutations = perm)
+
+adonis2(data.dist ~ PAT + Sex, data = fullMetadata_OFFS, permutations = perm)
+
+adonis2(data.dist ~ PAT + outcome, data = fullMetadata_OFFS, permutations = perm)
+
+## --> We found significant differences in global methylation due to
+## paternal treatment and sex; outcome is not. 
+
+########## NMDS
+
+## tbc
+
+
 
 ################# PCA
 ## PCA analysis on our samples: plot a scree plot for importance of components
@@ -225,30 +246,25 @@ myDiff1_15p = getMethylDiff(myDiffMeth,difference=15,qvalue=0.01)
 myDiff1_15p # 6544 positions
 # saveRDS(myDiff1_15p, file = "../../gitignore/output/myDiff1_15p_parentalDiffMeth.RDS")
 
-### YOU'RE HERE
+myDiff1_15p <- readRDS("../../gitignore/output/myDiff1_15p_parentalDiffMeth.RDS")
+
 # annotation!!
 library(genomation)
 
-?readTranscriptFeatures
-my.bed12.file = system.file("extdata/chr21.refseq.hg19.bed", package = "genomation")
-my.bed12.file
-feats = readTranscriptFeatures(my.bed12.file) 
-names(feats)
-sapply(feats, head)
+#library(GenomicFeatures)
 
-setwd("Documents/pro/Git/StickParaOffsBroject/code/R")
-
-gene.obj=readTranscriptFeatures("../../gitignore/bigdata/test.bed")
-
-
-gene.obj=readTranscriptFeatures("../../gitignore/bigdata/test.bed")
-
-gene.obj=readTranscriptFeatures("../../gitignore/bigdata/test.gff")
+gene.obj=readTranscriptFeatures("../../gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.bed12", remove.unusual = FALSE)
 
 # annotate differentially methylated CpGs with promoter/exon/intron using annotation data
-#
-annotateWithGeneParts(as(myDiff25p,"GRanges"),gene.obj)
+annotateWithGeneParts(as(myDiff1_15p,"GRanges"),gene.obj)
 
+## Kostas MBE: The DMSs and regions were predominately
+#found in intergenic regions (47.74% and 48.94%, respecti vely),with introns (26.19% and 23.09), exons (15.07% and 13.98%),and promoters (11% and 13.98%) showing lower proportions
+
+?annotateWithGeneParts()
+
+
+### YOU'RE HERE ;)
 
 ###################################################################################################
 ## Comparison 2: offsprings infected from unifected (trtgroup 4) and infected (trt group 6) fathers
