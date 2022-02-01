@@ -34,7 +34,7 @@ fullMetadata_PAR <- fullMetadata[fullMetadata$Generat %in% "P",]
 ## only offspring
 fullMetadata_OFFS <- fullMetadata[fullMetadata$Generat %in% "O",]
 # without sample 22 outlier that block the view on PCA
-# fullMetadata_OFFS_no22 <- fullMetadata_OFFS[!fullMetadata_OFFS$ID %in% "S22",]
+fullMetadata_OFFS_no22 <- fullMetadata_OFFS[!fullMetadata_OFFS$ID %in% "S22",]
 
 ## Load previously united data (all 6 treatments)
 ## uniteCovALL: CpG covered in ALL individuals (has no NAs, useful for exploratory clustering analyses)
@@ -82,10 +82,10 @@ uniteCov2_woSexAndUnknowChr_OFF=reorganize(
   treatment=fullMetadata_OFFS$trtG1G2_NUM)
 
 # without sample 22 outlier that block the view on PCA
-# uniteCovALL_woSexAndUnknowChr_OFF_no22=reorganize(
-#   uniteCovALL_woSexAndUnknowChr_OFF,
-#   sample.ids=fullMetadata_OFFS_no22$ID,
-#   treatment=fullMetadata_OFFS_no22$trtG1G2)
+uniteCovALL_woSexAndUnknowChr_OFF_no22=reorganize(
+  uniteCovALL_woSexAndUnknowChr_OFF,
+  sample.ids=fullMetadata_OFFS_no22$ID,
+  treatment=fullMetadata_OFFS_no22$trtG1G2)
 
 ##############################
 ##### Analysis workflow: #####
@@ -120,20 +120,23 @@ uniteCov2_woSexAndUnknowChr_OFF=reorganize(
 
 ## offspring:
 # pdf("../../data/fig/clusterALLCpG_offspings.pdf", width = 17, height = 7)
-# makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr_OFF, fullMetadata_OFFS,
-#                       my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
-#                       my.cols.fam = c(1:4))
+makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr_OFF, fullMetadata_OFFS,
+                      my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
+                      my.cols.fam = c(1:4))
 # dev.off()
 
-# creates a matrix containing percent methylation values
+# creates a matrix containing percent methylation values NB rm sample 22!!
 perc.meth=percMethylation(uniteCovALL_woSexAndUnknowChr_OFF)
+# KOSTAS MBE: "Methylated sites and regions with low variation
+# and a standard deviation below 0.3, that is, noninformative
+# sites across individuals, were excluded from the cluster analyses"
+SD=apply(perc.meth,1, sd, na.rm = TRUE)
+perc.meth <- perc.meth[-which(SD<0.3),]
 
 x=t(perc.meth)
 
 # creates a distance matrix. Method: Bray-Curtis, package vegan
-data.dist = vegdist(x, method="bray", binary=FALSE, diag=FALSE, upper=FALSE, na.rm = FALSE)
-
-summary(data.dist)
+data.dist = as.matrix((vegdist(x, "bray", upper = FALSE))) 
 
 # We use a PERMANOVA to test the hypothesis that paternal treatment,
 # family and sex induced changes in genome-wide methylation. 
@@ -143,87 +146,86 @@ summary(data.dist)
 ## Within each family, are paternal treatment, offspring treatment, sex and their interactions
 ## significantly influencing global methylation?
 perm <- how(nperm = 1000) # 1000 permutations
-setBlocks(perm) <- with(fullMetadata_OFFS, Family) # define the permutation structure
+setBlocks(perm) <- with(fullMetadata_OFFS_no22, Family) # define the permutation structure
 
 ## Full model
-adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permutations = perm)
+adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS_no22, permutations = perm)
 
 ## remove the non significant interactions
-adonis2(data.dist ~ PAT + outcome + Sex, data = fullMetadata_OFFS, permutations = perm)
+adonis2(data.dist ~ PAT + outcome + Sex, data = fullMetadata_OFFS_no22, permutations = perm)
 
 ## Remove 1 factor by turn - backwards simplification
-adonis2(data.dist ~ outcome + Sex, data = fullMetadata_OFFS, permutations = perm)
+adonis2(data.dist ~ outcome + Sex, data = fullMetadata_OFFS_no22, permutations = perm)
 
-adonis2(data.dist ~ PAT + Sex, data = fullMetadata_OFFS, permutations = perm)
+adonis2(data.dist ~ PAT + Sex, data = fullMetadata_OFFS_no22, permutations = perm)
 
-adonis2(data.dist ~ PAT + outcome, data = fullMetadata_OFFS, permutations = perm)
+adonis2(data.dist ~ PAT + outcome, data = fullMetadata_OFFS_no22, permutations = perm)
 
 ## --> We found significant differences in global methylation due to
 ## paternal treatment and sex; outcome is not. 
 
 ########## NMDS
+# find the best number of dimensions
+library(goeveg)
+## Clarke 1993 suggests the following guidelines for acceptable stress values: <0.05 = excellent, <0.10
+# = good, <0.20 = usable, >0.20 = not acceptable. The plot shows the border of the 0.20 stress value
+# limit. Solutions with higher stress values should be interpreted with caution and those with stress
+# above 0.30 are highly suspect
+dimcheckMDS(
+  data.dist,
+  distance = "bray",
+  k = 7,
+  trymax = 100,
+  autotransform = TRUE
+)
+abline(h = 0.1, col = "darkgreen")
+# Goodness of fit for NMDS suggested the presence of six dimensions
+# with a stress value <0.1
 
-## tbc
+#Create NMDS based on bray-curtis distances - metaMDS finds the
+# most stable NMDS solution by randomly starting from different points in your data
+set.seed(123)
+NMDS <- metaMDS(comm = x, distance = "bray",maxit=1000, k = 6)
 
+#check to see stress of NMDS
+stressplot(NMDS) # very not linear when ID 22 added!!
 
+#extract plotting coordinates
+MDS1 = NMDS$points[,1]
+MDS2 = NMDS$points[,2]
+## OR #extract NMDS scores (x and y coordinates)
+## data.scores = as.data.frame(scores(NMDS))
 
-################# PCA
-## PCA analysis on our samples: plot a scree plot for importance of components
-p=PCASamples(fullMethylKitObj, screeplot=TRUE, obj.return = T) # first axis very important
-s=summary(p)
-#create scree plot
-qplot(c(1:137), s$importance[2,]) + 
-  geom_line() + 
-  xlab("Principal Component") + 
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L), name = "Variance Explained")+
-  ggtitle("Scree Plot") +
-  theme_bw()
-rm(p,s)
+#create new dataframe with plotting coordinates and variables to test
+NMDS2 = data.frame(MDS1 = MDS1, MDS2 = MDS2, ID = fullMetadata_OFFS_no22$ID,
+                   PAT=as.factor(fullMetadata_OFFS_no22$PAT), 
+                   outcome=as.factor(fullMetadata_OFFS_no22$outcome), 
+                   Sex = as.factor(fullMetadata_OFFS_no22$Sex))
 
-## PCA: check the Family influence on the methylation pattern
-run=FALSE
-if(run==TRUE){
-  ## ALL
-  uniteCovALL_woSexAndUnknowChr_FAM = fullMethylKitObj
-  uniteCovALL_woSexAndUnknowChr_FAM@treatment = as.numeric(as.factor(fullMetadata$Family))
-  PCASamples(uniteCovALL_woSexAndUnknowChr_FAM); title(sub="all; colored by family")
-  rm(uniteCovALL_woSexAndUnknowChr_FAM)
-  ## OFFS rm sample 22 for PCA
-  uniteCovALL_woSexAndUnknowChr_OFF_no22_FAM = uniteCovALL_woSexAndUnknowChr_OFF_no22
-  uniteCovALL_woSexAndUnknowChr_OFF_no22_FAM@treatment = as.numeric(as.factor(fullMetadata_OFFS_no22$Family))
-  PCASamples(uniteCovALL_woSexAndUnknowChr_OFF_no22_FAM); title(sub="offspring w/o S22; colored by family")
-  rm(uniteCovALL_woSexAndUnknowChr_OFF_no22_FAM)
-}
+## with paternal treatment
+find_hull <- function(my_data) my_data[chull(my_data[,1], my_data[,2]), ]
+#function to create convex hulls, though ggplot has the stat_ellipse() function that can do this automatically.
+hulls <- ddply(NMDS2, "PAT", find_hull)
+#generating convex hulls by "PAT" in my metadata
+ggplot(NMDS2, aes(x=MDS1, y=MDS2)) +
+  geom_polygon(data = hulls, aes(col=PAT), alpha=0) +
+  scale_color_manual(values = c("grey","yellow"))+
+  scale_fill_manual(values = c("grey","yellow"))+
+  geom_point(aes(fill=PAT, shape=outcome), size = 3, alpha = .6) +
+  scale_shape_manual(values = c(21,22)) +
+  theme_bw() +
+  theme(legend.title=element_blank(), legend.position = "top")
 
-## PCA: check the Pattern treatment influence on the methylation pattern
-run=FALSE
-if(run==TRUE){
-  ## ALL
-  uniteCovALL_woSexAndUnknowChr_PAT = fullMethylKitObj
-  uniteCovALL_woSexAndUnknowChr_PAT@treatment = as.numeric(as.factor(fullMetadata$PAT))
-  PCASamples(uniteCovALL_woSexAndUnknowChr_PAT); title(sub="all; colored by paternal treatment")
-  rm(uniteCovALL_woSexAndUnknowChr_PAT)
-  ## OFFS rm sample 22 for PCA
-  uniteCovALL_woSexAndUnknowChr_OFF_no22_PAT = uniteCovALL_woSexAndUnknowChr_OFF_no22
-  uniteCovALL_woSexAndUnknowChr_OFF_no22_PAT@treatment = as.numeric(as.factor(fullMetadata_OFFS_no22$PAT))
-  PCASamples(uniteCovALL_woSexAndUnknowChr_OFF_no22_PAT); title(sub="offspring w/o S22; colored by paternal treatment")
-  rm(uniteCovALL_woSexAndUnknowChr_OFF_no22_PAT)
-}
-
-## PCA: check how the treatment group influence on the methylation pattern
-run=FALSE
-if(run==TRUE){
-  ## ALL
-  uniteCovALL_woSexAndUnknowChr_TRT = fullMethylKitObj
-  uniteCovALL_woSexAndUnknowChr_TRT@treatment = as.numeric(as.factor(fullMetadata$trtG1G2))
-  PCASamples(uniteCovALL_woSexAndUnknowChr_TRT); title(sub="all; colored by treatment")
-  rm(uniteCovALL_woSexAndUnknowChr_TRT)
-  ## OFFS rm sample 22 for PCA
-  uniteCovALL_woSexAndUnknowChr_OFF_no22_TRT = uniteCovALL_woSexAndUnknowChr_OFF_no22
-  uniteCovALL_woSexAndUnknowChr_OFF_no22_TRT@treatment = as.numeric(as.factor(fullMetadata_OFFS_no22$trtG1G2))-2
-  PCASamples(uniteCovALL_woSexAndUnknowChr_OFF_no22_TRT); title(sub="offspring w/o S22; colored by treatment")
-  rm(uniteCovALL_woSexAndUnknowChr_OFF_no22_TRT)
-}
+## with Sex
+hulls2 <- ddply(NMDS2, "Sex", find_hull)
+ggplot(NMDS2, aes(x=MDS1, y=MDS2)) +
+  geom_polygon(data = hulls2, aes(col=Sex), alpha=0) +
+  scale_color_manual(values = c("red","blue"))+
+  scale_fill_manual(values = c("red","blue"))+
+  geom_point(aes(fill=Sex, shape=outcome), size = 3, alpha = .6) +
+  scale_shape_manual(values = c(21,22)) +
+  theme_bw() +
+  theme(legend.title=element_blank(), legend.position = "top")
 
 ###############################################
 ### PART 2: Differential methylation sites ####
