@@ -38,13 +38,15 @@ myobj=methylKit::methRead(as.list(temp),
                           context="CpG")
 
 ##############################################
-## We remove several samples (N=7)
-## S12 (bad quality), S118 & S142 (very weird methylation profiles),
+## We remove several samples (N=9)
+## S12, S22, S110, S118 & S142 (less than 6M reads after trimming.
+## some have also very weird methylation profiles, bad fastQC)
 ## and Fam12 (N=4, only present in parental group)
-IDtoRm= c("S12", "S118", "S142", metadata$ID[metadata$Family %in% "Fam12"])
+IDtoRm= c("S12", "S22", "S110", "S118", "S142",
+          metadata$ID[metadata$Family %in% "Fam12"])
 
 ## create a new methylRawList object
-print("Remove 7 samples")
+print("Remove 9 samples")
 
 myobj=reorganize(
     myobj,
@@ -72,7 +74,7 @@ normFil.myobj=normalizeCoverage(filtered.myobj)
 
 table(metadata$trtG1G2[!metadata$ID %in% IDtoRm])
 #   Control  E_control  E_exposed    Exposed NE_control NE_exposed 
-#        12         29         29         12         28         27 
+#        12         28         28         12         28         27 
 
 print("Add CpG present in ALL individuals")
 uniteCovALL=unite(normFil.myobj, mc.cores=8)
@@ -95,22 +97,18 @@ save(uniteCov6, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05Me
 ## Remove reads from sex chromosome X ("Gy_chrXIX") and unmapped contigs ("Gy_chrUn") ##
 ########################################################################################
 print("nbr CpG shared by all 137 samples:")
-length(uniteCovALL$chr) ## nbr CpG shared by all 137 samples: 47238
+length(uniteCovALL$chr)
 
 print("nbr CpG shared by at least 2 animals:")
-length(uniteCov2$chr) ## nbr CpG shared by at least 6 animals: 1319604
+length(uniteCov2$chr) 
 
 print("nbr CpG shared by at least 6 animals:")
-length(uniteCov6$chr) ## nbr CpG shared by at least 6 animals: 1319604
+length(uniteCov6$chr) 
 
 print("nbr CpG per chrom shared by all 137 samples:")
 table(uniteCovALL$chr)
-## Gy_chrI    Gy_chrII   Gy_chrIII    Gy_chrIV    Gy_chrIX    Gy_chrUn     Gy_chrV    Gy_chrVI   Gy_chrVII  Gy_chrVIII     Gy_chrX 
-# 3147        2305        2088        3263        2171        2581        1983        1831        3138        1929        1892 
-# Gy_chrXI   Gy_chrXII  Gy_chrXIII   Gy_chrXIV   Gy_chrXIX    Gy_chrXV   Gy_chrXVI  Gy_chrXVII Gy_chrXVIII    Gy_chrXX   Gy_chrXXI 
-# 2323        2149        2085        1897         918        2258        1857        2127        1863        1714        1719 
 
-print("nbr CpG on sex chromosome of unmapped:") #3499
+print("nbr CpG on sex chromosome of unmapped:")
 nrow(uniteCovALL[uniteCovALL$chr %in% c("Gy_chrXIX", "Gy_chrUn"),])
 
 ## Keep CpG apart from sex chromosome XIX and unmapped (comprise Y chr)
@@ -124,12 +122,6 @@ uniteCov6_woSexAndUnknowChr=uniteCov6[!uniteCov6$chr %in% c("Gy_chrXIX", "Gy_chr
 save(uniteCovALL_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL_woSexAndUnknownChr.RData")
 save(uniteCov2_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov2_woSexAndUnknownChr.RData")
 save(uniteCov6_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6_woSexAndUnknowChr.RData")
-
-## Comparison with/without outliers: check that does not change the clustering
-pdf(file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/data/fig/clusterALLCpG_137fish.pdf", 
-    width = 20, height = 7)
-makePrettyMethCluster(uniteCovALL_final, metadata)
-dev.off()
 
 ##################### Previous tests with ALL numbers of fish 1 to 12:
 ## we kept for downstream analyses all CpG sites present in at least 1 to 12 individuals per group, or in all individuals:

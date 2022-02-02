@@ -2,104 +2,93 @@ Loading R/4.0.2
   Loading requirement: java/1.8.0_171-oracle
 
 ---------------------
-Welcome to dendextend version 1.15.1
+Welcome to dendextend version 1.15.2
 Type citation('dendextend') for how to cite the package.
 
 Type browseVignettes(package = 'dendextend') for the package vignette.
 The github page is: https://github.com/talgalili/dendextend/
 
 Suggestions and bug-reports can be submitted at: https://github.com/talgalili/dendextend/issues
-Or contact: <tal.galili@gmail.com>
+You may ask questions at stackoverflow, use the r and dendextend tags: 
+	 https://stackoverflow.com/questions/tagged/dendextend
 
 	To suppress this message use:  suppressPackageStartupMessages(library(dendextend))
 ---------------------
 
 
-Attaching package: ‘dendextend’
+Attaching package: 'dendextend'
 
-The following object is masked from ‘package:stats’:
+The following object is masked from 'package:stats':
 
     cutree
 
-Warning message:
-package ‘dendextend’ was built under R version 4.0.4 
 Loading required package: Matrix
 
-Attaching package: ‘nlme’
+Attaching package: 'nlme'
 
-The following object is masked from ‘package:lme4’:
+The following object is masked from 'package:lme4':
 
     lmList
 
-── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
-✔ tibble  3.1.3     ✔ dplyr   1.0.7
-✔ tidyr   1.1.4     ✔ stringr 1.4.0
-✔ readr   2.1.0     ✔ forcats 0.5.1
-✔ purrr   0.3.4     
-── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-✖ dplyr::arrange()   masks plyr::arrange()
-✖ dplyr::collapse()  masks nlme::collapse()
-✖ purrr::compact()   masks plyr::compact()
-✖ dplyr::count()     masks plyr::count()
-✖ tidyr::expand()    masks Matrix::expand()
-✖ dplyr::failwith()  masks plyr::failwith()
-✖ dplyr::filter()    masks stats::filter()
-✖ dplyr::id()        masks plyr::id()
-✖ dplyr::lag()       masks stats::lag()
-✖ dplyr::mutate()    masks plyr::mutate()
-✖ tidyr::pack()      masks Matrix::pack()
-✖ dplyr::rename()    masks plyr::rename()
-✖ dplyr::summarise() masks plyr::summarise()
-✖ dplyr::summarize() masks plyr::summarize()
-✖ tidyr::unpack()    masks Matrix::unpack()
-           
-            NE_control NE_exposed E_control E_exposed
-  controlO          28          0        29         0
-  infectedO          0         27         0        29
-           
-            NE_control NE_exposed E_control E_exposed
-  controlP          28         27         0         0
-  infectedP          0          0        29        29
+-- Attaching packages --------------------------------------- tidyverse 1.3.1 --
+v tibble  3.1.6     v dplyr   1.0.7
+v tidyr   1.1.4     v stringr 1.4.0
+v readr   2.1.1     v forcats 0.5.1
+v purrr   0.3.4     
+-- Conflicts ------------------------------------------ tidyverse_conflicts() --
+x dplyr::arrange()   masks plyr::arrange()
+x dplyr::collapse()  masks nlme::collapse()
+x purrr::compact()   masks plyr::compact()
+x dplyr::count()     masks plyr::count()
+x tidyr::expand()    masks Matrix::expand()
+x dplyr::failwith()  masks plyr::failwith()
+x dplyr::filter()    masks stats::filter()
+x dplyr::id()        masks plyr::id()
+x dplyr::lag()       masks stats::lag()
+x dplyr::mutate()    masks plyr::mutate()
+x tidyr::pack()      masks Matrix::pack()
+x dplyr::rename()    masks plyr::rename()
+x dplyr::summarise() masks plyr::summarise()
+x dplyr::summarize() masks plyr::summarize()
+x tidyr::unpack()    masks Matrix::unpack()
                 numDF denDF   F-value p-value
-(Intercept)         1   106  0.000000  1.0000
-patTrt              1   106 11.968263  0.0008
-patTrt:No.Worms     2   106  6.626148  0.0019
+(Intercept)         1   104  0.000000  1.0000
+patTrt              1   104 12.102448  0.0007
+patTrt:No.Worms     2   104  6.542902  0.0021
 `summarise()` has grouped output by 'patTrt'. You can override using the `.groups` argument.
-               numDF denDF  F-value p-value
-(Intercept)        1   106  0.00000  1.0000
-offsTrt            1   106 12.47783  0.0006
-patTrt             1   106 12.98096  0.0005
-offsTrt:patTrt     1   106  8.52427  0.0043
+               numDF denDF   F-value p-value
+(Intercept)        1   104  0.000000  1.0000
+offsTrt            1   104 12.078370  0.0007
+patTrt             1   104 13.114579  0.0005
+offsTrt:patTrt     1   104  8.549991  0.0042
 $`emmeans of trtG1G2`
  trtG1G2    emmean   SE df lower.CL upper.CL
- NE_control   16.3 11.8  3    -21.3     53.9
- NE_exposed  -60.8 12.0  3    -99.1    -22.6
- E_control    24.7 11.6  3    -12.2     61.6
- E_exposed    16.2 11.6  3    -20.7     53.1
+ NE_control   16.2 11.9  3    -21.6     54.0
+ NE_exposed  -60.8 12.1  3    -99.3    -22.4
+ E_control    24.9 11.9  3    -12.9     62.7
+ E_exposed    17.6 11.9  3    -20.2     55.4
 
 Degrees-of-freedom method: containment 
 Confidence level used: 0.95 
 
 $`pairwise differences of trtG1G2`
  1                       estimate   SE  df t.ratio p.value
- NE_control - NE_exposed   77.174 16.9 106   4.579  0.0001
- NE_control - E_control    -8.355 16.6 106  -0.505  0.9578
- NE_control - E_exposed     0.138 16.6 106   0.008  1.0000
- NE_exposed - E_control   -85.529 16.7 106  -5.118  <.0001
- NE_exposed - E_exposed   -77.036 16.7 106  -4.610  0.0001
- E_control - E_exposed      8.493 16.4 106   0.518  0.9547
+ NE_control - NE_exposed    77.07 17.0 104   4.546  0.0001
+ NE_control - E_control     -8.64 16.8 104  -0.514  0.9555
+ NE_control - E_exposed     -1.35 16.8 104  -0.080  0.9998
+ NE_exposed - E_control    -85.71 17.0 104  -5.056  <.0001
+ NE_exposed - E_exposed    -78.42 17.0 104  -4.626  0.0001
+ E_control - E_exposed       7.29 16.8 104   0.434  0.9725
 
 Degrees-of-freedom method: containment 
 P value adjustment: tukey method for comparing a family of 4 estimates 
 
-[1] 137
-[1] 11.17007
-[1] 0.3531412
-[1] 85.48594
-[1] 0.4721914
+[1] 135
+[1] 11.26741
+[1] 0.3304984
+[1] 85.45447
+[1] 0.4762736
 [1] "long part started, needs ~10min"
-   user  system elapsed 
-539.676   1.959 542.905 
 [1] "long truc saved"
 Error: We stop here for now
 Execution halted

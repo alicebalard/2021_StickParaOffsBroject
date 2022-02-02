@@ -22,33 +22,17 @@ load("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uni
 #load("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6_woSexAndUnknowChr.RData")
 
 ## Load samples metadata
-## Metylation metadata merged with Kostas files
-fullMetadata <- read.csv("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/data/fullMetadata137_Alice.csv")
-## relevel treatments for graphs
-fullMetadata$trtG1G2 <- factor(as.factor(fullMetadata$trtG1G2), levels = c("Control", "Exposed","NE_control", "NE_exposed", "E_control", "E_exposed"  ))
-## family as factor for models
-fullMetadata$Family <- as.factor(fullMetadata$Family)
+source("R01.3_prepMetadata.R")
 
 #####################################################################
 ## Compare fitness traits between the different offsprings groups ###
 ## Follow up of Sagonas 2020 & Ferre Ortega's master's dissertation #
 #####################################################################
-fullMetadata_offs <- fullMetadata[fullMetadata$Generat %in% "O",]
-fullMetadata_offs$trtG1G2 <- droplevels(fullMetadata_offs$trtG1G2)
-
-## Create variable for offsping and parents separated
-fullMetadata_offs$offsTrt <- "controlO"
-fullMetadata_offs$offsTrt[fullMetadata_offs$Tr %in% c("TT", "CT")] <- "infectedO"
-fullMetadata_offs$patTrt <- "controlP"
-fullMetadata_offs$patTrt[fullMetadata_offs$Tr %in% c("TC", "TT")] <- "infectedP"
-## Sanity check
-table(fullMetadata_offs$offsTrt, fullMetadata_offs$trtG1G2)
-table(fullMetadata_offs$patTrt, fullMetadata_offs$trtG1G2)
 
 ## Kaufmann et al. 2014: Body condition of the G2 fish, an estimate of fish health and a predictor
 # of energy reserves and reproductive success, was calculated using there residuals from the 
 # regression of body mass on body length (Chellappaet al.1995).
-fullMetadata_offs$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|Family), data=fullMetadata_offs))
+fullMetadata_OFFS$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|Family), data=fullMetadata_OFFS))
 
 ## Effect of paternal treatment on body condition of offspring:
 ## Kaufmann et al. 2014:
@@ -60,14 +44,14 @@ fullMetadata_offs$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|Family), da
 # half-sibship identity was set as a random effect
 
 ## Effect of paternal exposure on tolerance:
-modTol <- lme(BCI ~ patTrt + patTrt:No.Worms,random=~1|Family,data=fullMetadata_offs)
+modTol <- lme(BCI ~ patTrt + patTrt:No.Worms,random=~1|Family,data=fullMetadata_OFFS)
 anova(modTol)
 
 ## Or modTol <- lme(BCI ~ patTrt*No.Worms,random=~1|Family,data=fullMetadata_offs)
 
-myBCdf <- fullMetadata_offs %>% group_by(patTrt, No.Worms) %>% 
+myBCdf <- fullMetadata_OFFS %>% group_by(patTrt, No.Worms) %>% 
   summarise(BCI = mean(BCI)) %>% data.frame()
-ggplot(fullMetadata_offs, aes(x=No.Worms, y = BCI, group = patTrt, col = patTrt))+
+ggplot(fullMetadata_OFFS, aes(x=No.Worms, y = BCI, group = patTrt, col = patTrt))+
   geom_point() + geom_line(data=myBCdf)+
   geom_point(data=myBCdf, aes(fill = patTrt), col = "black", size = 3, pch = 21)+
   scale_color_manual(values = c("gray", "red"))+
@@ -79,16 +63,16 @@ ggplot(fullMetadata_offs, aes(x=No.Worms, y = BCI, group = patTrt, col = patTrt)
 # The linear mixed effect model (nlme function in R) included G2 body condition as dependent variable, 
 # sex, G2 treatment (exposed vs. control), paternal G1 treatment (exposed vs. control) 
 # and their interactions as fixed effects as well as maternal G2 half-sibship identity as a random effect
-mod1 <- lme(BCI ~ offsTrt * patTrt, random=~1|Family,data=fullMetadata_offs)
+mod1 <- lme(BCI ~ offsTrt * patTrt, random=~1|Family,data=fullMetadata_OFFS)
 anova(mod1) # strong significant effect of both offspring trt & paternal + interactions
 
-mod1.2 <- lme(BCI ~  trtG1G2, random=~1|Family,data=fullMetadata_offs)
+mod1.2 <- lme(BCI ~  trtG1G2, random=~1|Family,data=fullMetadata_OFFS)
 ## pairwise posthoc test
 emmeans(mod1.2, list(pairwise ~ trtG1G2), adjust = "tukey")
 ## Control father - treatment offspring has a strongly significantly lower BC than 
 ## every other group, same as Kaufmann et al. 2014
 
-ggplot(fullMetadata_offs, aes(x=trtG1G2, y = BCI))+
+ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI))+
   geom_boxplot()+
   geom_signif(comparisons = list(c("NE_control", "NE_exposed")),
               map_signif_level=TRUE, annotations="***",
@@ -105,13 +89,13 @@ ggplot(fullMetadata_offs, aes(x=trtG1G2, y = BCI))+
 ## Nbr/Ratio of Methylated Sites in different groups ##
 #######################################################
 
-## Nbr samples: 137
+## Nbr samples: 135
 nrow(fullMetadata)
-# Mean nbr of million reads: 11.2
+# Mean nbr of million reads: 11.3
 mean(fullMetadata$M.Seqs_rawReads)
-# 95% confidence interval: 0.35
+# 95% confidence interval: 0.33
 qnorm(0.975)*sd(fullMetadata$M.Seqs_rawReads)/sqrt(nrow(fullMetadata))
-# Average mapping efficiency +/-SD = 85.5% +/-0.47
+# Average mapping efficiency +/-SD = 85.4% +/-0.48
 mean(fullMetadata$MappingEfficiency.BSBoldvsGynogen)
 qnorm(0.975)*sd(fullMetadata$MappingEfficiency.BSBoldvsGynogen)/sqrt(nrow(fullMetadata))
 
@@ -122,12 +106,14 @@ qnorm(0.975)*sd(fullMetadata$MappingEfficiency.BSBoldvsGynogen)/sqrt(nrow(fullMe
 reRun= FALSE
 if(reRun == TRUE){
     df <- methylKit::getData(uniteCov2_woSexAndUnknowChr)
-    MfrData2 <- data.frame(matrix(ncol=137, nrow=nrow(df)))
-    namevector <- paste0("Mfr", 1:137)
-    vector <- 1:137
+    MfrData2 <- data.frame(matrix(ncol=nrow(fullMetadata),
+                                  nrow=nrow(df)))
+    namevector <- paste0("Mfr", 1:nrow(fullMetadata))
+    vector <- 1:nrow(fullMetadata)
     for(i in vector){
         colnames(MfrData2)[i] <- namevector[i]
-        MfrData2[i] <- df[paste0("numCs", i)]/df[paste0("coverage", i)]
+        MfrData2[i] <- df[paste0("numCs", i)]/
+            df[paste0("coverage", i)]
     }
 }
 
@@ -160,7 +146,7 @@ if(rerun == TRUE){
 }
 
 #### Load data : MfrData2 & MbiallData2 ####
-#load(file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/MethylationFrequency_2fishmin.RData")
+load(file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/MethylationFrequency_2fishmin.RData")
 
 ## rename correctly the full biallelic dataframe:
 colnames(MbiallData2) <- uniteCov2_woSexAndUnknowChr@sample.ids
@@ -175,35 +161,34 @@ dfBiallMeth
 
 ## Append fullMetadata with this new info
 fullMetadata <- merge(fullMetadata, dfBiallMeth, sort=F)
-fullMetadata_offs <- merge(fullMetadata_offs, dfBiallMeth, sort=F) # N = 113 offsp.
+fullMetadata_OFFS <- merge(fullMetadata_OFFS, dfBiallMeth, sort=F) # N = 113 offsp.
 
 # Is there a correlation between nbr of methylated sites and coverage? YES
 cor.test(fullMetadata$biallmethy,fullMetadata$M.Seqs_rawReads, method="pearson")
-## t = 6.8881, df = 135, p-value = 1.954e-10 cor 0.5099544
+## t = 5.217, df = 133, p-value = 6.802e-07 cor 0.4121599
 
 ###########################################################
 ## Does RMS (ratio of methylated sites) changes with BCI ##
 ###########################################################
 fullMetadata$RMS <- fullMetadata$biallmethy / (fullMetadata$M.Seqs_rawReads*10e6)
-fullMetadata_offs$RMS <- fullMetadata_offs$biallmethy / (fullMetadata_offs$M.Seqs_rawReads*10e6)
+fullMetadata_OFFS$RMS <- fullMetadata_OFFS$biallmethy / (fullMetadata_OFFS$M.Seqs_rawReads*10e6)
 
 ## with family as random factor: not significant
-mod <- lme(RMS ~ BCI, random=~ 1|Family, data = fullMetadata_offs)
+mod <- lme(RMS ~ BCI, random=~ 1|Family, data = fullMetadata_OFFS)
 anova(mod)
 
-mod <- lme(RMS ~ BCI*patTrt, random=~ 1|Family, data = fullMetadata_offs)
+mod <- lme(RMS ~ BCI*patTrt, random=~ 1|Family, data = fullMetadata_OFFS)
 anova(mod)
 
 ##############################################################################
 ## Does RMS (ratio of methylated sites) differ per trt group in offsprings? ##
 ##############################################################################
 
-
 # simple lm, compare to null model: not signif
-anova(lm(RMS ~ outcome, data = fullMetadata_offs)) 
+anova(lm(RMS ~ outcome, data = fullMetadata_OFFS)) 
 
 # with family as random factor: not significant
-mod <- lme(RMS ~ outcome, random= ~1|Family, data = fullMetadata_offs)
+mod <- lme(RMS ~ outcome, random= ~1|Family, data = fullMetadata_OFFS)
 anova(mod)
 
 # ggplot(fullMetadata_offs, aes(x = outcome, y = RMS, fill =outcome)) +
@@ -212,7 +197,7 @@ anova(mod)
 #     theme_minimal()
 
 ## And per group? Not significant
-mod <- lme(RMS ~ trtG1G2, random= ~1|Family, data = fullMetadata_offs)
+mod <- lme(RMS ~ trtG1G2, random= ~1|Family, data = fullMetadata_OFFS)
 anova(mod)
 
 # ggplot(fullMetadata_offs, aes(x = trtG1G2, y = RMS)) +
@@ -223,12 +208,12 @@ anova(mod)
 #########################################################################################
 ## Does RMS (ratio of methylated sites) correlated with parasite load in infected fish? ##
 ## -> NOPE
-modRMS <- lme(RMS ~ patTrt*No.Worms, random=~1|Family, data=fullMetadata_offs[fullMetadata_offs$No.Worms > 0,])
+modRMS <- lme(RMS ~ patTrt*No.Worms, random=~1|Family, data=fullMetadata_OFFS[fullMetadata_OFFS$No.Worms > 0,])
 anova(modRMS)
 
 #plot(modRMS)
 
-myRMSdf <- fullMetadata_offs[fullMetadata_offs$No.Worms > 0,] %>% group_by(patTrt, No.Worms) %>% 
+myRMSdf <- fullMetadata_OFFS[fullMetadata_OFFS$No.Worms > 0,] %>% group_by(patTrt, No.Worms) %>% 
   summarise(RMS = mean(RMS)) %>% data.frame()
 myRMSdf
 
@@ -242,57 +227,54 @@ myRMSdf
 #################################################################################
 ## Calcul of epi-FST/epi-FIS: Homogeneisation of methylation marks in infected? ##
 ################################################################################
-library(genepop)
+# library(genepop)
+# library(adegenet)
+# 
+# test <- head(MbiallData2, 15)
+# 
+# offspringID <- fullMetadata_OFFS$ID
+# 
+# offspring_gen = df2genind(test[,colnames(test) %in% offspringID],
+#                           ploidy = 2, ind.names = offspringID,
+#                           pop = fullMetadata_OFFS$trtG1G2, sep = "")
+# 
+# 
+# seafan_gen = import2genind("Pinkseafan_13MicrosatLoci.gen", ncode = 3, quiet = TRUE)
+# 
+# head(seafan_gen)
 
-library(adegenet)
-
-test <- head(MbiallData2, 15)
-
-offspringID <- fullMetadata_offs$ID
-
-offspring_gen = df2genind(test[,colnames(test) %in% offspringID],
-                          ploidy = 2, ind.names = offspringID,
-                          pop = fullMetadata_offs$trtG1G2, sep = "")
-
-
-seafan_gen = import2genind("Pinkseafan_13MicrosatLoci.gen", ncode = 3, quiet = TRUE)
-
-head(seafan_gen)
-
-
-
-################# PCA
-## PCA analysis on our samples: plot a scree plot for importance of components
-p=PCASamples(uniteCovALL_N137_final, screeplot=TRUE, obj.return = T) # first axis very important
-s=summary(p)
-#create scree plot
-library(ggplot2)
-qplot(c(1:137), s$importance[2,]) + 
-  geom_line() + 
-  xlab("Principal Component") + 
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L), name = "Variance Explained")+
-  ggtitle("Scree Plot") +
-  theme_bw()
-
-## PCA: validate the absence of strong sex influence on the methylation
-uniteCovALL_N137_final_SEX = uniteCovALL_N137_final
-uniteCovALL_N137_final_SEX@treatment = as.numeric(as.factor(metadata$Sex))
-PCASamples(uniteCovALL_N137_final_SEX); title(sub="colored by sex")
-PCASamples(uniteCovALL_N137_final_SEX, comp = c(3,4)); title(sub="colored by sex")
-
-## PCA: check the Family influence on the methylation pattern
-uniteCovALL_N137_final_FAM = uniteCovALL_N137_final
-uniteCovALL_N137_final_FAM@treatment = as.numeric(as.factor(metadata$Family))
-PCASamples(uniteCovALL_N137_final_FAM); title(sub="colored by family")
-PCASamples(uniteCovALL_N137_final_FAM, comp = c(3,4)); title(sub="colored by family")
-
-## PCA: check the Pattern treatment influence on the methylation pattern
-uniteCovALL_N137_final_PAT = uniteCovALL_N137_final
-metadata$PAT="Exposed father group"
-metadata$PAT[metadata$trtG1G2 %in% c("Control", "NE_control", "NE_exposed")]="Control father group"
-uniteCovALL_N137_final_PAT@treatment = as.numeric(as.factor(metadata$PAT))
-PCASamples(uniteCovALL_N137_final_PAT); title(sub="colored by paternal exposure group")
-PCASamples(uniteCovALL_N137_final_PAT, comp=c(3,4)); title(sub="colored by paternal exposure group")
-
+ # ################# PCA
+ # ## PCA analysis on our samples: plot a scree plot for importance of components
+ # p=PCASamples(uniteCovALL_N137_final, screeplot=TRUE, obj.return = T) # first axis very important
+ # s=summary(p)
+ # #create scree plot
+ # library(ggplot2)
+ # qplot(c(1:137), s$importance[2,]) + 
+ #   geom_line() + 
+ #   xlab("Principal Component") + 
+ #   scale_y_continuous(labels = scales::percent_format(accuracy = 1L), name = "Variance Explained")+
+ #   ggtitle("Scree Plot") +
+ #   theme_bw()
+ # 
+ # ## PCA: validate the absence of strong sex influence on the methylation
+ # uniteCovALL_N137_final_SEX = uniteCovALL_N137_final
+ # uniteCovALL_N137_final_SEX@treatment = as.numeric(as.factor(metadata$Sex))
+ # PCASamples(uniteCovALL_N137_final_SEX); title(sub="colored by sex")
+ # PCASamples(uniteCovALL_N137_final_SEX, comp = c(3,4)); title(sub="colored by sex")
+ # 
+ # ## PCA: check the Family influence on the methylation pattern
+ # uniteCovALL_N137_final_FAM = uniteCovALL_N137_final
+ # uniteCovALL_N137_final_FAM@treatment = as.numeric(as.factor(metadata$Family))
+ # PCASamples(uniteCovALL_N137_final_FAM); title(sub="colored by family")
+ # PCASamples(uniteCovALL_N137_final_FAM, comp = c(3,4)); title(sub="colored by family")
+ # 
+ # ## PCA: check the Pattern treatment influence on the methylation pattern
+ # uniteCovALL_N137_final_PAT = uniteCovALL_N137_final
+ # metadata$PAT="Exposed father group"
+ # metadata$PAT[metadata$trtG1G2 %in% c("Control", "NE_control", "NE_exposed")]="Control father group"
+ # uniteCovALL_N137_final_PAT@treatment = as.numeric(as.factor(metadata$PAT))
+ # PCASamples(uniteCovALL_N137_final_PAT); title(sub="colored by paternal exposure group")
+ # PCASamples(uniteCovALL_N137_final_PAT, comp=c(3,4)); title(sub="colored by paternal exposure group")
+ # 
 
 

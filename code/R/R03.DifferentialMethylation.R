@@ -18,23 +18,7 @@ library(vegan) ## for Adonis
 source("customRfunctions.R")
 
 ## Load samples metadata
-## Metylation metadata merged with Kostas files
-fullMetadata <- read.csv("../../data/fullMetadata137_Alice.csv")
-## relevel treatments for graphs
-fullMetadata$trtG1G2 <- factor(as.factor(fullMetadata$trtG1G2), levels = c("Control", "Exposed","NE_control", "NE_exposed", "E_control", "E_exposed"  ))
-fullMetadata$trtG1G2_NUM <- as.numeric(as.factor(fullMetadata$trtG1G2))
-## family as factor for models
-fullMetadata$Family <- as.factor(fullMetadata$Family)
-# paternal exposure
-fullMetadata$PAT="Exposed father group"
-fullMetadata$PAT[fullMetadata$trtG1G2 %in% c("Control", "NE_control", "NE_exposed")]="Control father group"
-
-## only parents
-fullMetadata_PAR <- fullMetadata[fullMetadata$Generat %in% "P",]
-## only offspring
-fullMetadata_OFFS <- fullMetadata[fullMetadata$Generat %in% "O",]
-# without sample 22 outlier that block the view on PCA
-fullMetadata_OFFS_no22 <- fullMetadata_OFFS[!fullMetadata_OFFS$ID %in% "S22",]
+source("R01.3_prepMetadata.R")
 
 ## Load previously united data (all 6 treatments)
 ## uniteCovALL: CpG covered in ALL individuals (has no NAs, useful for exploratory clustering analyses)
@@ -80,12 +64,6 @@ uniteCov2_woSexAndUnknowChr_OFF=reorganize(
   AL2MethylKitObj,
   sample.ids=fullMetadata_OFFS$ID,
   treatment=fullMetadata_OFFS$trtG1G2_NUM)
-
-# without sample 22 outlier that block the view on PCA
-uniteCovALL_woSexAndUnknowChr_OFF_no22=reorganize(
-  uniteCovALL_woSexAndUnknowChr_OFF,
-  sample.ids=fullMetadata_OFFS_no22$ID,
-  treatment=fullMetadata_OFFS_no22$trtG1G2)
 
 ##############################
 ##### Analysis workflow: #####

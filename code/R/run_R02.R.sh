@@ -10,4 +10,4 @@
 
 module load R/4.0.2
 
-Rscript /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/R02.analyses.R
+Rscript /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/R02.analysesGlobalMethyl.R

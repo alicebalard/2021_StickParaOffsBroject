@@ -30,8 +30,7 @@ if (rerun==TRUE){
   fileT <- read.table("../../data/multiqc_general_stats_trimmedReadsCutadapt.txt", header = T) 
   names(fileT) <- gsub("FastQC_mqc.generalstats.fastqc.", "", names(fileT))
   fileT$SampleID = gsub("_L00.*","", gsub(".*-L1_","", fileT$Sample))
-  names(fileT) <- c("Sample", "percent_duplicates_trimmedReads", "percent_gc_trimmedReads", "avg_sequence_length_trimmedReads", "percent_fails_trimmedReads", "total_sequences_trimmedReads", "SampleID") 
-  
+  names(fileT) <- c("Sample", "percent_duplicates_trimmedReads", "percent_gc_trimmedReads", "avg_sequence_length_trimmedReads", "percent_fails_trimmedReads", "total_sequences_trimmedReads", "SampleID")   
   ## Mapping efficiency after Bismark
   mappBismarck <- read.table(file = "../../data/Report_mapping_efficiency_Bismark.txt")
   mappDatBIS <- data.frame(SampleID = gsub("_L00*.","", gsub(".*-L1_","", gsub("_R1_001_trimmed_cutadapt_bismark_bt2_SE_report.txt", "", mappBismarck$V1))),
@@ -52,14 +51,14 @@ if (rerun==TRUE){
   fullMetadata <- fullMetadata[!names(fullMetadata) %in% c("Sample.Name", "Sample")]
   names(fullMetadata)[names(fullMetadata) %in% "MappingEfficiency"] <- "MappingEfficiency%BSBoldvsGynogen"
   
-  ## After exploration of raw data, we decide to remove 7 samples from (1) fam 12 (N=4, only in parents) and (2) with bad quality (S12, S118, S142)
+  ## After exploration of raw data, we decide to remove 7 samples from (1) fam 12 (N=4, only in parents) and (2) with bad quality ("S12", "S22", "S110", "S118", "S142")
   fullMetadata <- fullMetadata[!fullMetadata$Family %in% "Fam12",]
-  fullMetadata <- fullMetadata[!fullMetadata$ID %in% c("S12", "S118", "S142"),]
+  fullMetadata <- fullMetadata[!fullMetadata$ID %in% c("S12", "S22", "S110", "S118", "S142"),]
   
   nrow(fullMetadata)
   
   ## Export summary table:
-  write.csv(fullMetadata, "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/data/fullMetadata137_Alice.csv", row.names=FALSE, quote=FALSE)
+  write.csv(fullMetadata, "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/data/fullMetadata135_Alice.csv", row.names=FALSE, quote=FALSE)
   
 }
 
