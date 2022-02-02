@@ -125,8 +125,12 @@ makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr_OFF, fullMetadata_OFFS,
                       my.cols.fam = c(1:4))
 # dev.off()
 
+############################
+## HERE CHOOSE which dataset
+dataset = uniteCovALL_woSexAndUnknowChr_OFF; metadata = fullMetadata_OFFS
+
 # creates a matrix containing percent methylation values NB rm sample 22!!
-perc.meth=percMethylation(uniteCovALL_woSexAndUnknowChr_OFF)
+perc.meth=percMethylation(dataset)
 # KOSTAS MBE: "Methylated sites and regions with low variation
 # and a standard deviation below 0.3, that is, noninformative
 # sites across individuals, were excluded from the cluster analyses"
@@ -146,20 +150,20 @@ data.dist = as.matrix((vegdist(x, "bray", upper = FALSE)))
 ## Within each family, are paternal treatment, offspring treatment, sex and their interactions
 ## significantly influencing global methylation?
 perm <- how(nperm = 1000) # 1000 permutations
-setBlocks(perm) <- with(fullMetadata_OFFS_no22, Family) # define the permutation structure
+setBlocks(perm) <- with(metadata, Family) # define the permutation structure
 
 ## Full model
-adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS_no22, permutations = perm)
+adonis2(data.dist ~ PAT * outcome * Sex, data = metadata, permutations = perm)
 
 ## remove the non significant interactions
-adonis2(data.dist ~ PAT + outcome + Sex, data = fullMetadata_OFFS_no22, permutations = perm)
+adonis2(data.dist ~ PAT + outcome + Sex, data = metadata, permutations = perm)
 
 ## Remove 1 factor by turn - backwards simplification
-adonis2(data.dist ~ outcome + Sex, data = fullMetadata_OFFS_no22, permutations = perm)
+adonis2(data.dist ~ outcome + Sex, data = metadata, permutations = perm)
 
-adonis2(data.dist ~ PAT + Sex, data = fullMetadata_OFFS_no22, permutations = perm)
+adonis2(data.dist ~ PAT + Sex, data = metadata, permutations = perm)
 
-adonis2(data.dist ~ PAT + outcome, data = fullMetadata_OFFS_no22, permutations = perm)
+adonis2(data.dist ~ PAT + outcome, data = metadata, permutations = perm)
 
 ## --> We found significant differences in global methylation due to
 ## paternal treatment and sex; outcome is not. 
@@ -171,14 +175,14 @@ library(goeveg)
 # = good, <0.20 = usable, >0.20 = not acceptable. The plot shows the border of the 0.20 stress value
 # limit. Solutions with higher stress values should be interpreted with caution and those with stress
 # above 0.30 are highly suspect
-dimcheckMDS(
-  data.dist,
-  distance = "bray",
-  k = 7,
-  trymax = 100,
-  autotransform = TRUE
-)
-abline(h = 0.1, col = "darkgreen")
+# dimcheckMDS(
+#   data.dist,
+#   distance = "bray",
+#   k = 7,
+#   trymax = 100,
+#   autotransform = TRUE
+# )
+# abline(h = 0.1, col = "darkgreen")
 # Goodness of fit for NMDS suggested the presence of six dimensions
 # with a stress value <0.1
 
@@ -197,10 +201,10 @@ MDS2 = NMDS$points[,2]
 ## data.scores = as.data.frame(scores(NMDS))
 
 #create new dataframe with plotting coordinates and variables to test
-NMDS2 = data.frame(MDS1 = MDS1, MDS2 = MDS2, ID = fullMetadata_OFFS_no22$ID,
-                   PAT=as.factor(fullMetadata_OFFS_no22$PAT), 
-                   outcome=as.factor(fullMetadata_OFFS_no22$outcome), 
-                   Sex = as.factor(fullMetadata_OFFS_no22$Sex))
+NMDS2 = data.frame(MDS1 = MDS1, MDS2 = MDS2, ID = metadata$ID,
+                   PAT=as.factor(metadata$PAT), 
+                   outcome=as.factor(metadata$outcome), 
+                   Sex = as.factor(metadata$Sex))
 
 ## with paternal treatment
 find_hull <- function(my_data) my_data[chull(my_data[,1], my_data[,2]), ]
@@ -212,6 +216,7 @@ ggplot(NMDS2, aes(x=MDS1, y=MDS2)) +
   scale_color_manual(values = c("grey","yellow"))+
   scale_fill_manual(values = c("grey","yellow"))+
   geom_point(aes(fill=PAT, shape=outcome), size = 3, alpha = .6) +
+  geom_label(aes(label=row.names(NMDS2)))+
   scale_shape_manual(values = c(21,22)) +
   theme_bw() +
   theme(legend.title=element_blank(), legend.position = "top")
