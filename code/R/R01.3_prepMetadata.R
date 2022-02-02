@@ -3,7 +3,7 @@
 
 #####################################################
 ## Load methylation metadata merged with Kostas files
-fullMetadata <- read.csv("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/data/fullMetadata135_Alice.csv")
+fullMetadata <- read.csv("../../data/fullMetadata135_Alice.csv")
 
 # give a numerical value to treatment, for Methylkit
 fullMetadata$trtG1G2_NUM <- as.numeric(as.factor(fullMetadata$trtG1G2))
