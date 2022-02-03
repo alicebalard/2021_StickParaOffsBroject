@@ -40,5 +40,5 @@ makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam){
                rowLabels = "Family")
   ## Legend
   legend("topleft", legend = unique(metadata$Family[mydendro$order]),
-         fill = unique(colfam[mydendro$order]), bty = "n", title = "Family")
+         fill = unique(metadata$colfam[mydendro$order]), bty = "n", title = "Family")
 }

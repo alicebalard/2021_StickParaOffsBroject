@@ -53,3 +53,27 @@ Output: 02RefGenome/Bisulfite_Genome
 # Bismark alignment 
 Code: S03.2_BismarkAlignment
 Output: 03Bismark_alignment
+
+##############################
+##### R methylation analysis workflow: #####
+Preparation of data and metadata:
+R00 -> alignment stats
+R01.1, R01.2, R01.3, R01.4 -> data preparation
+
+R02 -> link methylation and fitness (tbc)
+
+# PART 1. (script R03.1) Methylation profile: or Adonis multivariate stats, presence/abs, block effect=family
+# PART 2. (script R03.2) DMS 
+# PART 3.DMR: Precise localisation of blocks investing in methylation
+# PART 4.Network: Explore other parameters than geographic: are the modules
+#   on a high recombination place? Or with high mutation rate? 
+#   What does modules capture on top of DMRs?
+##### Then 
+# - Gene Ontology
+# - Final: Check robustness: reshuffle the controls and check that we find less DMS/DMR/modules
+# 
+# These analyses will be done on:
+# A. Parents ctr-trt
+# B. Offspring ctr-trt pat1 & ctrl-trt pat2 (different offspring treatments)
+# C. Offspring ctrl-ctrl & trt-trt (different paternal treatment)
+##############################

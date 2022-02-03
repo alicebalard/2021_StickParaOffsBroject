@@ -1,0 +1,103 @@
+dataset = uniteCovALL_woSexAndUnknowChr_OFF; metadata = fullMetadata_OFFS
+
+# creates a matrix containing percent methylation values
+perc.meth=percMethylation(dataset)
+
+# KOSTAS MBE: "Methylated sites and regions with low variation
+# and a standard deviation below 0.3, that is, noninformative
+# sites across individuals, were excluded from the cluster analyses"
+SD=apply(perc.meth,1, sd, na.rm = TRUE)
+perc.meth <- perc.meth[-which(SD<0.3),]
+x=t(perc.meth)
+
+# creates a distance matrix. Method: Bray-Curtis, package vegan
+data.dist = as.matrix((vegdist(x, "bray", upper = FALSE))) 
+## Within each family, are paternal treatment, offspring treatment, sex and their interactions
+## significantly influencing global methylation?
+perm <- how(nperm = 1000) # 1000 permutations
+setBlocks(perm) <- with(metadata, Family) # define the permutation structure
+
+## Full model
+adonis2(data.dist ~ PAT * outcome * Sex, data = metadata, permutations = perm)
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Blocks:  with(metadata, Family) 
+Permutation: free
+Number of permutations: 1000
+
+adonis2(formula = data.dist ~ PAT * outcome * Sex, data = metadata, permutations = perm)
+                 Df SumOfSqs      R2      F   Pr(>F)    
+PAT               1 0.002556 0.01515 1.6868 0.000999 ***
+outcome           1 0.001736 0.01029 1.1459 0.050949 .  
+Sex               1 0.002256 0.01338 1.4892 0.000999 ***
+PAT:outcome       1 0.001525 0.00904 1.0064 0.249750    
+PAT:Sex           1 0.001566 0.00929 1.0338 0.191808    
+outcome:Sex       1 0.001506 0.00893 0.9942 0.498501    
+PAT:outcome:Sex   1 0.001488 0.00882 0.9820 0.427572    
+Residual        103 0.156057 0.92511                    
+Total           110 0.168690 1.00000                    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> ## remove the non significant interactions
+> adonis2(data.dist ~ PAT + outcome + Sex, data = metadata, permutations = perm)
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Blocks:  with(metadata, Family) 
+Permutation: free
+Number of permutations: 1000
+
+adonis2(formula = data.dist ~ PAT + outcome + Sex, data = metadata, permutations = perm)
+          Df SumOfSqs      R2      F   Pr(>F)    
+PAT        1 0.002556 0.01515 1.6865 0.000999 ***
+outcome    1 0.001736 0.01029 1.1457 0.047952 *  
+Sex        1 0.002256 0.01338 1.4889 0.004995 ** 
+Residual 107 0.162142 0.96118                    
+Total    110 0.168690 1.00000                    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> ## Remove 1 factor by turn - backwards simplification
+> adonis2(data.dist ~ outcome + Sex, data = metadata, permutations = perm)
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Blocks:  with(metadata, Family) 
+Permutation: free
+Number of permutations: 1000
+
+adonis2(formula = data.dist ~ outcome + Sex, data = metadata, permutations = perm)
+          Df SumOfSqs      R2      F   Pr(>F)   
+outcome    1 0.001729 0.01025 1.1345 0.066933 . 
+Sex        1 0.002410 0.01429 1.5820 0.001998 **
+Residual 108 0.164551 0.97546                   
+Total    110 0.168690 1.00000                   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> adonis2(data.dist ~ PAT + Sex, data = metadata, permutations = perm)
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Blocks:  with(metadata, Family) 
+Permutation: free
+Number of permutations: 1000
+
+adonis2(formula = data.dist ~ PAT + Sex, data = metadata, permutations = perm)
+          Df SumOfSqs      R2      F   Pr(>F)    
+PAT        1 0.002556 0.01515 1.6844 0.000999 ***
+Sex        1 0.002266 0.01343 1.4931 0.002997 ** 
+Residual 108 0.163869 0.97142                    
+Total    110 0.168690 1.00000                    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> adonis2(data.dist ~ PAT + outcome, data = metadata, permutations = perm)
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Blocks:  with(metadata, Family) 
+Permutation: free
+Number of permutations: 1000
+
+adonis2(formula = data.dist ~ PAT + outcome, data = metadata, permutations = perm)
+          Df SumOfSqs      R2      F   Pr(>F)    
+PAT        1 0.002556 0.01515 1.6789 0.000999 ***
+outcome    1 0.001736 0.01029 1.1406 0.051948 .  
+Residual 108 0.164398 0.97456                    
+Total    110 0.168690 1.00000                    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

@@ -242,39 +242,3 @@ myRMSdf
 # seafan_gen = import2genind("Pinkseafan_13MicrosatLoci.gen", ncode = 3, quiet = TRUE)
 # 
 # head(seafan_gen)
-
- # ################# PCA
- # ## PCA analysis on our samples: plot a scree plot for importance of components
- # p=PCASamples(uniteCovALL_N137_final, screeplot=TRUE, obj.return = T) # first axis very important
- # s=summary(p)
- # #create scree plot
- # library(ggplot2)
- # qplot(c(1:137), s$importance[2,]) + 
- #   geom_line() + 
- #   xlab("Principal Component") + 
- #   scale_y_continuous(labels = scales::percent_format(accuracy = 1L), name = "Variance Explained")+
- #   ggtitle("Scree Plot") +
- #   theme_bw()
- # 
- # ## PCA: validate the absence of strong sex influence on the methylation
- # uniteCovALL_N137_final_SEX = uniteCovALL_N137_final
- # uniteCovALL_N137_final_SEX@treatment = as.numeric(as.factor(metadata$Sex))
- # PCASamples(uniteCovALL_N137_final_SEX); title(sub="colored by sex")
- # PCASamples(uniteCovALL_N137_final_SEX, comp = c(3,4)); title(sub="colored by sex")
- # 
- # ## PCA: check the Family influence on the methylation pattern
- # uniteCovALL_N137_final_FAM = uniteCovALL_N137_final
- # uniteCovALL_N137_final_FAM@treatment = as.numeric(as.factor(metadata$Family))
- # PCASamples(uniteCovALL_N137_final_FAM); title(sub="colored by family")
- # PCASamples(uniteCovALL_N137_final_FAM, comp = c(3,4)); title(sub="colored by family")
- # 
- # ## PCA: check the Pattern treatment influence on the methylation pattern
- # uniteCovALL_N137_final_PAT = uniteCovALL_N137_final
- # metadata$PAT="Exposed father group"
- # metadata$PAT[metadata$trtG1G2 %in% c("Control", "NE_control", "NE_exposed")]="Control father group"
- # uniteCovALL_N137_final_PAT@treatment = as.numeric(as.factor(metadata$PAT))
- # PCASamples(uniteCovALL_N137_final_PAT); title(sub="colored by paternal exposure group")
- # PCASamples(uniteCovALL_N137_final_PAT, comp=c(3,4)); title(sub="colored by paternal exposure group")
- # 
-
-
