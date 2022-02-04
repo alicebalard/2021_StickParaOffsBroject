@@ -13,6 +13,8 @@ library(tidyverse)
 library(emmeans) ## for post-hoc Tukey tests
 library(methylKit)
 library(vegan) ## for Adonis
+library(genomation) ## for annotation
+library(GenomicFeatures) ## for annotation
 
 ## load custom functions
 source("customRfunctions.R")
@@ -32,36 +34,56 @@ source("R01.4_prepMethyldata.R")
 ## Extract DMS from parents (at least in 2 fish), annotate them, compare with Kostas results
 
 ## Calculate DMS accounting for covariates: family
-cov = data.frame(Family = fullMetadata_PAR$Family)
-myDiffMeth=calculateDiffMeth(uniteCov2_woSexAndUnknowChr_PAR, 
-                             covariates = cov, mc.cores = 4)
+rerun=FALSE
+if (rerun==TRUE){
+    cov = data.frame(Family = fullMetadata_PAR$Family)
+    myDiffMeth=calculateDiffMeth(uniteCov2_woSexAndUnknowChr_PAR, 
+                                 covariates = cov, mc.cores = 4)
 
-# We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
-# NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
-myDiff1_15p = getMethylDiff(myDiffMeth,difference=15,qvalue=0.01)
+                                        # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
+                                        # NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
+    myDiff1_15p = getMethylDiff(myDiffMeth,difference=15,qvalue=0.01)
 
-myDiff1_15p # 6544 positions
-saveRDS(myDiff1_15p, file = "../../gitignore/output/myDiff1_15p_parentalDiffMeth.RDS")
-# 
-# myDiff1_15p <- readRDS("../../gitignore/output/myDiff1_15p_parentalDiffMeth.RDS")
-# 
-# # annotation!!
-# library(genomation)
-# 
-# #library(GenomicFeatures)
-# 
-# gene.obj=readTranscriptFeatures("../../gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.bed12", remove.unusual = FALSE)
-# 
-# # annotate differentially methylated CpGs with promoter/exon/intron using annotation data
-# annotateWithGeneParts(as(myDiff1_15p,"GRanges"),gene.obj)
-# 
-# ## Kostas MBE: The DMSs and regions were predominately
-# #found in intergenic regions (47.74% and 48.94%, respecti vely),with introns (26.19% and 23.09), exons (15.07% and 13.98%),and promoters (11% and 13.98%) showing lower proportions
-# 
-# ?annotateWithGeneParts()
-# 
-# 
-# ### YOU'RE HERE ;)
+    myDiff1_15p # 6544 positions
+    saveRDS(myDiff1_15p, file = "../../data/myDiff1_15p_parentalDiffMeth.RDS")
+}
+
+myDiff1_15p <- readRDS("../../data/myDiff1_15p_parentalDiffMeth.RDS")
+
+#############
+## annotation
+
+## load genome annotation
+gene.obj=readTranscriptFeatures("../../gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.bed12", remove.unusual = FALSE)
+ 
+# annotate differentially methylated CpGs with promoter/exon/intron using annotation data
+annotateWithGeneParts(as(myDiff1_15p,"GRanges"),gene.obj)
+ #  Summary of target set annotation with genic parts
+ # Rows in target set: 6536
+ # -----------------------
+ # percentage of target features overlapping with annotation:
+ #   promoter       exon     intron intergenic 
+ #       9.56      16.81      33.74      46.80 
+ # 
+ # percentage of target features overlapping with annotation:
+ # (with promoter > exon > intron precedence):
+ #   promoter       exon     intron intergenic 
+ #       9.56      12.88      30.75      46.80 
+ # 
+ # percentage of annotation boundaries with feature overlap:
+ # promoter     exon   intron 
+ #     1.86     0.33     0.78 
+ # 
+ # summary of distances to the nearest TSS:
+ #    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ #       3    2929    7540   14079   18241  300247 
+
+## Kostas MBE: The DMSs and regions were predominately
+#found in intergenic regions (47.74% and 48.94%, respecti vely),with introns (26.19% and 23.09), exons (15.07% and 13.98%),and promoters (11% and 13.98%) showing lower proportions
+ 
+
+
+                                        # ### YOU'RE HERE ;)
 # 
 # ###################################################################################################
 # ## Comparison 2: offsprings infected from unifected (trtgroup 4) and infected (trt group 6) fathers

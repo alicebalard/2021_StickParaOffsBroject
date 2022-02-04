@@ -168,8 +168,11 @@ myNMDSplots <- function(dataset, metadata){
     geom_point(aes(fill=outcome, shape=outcome), size = 3, alpha = .6) +
     scale_shape_manual(values = c(21,22)) +
     theme_bw() +
-    theme(legend.title=element_blank(), legend.position = "top")
-  return(list(mystressplot, myPATplot, mySEXplot, myOFFplot))
+      theme(legend.title=element_blank(), legend.position = "top")
+    return(list(mystressplot=mystressplot, myPATplot=myPATplot,
+                mySEXplot=mySEXplot, myOFFplot=myOFFplot))
 }
 
-myNMDSplots(dataset = uniteCovALL_woSexAndUnknowChr_OFF, metadata = fullMetadata_OFFS)
+NMDSanalysis <- myNMDSplots(dataset = uniteCovALL_woSexAndUnknowChr_OFF, metadata = fullMetadata_OFFS)
+
+save(NMDSanalysis, file = "../../data/fig/NMDSplots.RData")

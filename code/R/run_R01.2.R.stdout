@@ -242,7 +242,3 @@ uniting...
        2757        2343        2178        2323 
 [1] "nbr CpG on sex chromosome of unmapped:"
 [1] 4832
-Error in data.frame(trtG1G2 = unique(metadata$trtG1G2[order(metadata$trtG1G2)]),  : 
-  argument "my.cols.trt" is missing, with no default
-Calls: makePrettyMethCluster -> join -> intersect -> as.vector -> data.frame
-Execution halted

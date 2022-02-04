@@ -1,0 +1,243 @@
+Loading R/4.0.2
+  Loading requirement: java/1.8.0_171-oracle
+
+---------------------
+Welcome to dendextend version 1.15.2
+Type citation('dendextend') for how to cite the package.
+
+Type browseVignettes(package = 'dendextend') for the package vignette.
+The github page is: https://github.com/talgalili/dendextend/
+
+Suggestions and bug-reports can be submitted at: https://github.com/talgalili/dendextend/issues
+You may ask questions at stackoverflow, use the r and dendextend tags: 
+	 https://stackoverflow.com/questions/tagged/dendextend
+
+	To suppress this message use:  suppressPackageStartupMessages(library(dendextend))
+---------------------
+
+
+Attaching package: ‘dendextend’
+
+The following object is masked from ‘package:stats’:
+
+    cutree
+
+Loading required package: Matrix
+
+Attaching package: ‘nlme’
+
+The following object is masked from ‘package:lme4’:
+
+    lmList
+
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ tibble  3.1.6     ✔ dplyr   1.0.7
+✔ tidyr   1.1.4     ✔ stringr 1.4.0
+✔ readr   2.1.1     ✔ forcats 0.5.1
+✔ purrr   0.3.4     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::arrange()   masks plyr::arrange()
+✖ dplyr::collapse()  masks nlme::collapse()
+✖ purrr::compact()   masks plyr::compact()
+✖ dplyr::count()     masks plyr::count()
+✖ tidyr::expand()    masks Matrix::expand()
+✖ dplyr::failwith()  masks plyr::failwith()
+✖ dplyr::filter()    masks stats::filter()
+✖ dplyr::id()        masks plyr::id()
+✖ dplyr::lag()       masks stats::lag()
+✖ dplyr::mutate()    masks plyr::mutate()
+✖ tidyr::pack()      masks Matrix::pack()
+✖ dplyr::rename()    masks plyr::rename()
+✖ dplyr::summarise() masks plyr::summarise()
+✖ dplyr::summarize() masks plyr::summarize()
+✖ tidyr::unpack()    masks Matrix::unpack()
+Loading required package: GenomicRanges
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:dplyr’:
+
+    combine, intersect, setdiff, union
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
+    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following objects are masked from ‘package:dplyr’:
+
+    first, rename
+
+The following object is masked from ‘package:tidyr’:
+
+    expand
+
+The following object is masked from ‘package:Matrix’:
+
+    expand
+
+The following object is masked from ‘package:plyr’:
+
+    rename
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+
+Attaching package: ‘IRanges’
+
+The following objects are masked from ‘package:dplyr’:
+
+    collapse, desc, slice
+
+The following object is masked from ‘package:purrr’:
+
+    reduce
+
+The following object is masked from ‘package:nlme’:
+
+    collapse
+
+The following object is masked from ‘package:plyr’:
+
+    desc
+
+Loading required package: GenomeInfoDb
+
+Attaching package: ‘methylKit’
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+The following object is masked from ‘package:tidyr’:
+
+    unite
+
+The following object is masked from ‘package:nlme’:
+
+    getData
+
+The following object is masked from ‘package:lme4’:
+
+    getData
+
+Loading required package: permute
+
+Attaching package: ‘permute’
+
+The following object is masked from ‘package:dendextend’:
+
+    shuffle
+
+Loading required package: lattice
+Registered S3 method overwritten by 'vegan':
+  method     from      
+  rev.hclust dendextend
+This is vegan 2.5-7
+Joining by: trtG1G2
+Joining by: Family
+The "ward" method has been renamed to "ward.D"; note new "ward.D2"
+null device 
+          1 
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Blocks:  with(metadata, Family) 
+Permutation: free
+Number of permutations: 1000
+
+adonis2(formula = data.dist ~ PAT * outcome * Sex, data = metadata, permutations = perm)
+                 Df SumOfSqs      R2      F   Pr(>F)    
+PAT               1 0.002556 0.01515 1.6868 0.000999 ***
+outcome           1 0.001736 0.01029 1.1459 0.039960 *  
+Sex               1 0.002256 0.01338 1.4892 0.002997 ** 
+PAT:outcome       1 0.001525 0.00904 1.0064 0.211788    
+PAT:Sex           1 0.001566 0.00929 1.0338 0.193806    
+outcome:Sex       1 0.001506 0.00893 0.9942 0.480519    
+PAT:outcome:Sex   1 0.001488 0.00882 0.9820 0.410589    
+Residual        103 0.156057 0.92511                    
+Total           110 0.168690 1.00000                    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Blocks:  with(metadata, Family) 
+Permutation: free
+Number of permutations: 1000
+
+adonis2(formula = data.dist ~ PAT + outcome + Sex, data = metadata, permutations = perm)
+          Df SumOfSqs      R2      F   Pr(>F)   
+PAT        1 0.002556 0.01515 1.6865 0.001998 **
+outcome    1 0.001736 0.01029 1.1457 0.049950 * 
+Sex        1 0.002256 0.01338 1.4889 0.001998 **
+Residual 107 0.162142 0.96118                   
+Total    110 0.168690 1.00000                   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Square root transformation
+Wisconsin double standardization
+Run 0 stress 0.09620984 
+Run 1 stress 0.09618465 
+... New best solution
+... Procrustes: rmse 0.02785525  max resid 0.09499548 
+Run 2 stress 0.09602655 
+... New best solution
+... Procrustes: rmse 0.02584596  max resid 0.09510434 
+Run 3 stress 0.09625291 
+... Procrustes: rmse 0.01562788  max resid 0.07593101 
+Run 4 stress 0.09633228 
+... Procrustes: rmse 0.04214619  max resid 0.1904911 
+Run 5 stress 0.09637595 
+... Procrustes: rmse 0.04239335  max resid 0.1899513 
+Run 6 stress 0.09610272 
+... Procrustes: rmse 0.03290405  max resid 0.1082857 
+Run 7 stress 0.09654946 
+Run 8 stress 0.09619635 
+... Procrustes: rmse 0.02769907  max resid 0.133417 
+Run 9 stress 0.09631087 
+... Procrustes: rmse 0.03797792  max resid 0.1504737 
+Run 10 stress 0.09655975 
+Run 11 stress 0.09634473 
+... Procrustes: rmse 0.04012695  max resid 0.1854403 
+Run 12 stress 0.09617818 
+... Procrustes: rmse 0.02499665  max resid 0.1129278 
+Run 13 stress 0.0963785 
+... Procrustes: rmse 0.04361389  max resid 0.1822785 
+Run 14 stress 0.09620757 
+... Procrustes: rmse 0.02867055  max resid 0.1063588 
+Run 15 stress 0.09633852 
+... Procrustes: rmse 0.04346159  max resid 0.1934258 
+Run 16 stress 0.09630559 
+... Procrustes: rmse 0.04212178  max resid 0.1600719 
+Run 17 stress 0.09655 
+Run 18 stress 0.09623193 
+... Procrustes: rmse 0.0266581  max resid 0.09578034 
+Run 19 stress 0.09603108 
+... Procrustes: rmse 0.001227695  max resid 0.004977311 
+... Similar to previous best
+Run 20 stress 0.09610563 
+... Procrustes: rmse 0.007148758  max resid 0.05435023 
+*** Solution reached

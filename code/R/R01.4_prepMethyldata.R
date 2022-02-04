@@ -1,18 +1,18 @@
 ## Load previously united data (all 6 treatments)
 ## uniteCovALL: CpG covered in ALL individuals (has no NAs, useful for exploratory clustering analyses)
 #load("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL_woSexAndUnknownChr.RData")
-base::load("../../gitignore/output/uniteCovALL_woSexAndUnknownChr.RData")
+base::load("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL_woSexAndUnknownChr.RData")
 ## rename
 fullMethylKitObj = uniteCovALL_woSexAndUnknowChr; rm(uniteCovALL_woSexAndUnknowChr)
 
 ## For further analyses: CpG covered in at least 2 individuals
 ## (Kostas took 2; Melanie is more stringent; let's see which makes sense)
-load("../../gitignore/output/uniteCov2_woSexAndUnknownChr.RData")
+load("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov2_woSexAndUnknownChr.RData")
 ## rename
 AL2MethylKitObj = uniteCov2_woSexAndUnknowChr ; rm(uniteCov2_woSexAndUnknowChr)
 
 ## If needed: CpG covered in at least 6 individuals
-#load("../../gitignore/output/uniteCov6_woSexAndUnknowChr.RData")
+#load("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6_woSexAndUnknowChr.RData")
 
 ##### Create methylkit objects for different analyses:
 # create a methylKit object with ONLY the parents - positions shared by AT LEAST 2 INDIVIDUALS
