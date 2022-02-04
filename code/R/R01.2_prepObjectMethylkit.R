@@ -113,7 +113,7 @@ nrow(uniteCovALL[uniteCovALL$chr %in% c("Gy_chrXIX", "Gy_chrUn"),])
 
 ## Keep CpG apart from sex chromosome XIX and unmapped (comprise Y chr)
 uniteCovALL_woSexAndUnknowChr=uniteCovALL[!uniteCovALL$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
-uniteCov2_woSexAndUnknowChr=uniteCov6[!uniteCov2$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
+uniteCov2_woSexAndUnknowChr=uniteCov2[!uniteCov2$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
 uniteCov6_woSexAndUnknowChr=uniteCov6[!uniteCov6$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
 
 #######################################
