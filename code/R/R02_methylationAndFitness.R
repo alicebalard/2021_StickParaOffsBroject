@@ -14,15 +14,15 @@ library(emmeans) ## for post-hoc Tukey tests
 ## load custom functions
 source("customRfunctions.R")
 
-## Load previously united data (all 6 treatments)
-## uniteCovALL: CpG covered in ALL individuals (has no NAs, useful for exploratory clustering analyses)
-#load("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL_woSexAndUnknownChr.RData")
-## For further analyses: CpG covered in at least 2 then 6 individuals per group
-load("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov2_woSexAndUnknownChr.RData")
-#load("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6_woSexAndUnknowChr.RData")
-
 ## Load samples metadata
 source("R01.3_prepMetadata.R")
+
+## Load previously united methylkit data
+
+## define in which machine we're working (apocrita or mythinkpad)
+## machine="apocrita"
+## machine="mythinkpad"
+source("R01.4_prepMethyldata.R")
 
 #####################################################################
 ## Compare fitness traits between the different offsprings groups ###

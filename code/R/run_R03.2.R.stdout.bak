@@ -158,61 +158,22 @@ Registered S3 method overwritten by 'vegan':
   method     from      
   rev.hclust dendextend
 This is vegan 2.5-7
-Loading required package: grid
-
-Attaching package: 'genomation'
-
-The following objects are masked from 'package:methylKit':
-
-    getFeatsWithTargetsStats, getFlanks, getMembers,
-    getTargetAnnotationStats, plotTargetAnnotation
-
-Loading required package: AnnotationDbi
-Loading required package: Biobase
-Welcome to Bioconductor
-
-    Vignettes contain introductory material; view with
-    'browseVignettes()'. To cite Bioconductor, see
-    'citation("Biobase")', and for packages 'citation("pkgname")'.
-
-
-Attaching package: 'AnnotationDbi'
-
-The following object is masked from 'package:methylKit':
-
-    select
-
-The following object is masked from 'package:dplyr':
-
-    select
-
 two groups detected:
  will calculate methylation difference as the difference of
 treatment (group: 4) - control (group: 1)
-Reading the table...
-Calculating intron coordinates...
-Calculating exon coordinates...
-Calculating TSS coordinates...
-Calculating promoter coordinates...
-Outputting the final GRangesList...
-
-Summary of target set annotation with genic parts
-Rows in target set: 13737
------------------------
-percentage of target features overlapping with annotation:
-  promoter       exon     intron intergenic 
-      8.72      16.59      33.46      47.54 
-
-percentage of target features overlapping with annotation:
-(with promoter > exon > intron precedence):
-  promoter       exon     intron intergenic 
-      8.72      13.02      30.73      47.54 
-
-percentage of annotation boundaries with feature overlap:
-promoter     exon   intron 
-    3.53     0.73     1.60 
-
-summary of distances to the nearest TSS:
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-      0    3090    8364   15817   19571  413076 
-
+methylDiff object with 6536 rows
+--------------
+        chr  start    end strand       pvalue       qvalue meth.diff
+169 Gy_chrI  49651  49651      + 1.441712e-05 0.0013742486 -18.34632
+295 Gy_chrI  85982  85982      + 1.077816e-04 0.0057838978  15.70924
+716 Gy_chrI 210613 210613      + 2.816862e-05 0.0022411439  21.25506
+759 Gy_chrI 225844 225844      + 1.959468e-04 0.0086260081  15.08547
+792 Gy_chrI 264730 264730      - 7.268841e-06 0.0008253473 -24.39535
+862 Gy_chrI 297143 297143      - 9.966295e-05 0.0054730173 -17.32945
+--------------
+sample.ids: S107 S108 S124 S125 S143 S144 S16 S17 S35 S36 S52 S53 S68 S69 S70 S71 S72 S73 S76 S77 S78 S79 S94 S95 
+destranded FALSE 
+assembly: Gynogen_pchrom_assembly_all 
+context: CpG 
+treament: 1 4 4 1 1 4 1 4 1 4 4 1 1 4 4 1 1 4 1 4 1 4 1 4 
+resolution: base 

@@ -22,6 +22,9 @@ source("customRfunctions.R")
 ## Load samples metadata
 source("R01.3_prepMetadata.R")
 
+## define in which machine we're working (apocrita or mythinkpad)
+machine="apocrita"
+## machine="mythinkpad"
 ## Load methylation data
 source("R01.4_prepMethyldata.R")
 
@@ -34,7 +37,7 @@ source("R01.4_prepMethyldata.R")
 ## Extract DMS from parents (at least in 2 fish), annotate them, compare with Kostas results
 
 ## Calculate DMS accounting for covariates: family
-rerun=FALSE
+rerun=TRUE
 if (rerun==TRUE){
     cov = data.frame(Family = fullMetadata_PAR$Family)
     myDiffMeth=calculateDiffMeth(uniteCov2_woSexAndUnknowChr_PAR, 

@@ -36,8 +36,3 @@ fullMetadata_OFFS$patTrt[fullMetadata_OFFS$Tr %in% c("TC", "TT")] <- "infectedP"
 ## Sanity check
 table(fullMetadata_OFFS$offsTrt, fullMetadata_OFFS$trtG1G2)
 table(fullMetadata_OFFS$patTrt, fullMetadata_OFFS$trtG1G2)
-
-
-
-
-

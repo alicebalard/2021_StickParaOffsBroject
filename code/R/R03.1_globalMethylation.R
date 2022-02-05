@@ -20,7 +20,9 @@ source("customRfunctions.R")
 ## Load samples metadata
 source("R01.3_prepMetadata.R")
 
-## Load methylation data
+## define in which machine we're working (apocrita or mythinkpad)
+machine="apocrita"
+## machine="mythinkpad"
 source("R01.4_prepMethyldata.R")
 
 #############################################################
