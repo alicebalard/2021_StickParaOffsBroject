@@ -37,7 +37,7 @@ source("R01.4_prepMethyldata.R")
 ## Extract DMS from parents (at least in 2 fish), annotate them, compare with Kostas results
 
 ## Calculate DMS accounting for covariates: family
-rerun=TRUE
+rerun=FALSE
 if (rerun==TRUE){
     cov = data.frame(Family = fullMetadata_PAR$Family)
     myDiffMeth=calculateDiffMeth(uniteCov2_woSexAndUnknowChr_PAR, 
@@ -60,30 +60,30 @@ myDiff1_15p <- readRDS("../../data/myDiff1_15p_parentalDiffMeth.RDS")
 gene.obj=readTranscriptFeatures("../../gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.bed12", remove.unusual = FALSE)
  
 # annotate differentially methylated CpGs with promoter/exon/intron using annotation data
-annotateWithGeneParts(as(myDiff1_15p,"GRanges"),gene.obj)
- #  Summary of target set annotation with genic parts
- # Rows in target set: 6536
- # -----------------------
- # percentage of target features overlapping with annotation:
- #   promoter       exon     intron intergenic 
- #       9.56      16.81      33.74      46.80 
- # 
- # percentage of target features overlapping with annotation:
- # (with promoter > exon > intron precedence):
- #   promoter       exon     intron intergenic 
- #       9.56      12.88      30.75      46.80 
- # 
- # percentage of annotation boundaries with feature overlap:
- # promoter     exon   intron 
- #     1.86     0.33     0.78 
- # 
- # summary of distances to the nearest TSS:
- #    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- #       3    2929    7540   14079   18241  300247 
-
+diffAnn_PAR=annotateWithGeneParts(as(myDiff1_15p,"GRanges"),gene.obj)
+diffAnn_PAR
+plotTargetAnnotation(diffAnn_PAR,precedence=TRUE,
+                     main="differential methylation annotation")
 ## Kostas MBE: The DMSs and regions were predominately
-#found in intergenic regions (47.74% and 48.94%, respecti vely),with introns (26.19% and 23.09), exons (15.07% and 13.98%),and promoters (11% and 13.98%) showing lower proportions
+#found in intergenic regions (47.74% and 48.94%, respecti vely),
+#with introns (26.19% and 23.09), exons (15.07% and 13.98%),and promoters (11% and 13.98%) showing lower proportions
  
+###########################
+## Manhattan plot of DMS ##
+###########################
+
+# load file with your DMS
+DMS_PAR <- readRDS("../../data/myDiff1_15p_parentalDiffMeth.RDS")
+# load annotation
+annot_PAR <- as.data.frame(diffAnn_PAR@members)
+## Load file containing length of each gynogen chromosomes 
+## grep "contig" gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff | awk '{print $1, $5}' > data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt
+GYgynogff = read.table("../../data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt")
+names(GYgynogff) = c("chrom","length")
+
+makeManhattanPlots(DMSfile = DMS_PAR, annotFile = annot_PAR, GYgynogff = GYgynogff)
+
+
 
 
                                         # ### YOU'RE HERE ;)

@@ -13,6 +13,8 @@ library(tidyverse)
 library(emmeans) ## for post-hoc Tukey tests
 library(methylKit)
 library(vegan) ## for Adonis
+library(ggpubr) ## to merge ggplot2 plots
+theme_set(theme_pubr())
 
 ## load custom functions
 source("customRfunctions.R")
@@ -21,8 +23,8 @@ source("customRfunctions.R")
 source("R01.3_prepMetadata.R")
 
 ## define in which machine we're working (apocrita or mythinkpad)
-machine="apocrita"
-## machine="mythinkpad"
+##machine="apocrita"
+machine="mythinkpad"
 source("R01.4_prepMethyldata.R")
 
 #############################################################
@@ -38,11 +40,11 @@ source("R01.4_prepMethyldata.R")
 # dev.off()
 
 ## offspring:
-pdf("../../data/fig/clusterALLCpG_offspings.pdf", width = 17, height = 7)
+# pdf("../../data/fig/clusterALLCpG_offspings.pdf", width = 17, height = 7)
 makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr_OFF, fullMetadata_OFFS,
                       my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
                       my.cols.fam = c(1:4))
-dev.off()
+# dev.off()
 
 ############################
 makePercentMetMat <- function(dataset){
@@ -110,71 +112,79 @@ myGOF.NMDS.FUN <- function(dataset){
 # myGOF.NMDS.FUN(dataset = uniteCovALL_woSexAndUnknowChr_OFF) # Goodness of fit for NMDS 
 # suggested the presence of six dimensions with a stress value <0.1
 
-myNMDSplots <- function(dataset, metadata){
+myNMDS <- function(dataset, metadata){
+  
   ## make percent methylation matrix
   x=makePercentMetMat(dataset)
   
   #Create NMDS based on bray-curtis distances - metaMDS finds the
   # most stable NMDS solution by randomly starting from different points in your data
-  set.seed(2)
+  set.seed(38)
   NMDS <- metaMDS(comm = x, distance = "bray", maxit=1000, k = 6)
   
   #check to see stress of NMDS
   mystressplot <- stressplot(NMDS) 
   
   #extract plotting coordinates
-  MDS1 = NMDS$points[,1]
-  MDS2 = NMDS$points[,2]
+  MDS1 = NMDS$points[,1] ; MDS2 = NMDS$points[,2] ; MDS3 = NMDS$points[,3]
   ## OR #extract NMDS scores (x and y coordinates)
   ## data.scores = as.data.frame(scores(NMDS))
   
-  #create new dataframe with plotting coordinates and variables to test
-  NMDS2 = data.frame(MDS1 = MDS1, MDS2 = MDS2, ID = metadata$ID,
-                     PAT=as.factor(metadata$PAT), 
-                     outcome=as.factor(metadata$outcome), 
-                     Sex = as.factor(metadata$Sex))
-  
-  #function to create convex hulls, though ggplot has the stat_ellipse() function that can do this automatically.
-  find_hull <- function(my_data) my_data[chull(my_data[,1], my_data[,2]), ]
-  
-  ## with paternal treatment
-  hulls <- ddply(NMDS2, "PAT", find_hull)
-  #generating convex hulls by "PAT" in my metadata
-  myPATplot <- ggplot(NMDS2, aes(x=MDS1, y=MDS2)) +
-    geom_polygon(data = hulls, aes(col=PAT), alpha=0) +
-    scale_color_manual(values = c("grey","yellow"))+
-    scale_fill_manual(values = c("grey","yellow"))+
-    geom_point(aes(fill=PAT, shape=PAT), size = 3, alpha = .6) +
-    #  geom_label(aes(label=row.names(NMDS2)))+
-    scale_shape_manual(values = c(21,22)) +
-    theme_bw() +
-    theme(legend.title=element_blank(), legend.position = "top")
-  
-  ## with Sex
-  hulls2 <- ddply(NMDS2, "Sex", find_hull)
-  mySEXplot <- ggplot(NMDS2, aes(x=MDS1, y=MDS2)) +
-    geom_polygon(data = hulls2, aes(col=Sex), alpha=0) +
-    scale_color_manual(values = c("red","blue"))+
-    scale_fill_manual(values = c("red","blue"))+
-    geom_point(aes(fill=Sex, shape=Sex), size = 3, alpha = .6) +
-    scale_shape_manual(values = c(21,22)) +
-    theme_bw() +
-    theme(legend.title=element_blank(), legend.position = "top")
-  
-  ## with offspring trt
-  hulls2 <- ddply(NMDS2, "outcome", find_hull)
-  myOFFplot <- ggplot(NMDS2, aes(x=MDS1, y=MDS2)) +
-    geom_polygon(data = hulls2, aes(col=outcome), alpha=0) +
-    scale_color_manual(values = c("grey","red"))+
-    scale_fill_manual(values = c("grey","red"))+
-    geom_point(aes(fill=outcome, shape=outcome), size = 3, alpha = .6) +
-    scale_shape_manual(values = c(21,22)) +
-    theme_bw() +
+  #create new data table (important for later hulls finding)
+  # with plotting coordinates and variables to test (dim 1,2,3)
+  NMDS_dt = data.table::data.table(MDS1 = MDS1, MDS2 = MDS2, MDS3 = MDS3,
+                                   ID = metadata$ID,
+                                   PAT=as.factor(metadata$PAT), 
+                                   outcome=as.factor(metadata$outcome), 
+                                   Sex = as.factor(metadata$Sex))
+  #### start sub fun 
+  makeNMDSplots <- function(dim, myvar){
+    if (dim == "1_2"){
+      dima=1; dimb=2
+    } else if (dim == "1_3"){
+      dima=1; dimb=3
+    } else if (dim == "2_3"){
+      dima=2; dimb=3
+    }
+    
+    if (myvar == "PAT"){
+      mycols = c("black","yellow")
+    } else if (myvar == "Sex"){
+      mycols = c("pink","blue")
+    } else if (myvar == "outcome"){
+      mycols = c("grey","red")
+    }
+    
+    # generating convex hulls splitted by myvar in my metadata:
+    hulls <- NMDS_dt[, .SD[chull(get(paste0("MDS", dima)), get(paste0("MDS", dimb)))], by = get(myvar)]
+    
+    myNMDSplot <- ggplot(NMDS_dt, 
+                         aes_string(x=paste0("MDS",dima), y=paste0("MDS",dimb))) +
+      geom_polygon(data = hulls, aes_string(fill=myvar), alpha=0.3) +
+      scale_color_manual(values = mycols)+
+      scale_fill_manual(values = mycols)+
+      geom_point(aes_string(fill=myvar, shape=myvar), size = 3, alpha = .6) +
+      #  geom_label(aes(label=row.names(NMDS2)))+
+      scale_shape_manual(values = c(21,22)) +
       theme(legend.title=element_blank(), legend.position = "top")
-    return(list(mystressplot=mystressplot, myPATplot=myPATplot,
-                mySEXplot=mySEXplot, myOFFplot=myOFFplot))
+    
+    return(myNMDSplot)
+  }
+  
+  figure <-  ggarrange(makeNMDSplots(dim= "1_2", myvar = "PAT"),
+                       makeNMDSplots(dim= "1_3", myvar = "PAT"),
+                       makeNMDSplots(dim= "2_3", myvar = "PAT"),
+                       makeNMDSplots(dim= "1_2", myvar = "Sex"),
+                       makeNMDSplots(dim= "1_3", myvar = "Sex"),
+                       makeNMDSplots(dim= "2_3", myvar = "Sex"),
+                       makeNMDSplots(dim= "1_2", myvar = "outcome"),
+                       makeNMDSplots(dim= "1_3", myvar = "outcome"),
+                       makeNMDSplots(dim= "2_3", myvar = "outcome"),
+                       ncol = 3, nrow = 3)
+  
+  return(list(mystressplot=mystressplot, NMDSplot = figure))
 }
 
-NMDSanalysis <- myNMDSplots(dataset = uniteCovALL_woSexAndUnknowChr_OFF, metadata = fullMetadata_OFFS)
-
-save(NMDSanalysis, file = "../../data/fig/NMDSplots.RData")
+NMDSanalysis <- myNMDS(dataset = uniteCovALL_woSexAndUnknowChr_OFF, metadata = fullMetadata_OFFS)
+NMDSanalysis$NMDSplot
+#save(NMDSanalysis, file = "../../data/fig/NMDSplots.RData")

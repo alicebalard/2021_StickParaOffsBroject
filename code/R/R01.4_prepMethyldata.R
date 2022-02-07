@@ -31,7 +31,7 @@ uniteCov2_woSexAndUnknowChr_PAR=reorganize(
   AL2MethylKitObj,
   sample.ids=fullMetadata_PAR$ID,
   treatment=fullMetadata_PAR$trtG1G2_NUM)
-## methylBase object with 1772152 rows
+## methylBase object with 1772013 rows
 
 ## Remove positions with only NA
 rm_NA_CpGs <- function(myunite){
@@ -54,6 +54,7 @@ uniteCovALL_woSexAndUnknowChr_OFF=reorganize(
   fullMethylKitObj,
   sample.ids=fullMetadata_OFFS$ID,
   treatment=fullMetadata_OFFS$trtG1G2_NUM)
+## methylBase object with 55530 rows
 
 ## Remove positions with only NA
 uniteCovALL_woSexAndUnknowChr_OFF <- rm_NA_CpGs(uniteCovALL_woSexAndUnknowChr_OFF)
