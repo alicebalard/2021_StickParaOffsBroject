@@ -3,28 +3,15 @@
 ## November 2021
 
 #################### Data load & preparation ####################
-library(plyr) # for join (keep row order)
-library(dendextend) # The package dendextend contains many functions for changing the appearance of a dendrogram and for comparing dendrograms.
-library(ggplot2)
-library(ggsignif) ## for significance bars on ggplot
-library(lme4) ## for mixed models
-library(nlme) ## for mixed models
-library(tidyverse)
-library(emmeans) ## for post-hoc Tukey tests
-library(methylKit)
-library(vegan) ## for Adonis
-library(ggpubr) ## to merge ggplot2 plots
-theme_set(theme_pubr())
-
+source("librariesLoading.R")
 ## load custom functions
 source("customRfunctions.R")
-
 ## Load samples metadata
 source("R01.3_prepMetadata.R")
-
 ## define in which machine we're working (apocrita or mythinkpad)
-##machine="apocrita"
-machine="mythinkpad"
+machine="apocrita"
+## machine="mythinkpad"
+## Load methylation data
 source("R01.4_prepMethyldata.R")
 
 #############################################################
@@ -92,8 +79,7 @@ myadonisFUN(dataset = uniteCovALL_woSexAndUnknowChr_OFF, metadata = fullMetadata
 myGOF.NMDS.FUN <- function(dataset){
   # make distance matrix with B-C distances
   data.dist = makeDatadistFUN(dataset)
-  # find the best number of dimensions
-  library(goeveg)
+  # find the best number of dimensions (goeveg lib)
   ## Clarke 1993 suggests the following guidelines for acceptable stress values: <0.05 = excellent, <0.10
   # = good, <0.20 = usable, >0.20 = not acceptable. The plot shows the border of the 0.20 stress value
   # limit. Solutions with higher stress values should be interpreted with caution and those with stress
