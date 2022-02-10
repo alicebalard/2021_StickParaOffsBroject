@@ -15,14 +15,20 @@ library(emmeans) ## for post-hoc Tukey tests
 source("customRfunctions.R")
 
 ## Load samples metadata
-source("R01.3_prepMetadata.R")
+source("R01.3_loadMetadata.R")
 
 ## Load previously united methylkit data
 
 ## define in which machine we're working (apocrita or mythinkpad)
-## machine="apocrita"
+machine="apocrita"
 ## machine="mythinkpad"
-source("R01.4_prepMethyldata.R")
+source("R01.4_loadMethyldata.R")
+## Data getting loaded:
+# uniteCovALL_woSexAndUnknowChr -> CpG positions shared by all fish
+# uniteCovALL_G1_woSexAndUnknowChr-> CpG positions shared by all parents
+# uniteCovALL_G2_woSexAndUnknowChr -> CpG positions shared by all offprings
+# uniteCov6_G1_woSexAndUnknowChr -> CpG positions shared by half the parents in each trt group
+# uniteCov14_G2_woSexAndUnknowChr -> CpG positions shared by half the offspring in each trt group
 
 #####################################################################
 ## Compare fitness traits between the different offsprings groups ###
@@ -33,6 +39,9 @@ source("R01.4_prepMethyldata.R")
 # of energy reserves and reproductive success, was calculated using there residuals from the 
 # regression of body mass on body length (Chellappaet al.1995).
 fullMetadata_OFFS$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|Family), data=fullMetadata_OFFS))
+
+## and for parents (no sex difference, only males):
+fullMetadata_PAR$BCI <- residuals(lmer(Wnettofin ~ Slfin + (1|Family), data=fullMetadata_PAR))
 
 ## Effect of paternal treatment on body condition of offspring:
 ## Kaufmann et al. 2014:
@@ -100,29 +109,24 @@ mean(fullMetadata$MappingEfficiency.BSBoldvsGynogen)
 qnorm(0.975)*sd(fullMetadata$MappingEfficiency.BSBoldvsGynogen)/sqrt(nrow(fullMetadata))
 
 ########################
-## Calculate (1) Mfr per site, (2) biallelic equivalent, (3) epi-Fst and epi-FIS and (4) number of methylated sites in uniteCov2 (CpG shared by at least 2 fish, after filtering and normalising)
+## Calculate (1) Mfr per site, (2) biallelic equivalent, (3) epi-Fst and epi-FIS and (4) number of methylated sites in uniteCov2 (CpG shared by all fish, after filtering and normalising)
 
-## (1) Mfr per site
-reRun= FALSE
-if(reRun == TRUE){
-    df <- methylKit::getData(uniteCov2_woSexAndUnknowChr)
-    MfrData2 <- data.frame(matrix(ncol=nrow(fullMetadata),
-                                  nrow=nrow(df)))
-    namevector <- paste0("Mfr", 1:nrow(fullMetadata))
-    vector <- 1:nrow(fullMetadata)
+## Part 1: check correlation between methylation presence (beta > 0.7) and coverage in our 5 datasets
+mycheckCorFUN <- function(myUniteCov, myMetaData){
+    ## (1) Mfr per site
+    df <- methylKit::getData(myUniteCov)
+    MfrData <- data.frame(matrix(ncol=nrow(myMetaData),
+                                 nrow=nrow(df)))
+    namevector <- paste0("Mfr", 1:nrow(myMetaData))
+    vector <- 1:nrow(myMetaData)
     for(i in vector){
-        colnames(MfrData2)[i] <- namevector[i]
-        MfrData2[i] <- df[paste0("numCs", i)]/
+        colnames(MfrData)[i] <- namevector[i]
+        MfrData[i] <- df[paste0("numCs", i)]/
             df[paste0("coverage", i)]
     }
-}
-
-## (2) biallelic equivalent
+    ## (2) biallelic equivalent
 ### Sagonas et al. 2020 MBE " A  number  of  methylated  sites/regions  were  esti-mated by converting the MFr into ordinal data: sites/regionswith little or no methylation (MFr<30%) were annotated as0  and  treated  as  no  methylated  sites/regions,  sites/regionswith  intermediate  methylation  levels  (30%<MFr<70%)were considered as heterozygote sites/regions and convertedinto  1,  whereas  sites/regions  with  high  or  fixed  methylation(MFr>70%) were treated as homozygous at this site/regionsand were annotated as 2."
 
-rerun= FALSE
-if(rerun == TRUE){
-    print("long part started, needs ~10min")
     getBiallVal <- function(x){
         y=NA
         if(x <= 0.3 & !is.na(x)){
@@ -136,60 +140,90 @@ if(rerun == TRUE){
     }
     getBiallValVec <- function(vec){sapply(vec, getBiallVal)}
     system.time(
-        MbiallData2 <- sapply(MfrData2, function(x) {getBiallValVec(x)})
+        MbiallData <- sapply(MfrData, function(x) {getBiallValVec(x)})
     )
-#### Saving point ####
-    save(MfrData2, MbiallData2, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/MethylationFrequency_2fishmin.RData")
-    print("long truc saved")
-    stop("We stop here for now")
-    print("Script did NOT end!")
+
+    ## rename correctly the full biallelic dataframe:
+    colnames(MbiallData) <- myUniteCov@sample.ids
+
+    ## make a data.frame with the sample ID and the biallelic methylation inf
+    ## To target methylated regions, we selected only sites in which methylation  ratio  was  over  70%
+    dfBiallMeth <- data.frame(
+        biallmethy = apply(MbiallData, 2, function(v) sum(v == 2, na.rm=TRUE)),
+        ID=myUniteCov@sample.ids)
+
+    dfBiallMeth
+
+    ## Append myMetaData with this new info
+    idorder <- order(as.numeric(gsub("S", "", myMetaData$ID)))
+    myMetaData <- merge(myMetaData, dfBiallMeth, by = "ID")
+    myMetaData <- myMetaData[idorder, ]
+    
+    return(myMetaData)
 }
 
-#### Load data : MfrData2 & MbiallData2 ####
-load(file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/MethylationFrequency_2fishmin.RData")
+fullMetadata_ALL <- mycheckCorFUN(uniteCovALL_woSexAndUnknowChr, fullMetadata)
 
-## rename correctly the full biallelic dataframe:
-colnames(MbiallData2) <- uniteCov2_woSexAndUnknowChr@sample.ids
+fullMetadata_PAR_ALL  <- mycheckCorFUN(uniteCovALL_G1_woSexAndUnknowChr, fullMetadata_PAR)
 
-## make a data.frame with the sample ID and the biallelic methylation inf
-## To target methylated regions, we selectedonly sites in which methylation  ratio  was  over  70%
-dfBiallMeth <- data.frame(
-    biallmethy = apply(MbiallData2, 2, function(v) sum(v == 2, na.rm=TRUE)),
-    ID=uniteCov2_woSexAndUnknowChr@sample.ids)
+fullMetadata_PAR_half <- mycheckCorFUN(uniteCov6_G1_woSexAndUnknowChr, fullMetadata_PAR)
 
-dfBiallMeth
+fullMetadata_OFFS_ALL  <- mycheckCorFUN(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS)
 
-## Append fullMetadata with this new info
-fullMetadata <- merge(fullMetadata, dfBiallMeth, sort=F)
-fullMetadata_OFFS <- merge(fullMetadata_OFFS, dfBiallMeth, sort=F) # N = 113 offsp.
+fullMetadata_OFFS_half  <- mycheckCorFUN(uniteCov14_G2_woSexAndUnknowChr, fullMetadata_OFFS)
 
-# Is there a correlation between nbr of methylated sites and coverage? YES
-cor.test(fullMetadata$biallmethy,fullMetadata$M.Seqs_rawReads, method="pearson")
-## t = 5.217, df = 133, p-value = 6.802e-07 cor 0.4121599
+############
+## Question: in our 5 datasets,
+## Is there a correlation between nbr of methylated sites and coverage?
+cor.test(fullMetadata_ALL$biallmethy,fullMetadata_ALL$M.Seqs_rawReads, method="pearson")
+##t = 0.94062, df = 133, p-value = 0.3486
+
+cor.test(fullMetadata_PAR_ALL$biallmethy,
+         fullMetadata_PAR_ALL$M.Seqs_rawReads, method="pearson")
+##t = -0.085834, df = 22, p-value = 0.9324
+
+cor.test(fullMetadata_PAR_half$biallmethy,
+         fullMetadata_PAR_half$M.Seqs_rawReads, method="pearson")
+## t = 4.106, df = 22, p-value = 0.0004657 cor=0.6586753
+
+cor.test(fullMetadata_OFFS_ALL$biallmethy,
+         fullMetadata_OFFS_ALL$M.Seqs_rawReads, method="pearson")
+## t = 1.0553, df = 109, p-value = 0.2936
+
+cor.test(fullMetadata_OFFS_half$biallmethy,
+         fullMetadata_OFFS_half$M.Seqs_rawReads, method="pearson")
+##t = 4.1194, df = 109, p-value = 7.421e-05 cor=0.3670324
 
 ###########################################################
 ## Does RMS (ratio of methylated sites) changes with BCI ##
 ###########################################################
-fullMetadata$RMS <- fullMetadata$biallmethy / (fullMetadata$M.Seqs_rawReads*10e6)
-fullMetadata_OFFS$RMS <- fullMetadata_OFFS$biallmethy / (fullMetadata_OFFS$M.Seqs_rawReads*10e6)
+calcRMS <- function(myMetaData){
+    myMetaData$biallmethy / (myMetaData$M.Seqs_rawReads*10e6)
+}
+
+fullMetadata_ALL$RMS <- calcRMS(fullMetadata_ALL)
+fullMetadata_PAR_ALL$RMS <- calcRMS(fullMetadata_PAR_ALL)
+fullMetadata_PAR_half$RMS <- calcRMS(fullMetadata_PAR_half)
+fullMetadata_OFFS_ALL$RMS <- calcRMS(fullMetadata_OFFS_ALL)
+fullMetadata_OFFS_half$RMS <- calcRMS(fullMetadata_OFFS_half)
 
 ## with family as random factor: not significant
-mod <- lme(RMS ~ BCI, random=~ 1|Family, data = fullMetadata_OFFS)
-anova(mod)
+## in parents:
+anova(lme(RMS ~ BCI, random=~ 1|Family, data = fullMetadata_PAR_half))
 
-mod <- lme(RMS ~ BCI*patTrt, random=~ 1|Family, data = fullMetadata_OFFS)
-anova(mod)
+## in offsprings:
+anova(lme(RMS ~ BCI, random=~ 1|Family, data = fullMetadata_OFFS_half))
+anova(lme(RMS ~ BCI*patTrt, random=~ 1|Family, data = fullMetadata_OFFS_half))
 
 ##############################################################################
 ## Does RMS (ratio of methylated sites) differ per trt group in offsprings? ##
 ##############################################################################
 
 # simple lm, compare to null model: not signif
-anova(lm(RMS ~ outcome, data = fullMetadata_OFFS)) 
+anova(lm(RMS ~ outcome, data = fullMetadata_OFFS_half)) 
 
 # with family as random factor: not significant
-mod <- lme(RMS ~ outcome, random= ~1|Family, data = fullMetadata_OFFS)
-anova(mod)
+anova(lme(RMS ~ outcome, random= ~1|Family, data = fullMetadata_OFFS_half))
 
 # ggplot(fullMetadata_offs, aes(x = outcome, y = RMS, fill =outcome)) +
 #     geom_boxplot() +
@@ -208,12 +242,12 @@ anova(mod)
 #########################################################################################
 ## Does RMS (ratio of methylated sites) correlated with parasite load in infected fish? ##
 ## -> NOPE
-modRMS <- lme(RMS ~ patTrt*No.Worms, random=~1|Family, data=fullMetadata_OFFS[fullMetadata_OFFS$No.Worms > 0,])
+modRMS <- lme(RMS ~ patTrt*No.Worms, random=~1|Family, data=fullMetadata_OFFS_half[fullMetadata_OFFS_half$No.Worms > 0,])
 anova(modRMS)
 
 #plot(modRMS)
 
-myRMSdf <- fullMetadata_OFFS[fullMetadata_OFFS$No.Worms > 0,] %>% group_by(patTrt, No.Worms) %>% 
+myRMSdf <- fullMetadata_OFFS_half[fullMetadata_OFFS_half$No.Worms > 0,] %>% group_by(patTrt, No.Worms) %>% 
   summarise(RMS = mean(RMS)) %>% data.frame()
 myRMSdf
 

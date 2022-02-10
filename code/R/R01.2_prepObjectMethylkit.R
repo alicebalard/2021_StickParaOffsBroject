@@ -15,9 +15,9 @@ library(ggplot2)
 ## /data/archive/archive-SBCS-EizaguirreLab/RRBS/StickPara_Broject_archive/08CompGenomes_mCextr/04RAnalyses_Methylome/methylbam_peichel...
 
 ## load custom functions
-source("/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/customRfunctions.R")
+source("customRfunctions.R")
 
-##### Load prepared dataset #####
+##### Load prepared dataset (in APOCRITA) #####
 dataPath="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/04BSBolt_methCall/BSBolt/MethylationCalling/Methylation_calling_splitted/formatCG4methylKit"
 
 temp = list.files(path=dataPath,
@@ -77,51 +77,104 @@ table(metadata$trtG1G2[!metadata$ID %in% IDtoRm])
 #        12         28         28         12         28         27 
 
 print("Add CpG present in ALL individuals")
-uniteCovALL=unite(normFil.myobj, mc.cores=8)
+uniteCovALL= methylKit::unite(normFil.myobj, mc.cores=8)
 uniteCovALL=as(uniteCovALL,"methylBase")
 
-## Sagonas et al. 2020. keep only those methyl-ated CpG sites observed in at least two individual fish after filtering and normalising
-uniteCov2=unite(normFil.myobj, min.per.group=2L, mc.cores=8)# try with 8 cores
-uniteCov2=as(uniteCov2,"methylBase")
-   
-## We save also DMS present in at least 6 fish
-uniteCov6=unite(normFil.myobj, min.per.group=6L, mc.cores=8)# try with 8 cores
-uniteCov6=as(uniteCov6,"methylBase")
+## In all PARENTS:
+uniteCovALL_G1 = reorganize(
+    normFil.myobj,
+    sample.ids=metadata$ID[!metadata$ID %in% IDtoRm &
+                           metadata$Generat %in% "P"],
+    treatment=metadata$trtG1G2_NUM[!metadata$ID %in% IDtoRm &
+                                   metadata$Generat %in% "P"])
+
+uniteCovALL_G1 = methylKit::unite(uniteCovALL_G1, mc.cores=8)# try with 8 cores
+uniteCovALL_G1 = as(uniteCovALL_G1,"methylBase")
+
+## In all OFFSPRING:
+uniteCovALL_G2 = reorganize(
+    normFil.myobj,
+    sample.ids=metadata$ID[!metadata$ID %in% IDtoRm &
+                           metadata$Generat %in% "O"],
+    treatment=metadata$trtG1G2_NUM[!metadata$ID %in% IDtoRm &
+                                   metadata$Generat %in% "O"])
+
+uniteCovALL_G2 = methylKit::unite(uniteCovALL_G2, mc.cores=8)# try with 8 cores
+uniteCovALL_G2 = as(uniteCovALL_G2,"methylBase")
+
+## Keep methylated CpG sites observed in at least 50% individual fish after filtering and normalising: 6 for parents, 14 for offsprings
+## PARENTS
+uniteCov6_G1 = reorganize(
+    normFil.myobj,
+    sample.ids=metadata$ID[!metadata$ID %in% IDtoRm &
+                           metadata$Generat %in% "P"],
+    treatment=metadata$trtG1G2_NUM[!metadata$ID %in% IDtoRm &
+                                   metadata$Generat %in% "P"])
+
+uniteCov6_G1 = methylKit::unite(uniteCov6_G1,
+                     min.per.group=6L, mc.cores=8)# try with 8 cores
+uniteCov6_G1 = as(uniteCov6_G1,"methylBase")
+
+## OFFSPRING
+uniteCov14_G2 = reorganize(
+    normFil.myobj,
+    sample.ids=metadata$ID[!metadata$ID %in% IDtoRm &
+                           metadata$Generat %in% "O"],
+    treatment=metadata$trtG1G2_NUM[!metadata$ID %in% IDtoRm &
+                                   metadata$Generat %in% "O"])
+
+uniteCov14_G2 = methylKit::unite(uniteCov14_G2,
+                     min.per.group=14L, mc.cores=8)# try with 8 cores
+uniteCov14_G2 = as(uniteCov14_G2,"methylBase")
 
 ## And save in RData file for later analyses
 save(uniteCovALL, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL.RData")
-save(uniteCov2, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov2.RData")
-save(uniteCov6, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6.RData")
+save(uniteCovALL_G1, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL_G1.RData")
+save(uniteCovALL_G2, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL_G2.RData")
+save(uniteCov6_G1, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6_G1.RData")
+save(uniteCov14_G2, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov14_G2.RData")
 
 ########################################################################################
 ## Remove reads from sex chromosome X ("Gy_chrXIX") and unmapped contigs ("Gy_chrUn") ##
 ########################################################################################
 print("nbr CpG shared by all 137 samples:")
 length(uniteCovALL$chr)
-
-print("nbr CpG shared by at least 2 animals:")
-length(uniteCov2$chr) 
-
-print("nbr CpG shared by at least 6 animals:")
-length(uniteCov6$chr) 
-
-print("nbr CpG per chrom shared by all 137 samples:")
-table(uniteCovALL$chr)
+print("nbr CpG shared by all parents:")
+length(uniteCovALL_G1$chr)
+print("nbr CpG shared by all offsprings:")
+length(uniteCovALL_G2$chr)
+print("nbr CpG shared by 50% (6) of parents per trt group:")
+length(uniteCov6_G1$chr)
+print("nbr CpG shared by 50% (14) of offsprings per trt group:")
+length(uniteCov14_G2$chr)
 
 print("nbr CpG on sex chromosome of unmapped:")
 nrow(uniteCovALL[uniteCovALL$chr %in% c("Gy_chrXIX", "Gy_chrUn"),])
 
 ## Keep CpG apart from sex chromosome XIX and unmapped (comprise Y chr)
-uniteCovALL_woSexAndUnknowChr=uniteCovALL[!uniteCovALL$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
-uniteCov2_woSexAndUnknowChr=uniteCov2[!uniteCov2$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
-uniteCov6_woSexAndUnknowChr=uniteCov6[!uniteCov6$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
+uniteCovALL_woSexAndUnknowChr=uniteCovALL[
+    !uniteCovALL$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
+uniteCovALL_G1_woSexAndUnknowChr=uniteCovALL_G1[
+    !uniteCovALL_G1$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
+uniteCovALL_G2_woSexAndUnknowChr=uniteCovALL_G2[
+    !uniteCovALL_G2$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
+uniteCov6_G1_woSexAndUnknowChr=uniteCov6_G1[
+    !uniteCov6_G1$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
+uniteCov14_G2_woSexAndUnknowChr=uniteCov14_G2[
+    !uniteCov14_G2$chr %in% c("Gy_chrXIX", "Gy_chrUn"),]
 
 #######################################
 ## Saving point for further analyses ##
 #######################################
 save(uniteCovALL_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL_woSexAndUnknownChr.RData")
-save(uniteCov2_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov2_woSexAndUnknownChr.RData")
-save(uniteCov6_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6_woSexAndUnknowChr.RData")
+save(uniteCovALL_G1_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL_G1_woSexAndUnknownChr.RData")
+save(uniteCovALL_G2_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovALL_G2_woSexAndUnknownChr.RData")
+save(uniteCov6_G1_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6_G1_woSexAndUnknownChr.RData")
+save(uniteCov14_G2_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov14_G2_woSexAndUnknownChr.RData")
+
+## Put the correct date in bash:
+# for f in uniteCov*; do mv "$f" "$(echo "$f" | sed s/.RData/_10feb22.RData/)"; done
+
 
 ##################### Previous tests with ALL numbers of fish 1 to 12:
 ## we kept for downstream analyses all CpG sites present in at least 1 to 12 individuals per group, or in all individuals:

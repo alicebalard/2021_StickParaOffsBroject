@@ -5,45 +5,45 @@ Loading required package: stats4
 Loading required package: BiocGenerics
 Loading required package: parallel
 
-Attaching package: 'BiocGenerics'
+Attaching package: ‘BiocGenerics’
 
-The following objects are masked from 'package:parallel':
+The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-The following objects are masked from 'package:stats':
+The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
-The following objects are masked from 'package:base':
+The following objects are masked from ‘package:base’:
 
-    Filter, Find, Map, Position, Reduce, anyDuplicated, append,
-    as.data.frame, basename, cbind, colnames, dirname, do.call,
-    duplicated, eval, evalq, get, grep, grepl, intersect, is.unsorted,
-    lapply, mapply, match, mget, order, paste, pmax, pmax.int, pmin,
-    pmin.int, rank, rbind, rownames, sapply, setdiff, sort, table,
-    tapply, union, unique, unsplit, which.max, which.min
+    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
+    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which.max, which.min
 
 Loading required package: S4Vectors
 
-Attaching package: 'S4Vectors'
+Attaching package: ‘S4Vectors’
 
-The following object is masked from 'package:base':
+The following object is masked from ‘package:base’:
 
     expand.grid
 
 Loading required package: IRanges
 Loading required package: GenomeInfoDb
 
-Attaching package: 'plyr'
+Attaching package: ‘plyr’
 
-The following object is masked from 'package:IRanges':
+The following object is masked from ‘package:IRanges’:
 
     desc
 
-The following object is masked from 'package:S4Vectors':
+The following object is masked from ‘package:S4Vectors’:
 
     rename
 
@@ -63,12 +63,78 @@ You may ask questions at stackoverflow, use the r and dendextend tags:
 ---------------------
 
 
-Attaching package: 'dendextend'
+Attaching package: ‘dendextend’
 
-The following object is masked from 'package:stats':
+The following object is masked from ‘package:stats’:
 
     cutree
 
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:plyr’:
+
+    arrange, count, desc, failwith, id, mutate, rename, summarise,
+    summarize
+
+The following object is masked from ‘package:methylKit’:
+
+    select
+
+The following objects are masked from ‘package:GenomicRanges’:
+
+    intersect, setdiff, union
+
+The following object is masked from ‘package:GenomeInfoDb’:
+
+    intersect
+
+The following objects are masked from ‘package:IRanges’:
+
+    collapse, desc, intersect, setdiff, slice, union
+
+The following objects are masked from ‘package:S4Vectors’:
+
+    first, intersect, rename, setdiff, setequal, union
+
+The following objects are masked from ‘package:BiocGenerics’:
+
+    combine, intersect, setdiff, union
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ tibble  3.1.6     ✔ purrr   0.3.4
+✔ tidyr   1.1.4     ✔ stringr 1.4.0
+✔ readr   2.1.1     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::arrange()    masks plyr::arrange()
+✖ dplyr::collapse()   masks IRanges::collapse()
+✖ dplyr::combine()    masks BiocGenerics::combine()
+✖ purrr::compact()    masks plyr::compact()
+✖ dplyr::count()      masks plyr::count()
+✖ dplyr::desc()       masks plyr::desc(), IRanges::desc()
+✖ tidyr::expand()     masks S4Vectors::expand()
+✖ dplyr::failwith()   masks plyr::failwith()
+✖ dplyr::filter()     masks stats::filter()
+✖ dplyr::first()      masks S4Vectors::first()
+✖ dplyr::id()         masks plyr::id()
+✖ dplyr::lag()        masks stats::lag()
+✖ dplyr::mutate()     masks plyr::mutate()
+✖ ggplot2::Position() masks BiocGenerics::Position(), base::Position()
+✖ purrr::reduce()     masks GenomicRanges::reduce(), IRanges::reduce()
+✖ dplyr::rename()     masks plyr::rename(), S4Vectors::rename()
+✖ dplyr::select()     masks methylKit::select()
+✖ dplyr::slice()      masks IRanges::slice()
+✖ dplyr::summarise()  masks plyr::summarise()
+✖ dplyr::summarize()  masks plyr::summarize()
+✖ tidyr::unite()      masks methylKit::unite()
 Received list of locations.
 Reading file.
 Reading file.
@@ -224,21 +290,17 @@ Reading file.
 uniting...
 uniting...
 uniting...
+uniting...
+uniting...
 [1] "nbr CpG shared by all 137 samples:"
 [1] 60362
-[1] "nbr CpG shared by at least 2 animals:"
-[1] 1989014
-[1] "nbr CpG shared by at least 6 animals:"
-[1] 1319592
-[1] "nbr CpG per chrom shared by all 137 samples:"
-
-    Gy_chrI    Gy_chrII   Gy_chrIII    Gy_chrIV    Gy_chrIX    Gy_chrUn 
-       4088        2821        2748        4192        2735        3581 
-    Gy_chrV    Gy_chrVI   Gy_chrVII  Gy_chrVIII     Gy_chrX    Gy_chrXI 
-       2452        2356        3853        2394        2221        2855 
-  Gy_chrXII  Gy_chrXIII   Gy_chrXIV   Gy_chrXIX    Gy_chrXV   Gy_chrXVI 
-       2786        2592        2402        1251        3018        2416 
- Gy_chrXVII Gy_chrXVIII    Gy_chrXX   Gy_chrXXI 
-       2757        2343        2178        2323 
+[1] "nbr CpG shared by all parents:"
+[1] 163408
+[1] "nbr CpG shared by all offsprings:"
+[1] 85293
+[1] "nbr CpG shared by 50% (6) of parents per trt group:"
+[1] 1325765
+[1] "nbr CpG shared by 50% (14) of offsprings per trt group:"
+[1] 1172880
 [1] "nbr CpG on sex chromosome of unmapped:"
 [1] 4832
