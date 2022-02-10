@@ -23,21 +23,18 @@ source("R01.4_prepMethyldata.R")
 myMethylKit = uniteCov2_woSexAndUnknowChr_PAR
 # load file with your DMS
 DMS_PAR <- readRDS("../../data/myDiff1_15p_parentalDiffMeth.RDS")
-myDMS = DMS_PAR
+myDMS = DMS_PAR # 13737 observation
 myMetaData <- fullMetadata_PAR
 enableWGCNAThreads()
 
-## Separate infected/control parents
-### First, infected parents:
-myMethylKit <- reorganize(
-  myMethylKit,
-  sample.ids=fullMetadata_PAR$ID[fullMetadata_PAR$trtG1G2_NUM %in% 4],
-  treatment=fullMetadata_PAR$trtG1G2_NUM[fullMetadata_PAR$trtG1G2_NUM %in% 4])
+## in step gsg$allOK: Removing samples: S70, S95
 
-myMetaData <- myMetaData[myMetaData$trtG1G2_NUM %in% 4,]
 
 #######
 ## 1.Data preparation
+
+######################################
+## METHYLATION DATA
 
 ## Extract the targeted CpG positions from the methylkit object
 myMethylKit$position <- paste(myMethylKit$chr, myMethylKit$start, myMethylKit$end)
@@ -63,11 +60,12 @@ datMeth = as.data.frame(t(myDF_fr));
 names(datMeth) = CpGInfo$CpGpos
 
 ## We first check for genes and samples with too many missing values:
-gsg = goodSamplesGenes(datMeth, verbose = 3, minFraction = 0.75); # keep CpG covered in at least 75% of samples
+gsg = goodSamplesGenes(datMeth, verbose = 3, 
+                       minFraction = 3/4)#increase minFraction because too many Nas at the following steps
 gsg$allOK 
 
-# If the last statement returns TRUE, all genes have passed the cuts. If not, we remove the offending genes and samples
-# from the data
+# If the last statement returns TRUE, all genes have passed the cuts. If not, 
+# we remove the offending genes and samples from the data
 if (!gsg$allOK)
 {
   # Optionally, print the gene and sample names that were removed:
@@ -78,16 +76,6 @@ if (!gsg$allOK)
   # Remove the offending genes and samples from the data:
   datMeth = datMeth[gsg$goodSamples, gsg$goodGenes]
 }
-
-## and check
-gsg = goodSamplesGenes(datMeth, verbose = 3, minFraction = 0.75); # keep CpG covered in at least 75% of samples
-gsg$allOK 
-
-## remove CpG with very low SD
-SD=apply(datMeth,2, sd, na.rm = TRUE)
-table(SD %in% 0) # no null SD
-# hist(SD, breaks = 100)
-# datMeth <- datMeth[,-which(SD<0.1)]
 
 ## Cluster the samples (in contrast to clustering genes that will come later) to see if there are any obvious
 ## outliers:
@@ -100,15 +88,20 @@ par(mar = c(0,4,2,0))
 plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
      cex.axis = 1.5, cex.main = 2) ## All good!
 
+######################################
+## TRAIT DATA
+
 ## Form a data frame analogous to expression data that will hold the individuals traits
 nrow(myMetaData)
 
+## Resistance: load of parasites: myMetaData$No.Worms
+## Tolerance: BCI TBC
 myMetaData$Family_NUM = as.numeric(gsub("Fam", "",myMetaData$Family))
 
 traitRows = match(rownames(datMeth), myMetaData$SampleID);
 datTraits = myMetaData[traitRows,];
 rownames(datTraits) = myMetaData[traitRows, "ID"];
-datTraits = datTraits[c("trtG1G2_NUM", "Family_NUM")] ## here keep interesting CONTINUOUS traits (no "Family", "Sex", "trtG1G2")
+datTraits = datTraits[c("trtG1G2_NUM", "Family_NUM", "No.Worms")] ## here keep interesting CONTINUOUS traits (no "Family", "Sex", "trtG1G2")
 collectGarbage();
 
 ## We now have the methylation data in the variable datMeth, and the corresponding traits in the variable
@@ -141,6 +134,7 @@ text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
      labels=powers,cex=cex1,col="red");
 # this line corresponds to using an R^2 cut-off of h
 abline(h=0.8,col="red")
+abline(h=0.9,col="red")
 # Mean connectivity as a function of the soft-thresholding power
 plot(sft$fitIndices[,1], sft$fitIndices[,5],
      xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
@@ -155,111 +149,102 @@ abline(h=100,col="red")
 
 #########
 ## 2.2 One-step network construction and module detection
-net = blockwiseModules(datMeth, power = 5,
-                       corOptions = list(use = "p", maxPOutliers = 0.1),
-                       replaceMissingAdjacencies = TRUE ,
-                       TOMType = "unsigned", minModuleSize = 30,
-                       reassignThreshold = 0, mergeCutHeight = 0.25,
-                       numericLabels = TRUE, pamRespectsDendro = FALSE)
-# saveTOMs = TRUE,
-# saveTOMFileBase = "femaleMouseTOM",
-# verbose = 3)
-# replaceMissingAdjacencies = TRUE) # https://support.bioconductor.org/p/75956/ 
-
-table(is.na(datMeth))
-
-datMeth[1:3, 1:3]
-## see columns with too many NaS. 
-isna=apply(datMeth,2, is.na)
-
-table(isna)
-datMeth2 = datMeth[, colSums(is.na(datMeth)) != nrow(datMeth)]
-
+net = blockwiseModules(datMeth, power = 12, # 12 is default for signed network
+                       TOMType = "signed", # preserved direction +/- of correlations
+                       maxBlockSize = 10000, # we have about 6000 probes, this value should be higher
+                       corType = "bicor", # handles better outliers than Pearson
+                       maxPOutliers = 0.1,
+                       replaceMissingAdjacencies = TRUE, # to deal with pairs of genes in your data
+                       # that have missing values arranged such that after removing the entries
+                       # that are missing in the other gene, one of the genes becomes constant
+                       saveTOMs = TRUE,
+                       saveTOMFileBase = "../../data/networks/parentalTOM",
+                       verbose = 3)
 
 # We now return to the network analysis. To see how many modules were identified and what the module sizes are,
 # one can use table(net$colors). Its output is
-table(net$colors) # 1 module, with 42 CpG. The label 0 is reserved for CpGs outside of all modules
+table(net$colors) # The label grey is reserved for CpGs outside of all modules
+
+# open a graphics window
+sizeGrWindow(12, 9)
+# Convert labels to colors for plotting
+mergedColors = labels2colors(net$colors)
+# Plot the dendrogram and the module colors underneath
+plotDendroAndColors(net$dendrograms[[1]], mergedColors[net$blockGenes[[1]]],
+                    "Module colors",
+                    dendroLabels = FALSE, hang = 0.03,
+                    addGuide = TRUE, guideHang = 0.05)
+
+moduleLabels = net$colors
+moduleColors = labels2colors(net$colors)
+MEs = net$MEs;
+geneTree = net$dendrograms[[1]];
+# save(MEs, moduleLabels, moduleColors, geneTree,
+#      file = "FemaleLiver-02-networkConstruction-auto.RData")
 # 
-# # open a graphics window
-# sizeGrWindow(12, 9)
-# # Convert labels to colors for plotting
-# mergedColors = labels2colors(net$colors)
-# # Plot the dendrogram and the module colors underneath
-# plotDendroAndColors(net$dendrograms[[1]], mergedColors[net$blockGenes[[1]]],
-#                     "Module colors",
-#                     dendroLabels = FALSE, hang = 0.03,
-#                     addGuide = TRUE, guideHang = 0.05)
+################ GRAPHS ###################
+library(tidyverse); library(igraph); library(ggraph); library(tidygraph); library(ggregplot)
+library(fs); library(magrittr); library(cowplot); library(ggplot2)
+library(patchwork); library(Matrix); library(MASS); library(reshape2)
+
+## Export from WGCNA to igraph for visualisation
+
+# Recalculate topological overlap
+TOM = TOMsimilarityFromExpr(datMeth, power = 12);
+
+rownames(TOM) <- names(datMeth)
+colnames(TOM) <- names(datMeth)
+# this is an adjacency matrix
+
+## Make graph:
+myGraph <- TOM %>%
+  # stores the correlations as edge weight:
+  graph_from_adjacency_matrix(mode = "undirected", weighted = T) %>% # igraph. Weight saved in edges
+  # as_tbl_graph(nodes = CpGInfo) %>% # %>% # tidygraph with nodes CpG info
+  simplify()%>% # removes self-loops
+  as_tbl_graph() %>% # tidygraph with nodes CpG name
+  activate(nodes) %>%
+  left_join(CpGInfo, by = c("name" = "CpGpos"))%>% # add CpGInfo: chromosome location
+  left_join(data.frame(name= names(moduleLabels), color = moduleColors), by = c("name" = "name")) # add previously detected module colors
+
+## add layout based on algorythms, compare different layouts
+Layout1 <- layout_with_fr(myGraph, # Fruchterman-Reingold as an example
+                          weights = myGraph %>%
+                            activate(edges) %>%
+                            pull(weight)) # Adding in weights explicitly
 # 
-# moduleLabels = net$colors
-# moduleColors = labels2colors(net$colors)
-# MEs = net$MEs;
-# geneTree = net$dendrograms[[1]];
-# # save(MEs, moduleLabels, moduleColors, geneTree,
-# #      file = "FemaleLiver-02-networkConstruction-auto.RData")
-# 
-# ################ GRAPHS ###################
-# library(tidyverse); library(igraph); library(ggraph); library(tidygraph); library(ggregplot)
-# library(fs); library(magrittr); library(cowplot); library(ggplot2)
-# library(patchwork); library(Matrix); library(MASS); library(reshape2)
-# 
-# ## Export from WGCNA to igraph for visualisation
-# 
-# # Recalculate topological overlap
-# TOM = TOMsimilarityFromExpr(datMeth, power = 3);
-# 
-# rownames(TOM) <- names(datMeth)
-# colnames(TOM) <- names(datMeth)
-# ## 66 by 66: this is an adjacency matrix
-# 
-# ## Make graph:
-# myGraph <- TOM %>% 
-#   # stores the correlations as edge weight:
-#   graph_from_adjacency_matrix(mode = "undirected", weighted = T) %>% # igraph. Weight saved in edges
-#   # as_tbl_graph(nodes = CpGInfo) %>% # %>% # tidygraph with nodes CpG info
-#   simplify()%>% # removes self-loops
-#   as_tbl_graph() %>% # tidygraph with nodes CpG name
-#   activate(nodes) %>% 
-#   left_join(CpGInfo, by = c("name" = "CpGpos"))%>% # add CpGInfo: chromosome location 
-#   left_join(data.frame(name= names(moduleLabels), color = moduleColors), by = c("name" = "name")) # add previously detected module colors
-# 
-# ## add layout based on algorythms, compare different layouts
-# Layout1 <- layout_with_fr(myGraph, # Fruchterman-Reingold as an example
-#                           weights = myGraph %>% 
-#                             activate(edges) %>% 
-#                             pull(weight)) # Adding in weights explicitly
-# 
-# Layout2 <- layout_with_kk(myGraph, 
-#                           weights = myGraph %>% 
-#                             activate(edges) %>% 
+# Layout2 <- layout_with_kk(myGraph,
+#                           weights = myGraph %>%
+#                             activate(edges) %>%
 #                             pull(weight)) # Kamada-Kawai
-# Layout3 <- layout_with_drl(myGraph, 
-#                            weights = myGraph %>% 
-#                              activate(edges) %>% 
+# Layout3 <- layout_with_drl(myGraph,
+#                            weights = myGraph %>%
+#                              activate(edges) %>%
 #                              pull(weight)) # Deep reinforcement learning
 # Layout4 <- layout_with_mds(myGraph) # Multi-dimensional scaling
 # 
 # # Comparing the layout algorithms ####
-# list(Layout1, Layout2, Layout3, Layout4) %>% 
+# list(Layout1, Layout2, Layout3, Layout4) %>%
 #   map(~myGraph %>% # Going through the list of layouts
 #         ggraph(.x) + # Applying a new layout to the graph each time
 #         geom_edge_link0(alpha = 0.1) +
 #         geom_node_point() +
 #         theme_bw() +
-#         coord_fixed()) %>% 
+#         coord_fixed()) %>%
 #   ArrangeCowplot() +  # My function to plot them all together using patchwork
 #   plot_layout(ncol = 2) + # 2 columns
 #   plot_annotation(tag_levels = "A") # Label them with letters
-# 
-# ## Plot:
-# myGraph %>% # my igraph - tidygraph
-#   ggraph(Layout1) +  # then ggraph
-#   geom_edge_link(aes(alpha=weight)) + 
-#   scale_edge_alpha(range=c(0.1,1))+
-#   geom_node_point(aes(color=color), size = 7) +
-#   scale_colour_manual(values = c("grey", "turquoise"))+
-#   geom_node_text(aes(label = name), size = 3) 
-# 
-# 
+
+## Plot:
+myGraph %>% # my igraph - tidygraph
+  ggraph(Layout1) +  # then ggraph
+  geom_edge_link(aes(alpha=weight)) +
+  scale_edge_alpha(range=c(0.1,1))+
+  geom_node_point(aes(color=color), size = 7) +
+#  scale_colour_manual(values = c("grey", "turquoise"))+
+  geom_node_text(aes(label = name), size = 3)
+
+
 # ########### Network "bonus" ideas
 # 
 # ## test other nodes characteristics
