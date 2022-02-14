@@ -9,8 +9,8 @@ source("customRfunctions.R")
 ## Load samples metadata
 source("R01.3_loadMetadata.R")
 ## define in which machine we're working (apocrita or mythinkpad)
-machine="apocrita"
-##machine="mythinkpad"
+# machine="apocrita"
+machine="mythinkpad"
 ## Load methylation data
 source("R01.4_loadMethyldata.R")
 
@@ -40,10 +40,11 @@ getDMS <- function(myuniteCov, myMetadata){
 ## rerun or upload
 ### RERUN
 # DMS15pc_PAR_half <- getDMS(uniteCov6_G1_woSexAndUnknowChr, fullMetadata_PAR_half)
-# 6603 positions
 # saveRDS(DMS15pc_PAR_half, file = "../../data/DMS15pc_PAR_half.RDS")
 ### UPLOAD
 DMS15pc_PAR_half <- readRDS("../../data/DMS15pc_PAR_half.RDS")
+nrow(DMS15pc_PAR_half)
+# 6603 positions
 
 ## NB Kostas' results: "We found a total of 1,973 CpG sites out of
 # 1,172,887 CpGs (0.17%) across the genome that showed at
@@ -64,26 +65,57 @@ table(fullMetadata_OFFS$trtG1G2, fullMetadata_OFFS$trtG1G2_NUM)
 # E_control  28  0  0  0
 # E_exposed   0 28  0  0
 
-DMS15pc_G2_controlG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
-                                                            treatment = fullMetadata_OFFS$trtG1G2_NUM[
-                                                                                              fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)], 
-                                                            sample.ids = fullMetadata_OFFS$ID[
-                                                                                               fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)]), 
-                                    myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+# DMS15pc_G2_controlG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+#                                                             treatment = fullMetadata_OFFS$trtG1G2_NUM[
+#                                                                                               fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)], 
+#                                                             sample.ids = fullMetadata_OFFS$ID[
+#                                                                                                fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)]), 
+#                                     myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+# 
+# saveRDS(DMS15pc_G2_controlG1_half, file = "../../data/DMS15pc_G2_controlG1_half.RDS")
 
-saveRDS(DMS15pc_G2_controlG1_half, file = "../../data/DMS15pc_G2_controlG1_half")
-
-DMS15pc_G2_infectedG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
-                                                            treatment = fullMetadata_OFFS$trtG1G2_NUM[
-                                                                                              fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)], 
-                                                            sample.ids = fullMetadata_OFFS$ID[
-                                                                                               fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)]), 
-                                    myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
-
-saveRDS(DMS15pc_G2_infectedG1_half, file = "../../data/DMS15pc_G2_infectedG1_half")
+# DMS15pc_G2_infectedG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+#                                                             treatment = fullMetadata_OFFS$trtG1G2_NUM[
+#                                                                                               fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)], 
+#                                                             sample.ids = fullMetadata_OFFS$ID[
+#                                                                                                fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)]), 
+#                                     myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
+# 
+# saveRDS(DMS15pc_G2_infectedG1_half, file = "../../data/DMS15pc_G2_infectedG1_half.RDS")
 
 ## stop here:
-stop("We stop here for now")
+# stop("We stop here for now") # to run getDMS on Apocrita cause it's LONG
+
+### UPLOAD
+## Control G1 - G2(trt vs control)
+DMS15pc_G2_controlG1_half <- readRDS("../../data/DMS15pc_G2_controlG1_half.RDS")
+nrow(DMS15pc_G2_controlG1_half)
+# 1642 positions
+
+## Infected G1 - G2(trt vs control)
+DMS15pc_G2_infectedG1_half <- readRDS("../../data/DMS15pc_G2_infectedG1_half.RDS")
+nrow(DMS15pc_G2_infectedG1_half)
+# 943 positions
+
+#### WHICH positions? 
+library(VennDiagram)#to put up
+
+## Check which sequenced CpG are overlapping between half offsprings and half parents datasets:
+
+## YOU'RE HERE 14th feb evening!!
+
+
+## Check which DMS are averlapping between offsprings and parents datasets
+
+posG1DMS <- paste(DMS15pc_PAR_half$chr, DMS15pc_PAR_half$start, DMS15pc_PAR_half$end)
+posG2DMS_controlG1 <- paste(DMS15pc_G2_controlG1_half$chr, DMS15pc_G2_controlG1_half$start, DMS15pc_G2_controlG1_half$end)
+posG2DMS_infectedG1 <- paste(DMS15pc_G2_infectedG1_half$chr, DMS15pc_G2_infectedG1_half$start, DMS15pc_G2_infectedG1_half$end)
+
+VennDiagram::get.venn.partitions(
+  list(posG1DMS=posG1DMS, posG2DMS_controlG1=posG2DMS_controlG1, posG2DMS_infectedG1=posG2DMS_infectedG1))
+grid.newpage()
+grid::grid.draw(VennDiagram::venn.diagram(list(posG1DMS=posG1DMS, posG2DMS_controlG1=posG2DMS_controlG1, posG2DMS_infectedG1=posG2DMS_infectedG1), NULL))
+
 
 
 #############
