@@ -64,7 +64,7 @@ get_pos <- function(CHROM,genome){
          POS = sample(x=1:genome$length[genome$chrom == CHROM],size=1))
 }
 
-makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff){
+makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50","grey50","darkred","darkred")){
   #GA_genome.fa.sizes.txt is a file with chromosome sizes and names
   genome <- GYgynogff %>%
     mutate(chrom_nr=chrom %>% deroman(),
@@ -101,9 +101,9 @@ makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff){
   ggplot()+
     geom_rect(data=genome2,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=type), alpha=.2)+
     geom_point(data=data[abs(data$meth.diff)>15 & data$significance=="significant",],
-               aes(x=gpos,y=meth.diff,col=region,shape=region),fill="white")+
-    scale_color_manual(values = c("grey50","grey50","darkred","darkred"))+
-    scale_shape_manual(values=c(21,22,21,22))+
+               aes(x=gpos,y=meth.diff,col=region,shape=region),fill="white", size = 2)+
+    scale_color_manual(values = mycols)+
+    scale_shape_manual(values=c(21,21,21,21))+
     scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none")+
     scale_x_continuous(breaks=genome2$gmid,labels=genome2$chrom %>% str_remove(.,"chr"),
                        position = "top",expand = c(0,0))+
@@ -113,6 +113,3 @@ makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff){
           axis.title = element_blank(),
           strip.placement = "outside")
 }
-
-
-

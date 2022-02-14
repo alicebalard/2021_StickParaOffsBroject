@@ -7,12 +7,12 @@ source("librariesLoading.R")
 ## load custom functions
 source("customRfunctions.R")
 ## Load samples metadata
-source("R01.3_prepMetadata.R")
+source("R01.3_loadMetadata.R")
 ## define in which machine we're working (apocrita or mythinkpad)
-machine="apocrita"
-## machine="mythinkpad"
+# machine="apocrita"
+machine="mythinkpad"
 ## Load methylation data
-source("R01.4_prepMethyldata.R")
+source("R01.4_loadMethyldata.R")
 
 #############################################################
 ### PART 1: Methylation profiles, CpG present in all fish ###
@@ -28,7 +28,7 @@ source("R01.4_prepMethyldata.R")
 
 ## offspring:
 # pdf("../../data/fig/clusterALLCpG_offspings.pdf", width = 17, height = 7)
-makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr_OFF, fullMetadata_OFFS,
+makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS_ALL,
                       my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
                       my.cols.fam = c(1:4))
 # dev.off()
@@ -65,15 +65,11 @@ myadonisFUN <- function(dataset, metadata){
   print(adonis2(data.dist ~ PAT * outcome * Sex, data = metadata, permutations = perm))
   ## remove the non significant interactions
   print(adonis2(data.dist ~ PAT + outcome + Sex, data = metadata, permutations = perm))
-  ## Remove 1 factor by turn - backwards simplification
-  # adonis2(data.dist ~ outcome + Sex, data = metadata, permutations = perm)
-  # adonis2(data.dist ~ PAT + Sex, data = metadata, permutations = perm)
-  # adonis2(data.dist ~ PAT + outcome, data = metadata, permutations = perm)
 }
 
 ###################
-## Let's run Adonis
-myadonisFUN(dataset = uniteCovALL_woSexAndUnknowChr_OFF, metadata = fullMetadata_OFFS)
+## Let's run Adonis for offspring (considering CpG shared by ALL)
+myadonisFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS_ALL)
 
 ########## NMDS
 myGOF.NMDS.FUN <- function(dataset){
@@ -95,8 +91,8 @@ myGOF.NMDS.FUN <- function(dataset){
 }
 
 #### RUN Goodness of fit
-# myGOF.NMDS.FUN(dataset = uniteCovALL_woSexAndUnknowChr_OFF) # Goodness of fit for NMDS 
-# suggested the presence of six dimensions with a stress value <0.1
+# myGOF.NMDS.FUN(dataset = uniteCovALL_G2_woSexAndUnknowChr) # Goodness of fit for NMDS 
+# suggested the presence of six dimensions with a stress value <0.1 and 2 with > 0.2
 
 myNMDS <- function(dataset, metadata){
   
@@ -171,6 +167,6 @@ myNMDS <- function(dataset, metadata){
   return(list(mystressplot=mystressplot, NMDSplot = figure))
 }
 
-NMDSanalysis <- myNMDS(dataset = uniteCovALL_woSexAndUnknowChr_OFF, metadata = fullMetadata_OFFS)
+NMDSanalysis <- myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS_ALL)
 NMDSanalysis$NMDSplot
 #save(NMDSanalysis, file = "../../data/fig/NMDSplots.RData")

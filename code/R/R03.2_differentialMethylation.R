@@ -9,8 +9,8 @@ source("customRfunctions.R")
 ## Load samples metadata
 source("R01.3_prepMetadata.R")
 ## define in which machine we're working (apocrita or mythinkpad)
-machine="apocrita"
-## machine="mythinkpad"
+##machine="apocrita"
+machine="mythinkpad"
 ## Load methylation data
 source("R01.4_prepMethyldata.R")
 
@@ -18,48 +18,105 @@ source("R01.4_prepMethyldata.R")
 ### PART 2: Differential methylation sites ####
 ###############################################
 
-##########################################################
-## Comparison 1: BASELINE -> Parents (control vs infected) 
-## Extract DMS from parents (at least in 2 fish), annotate them, compare with Kostas results
+### 3 comparisons to do:
+## PARENTS trt-ctrl
+## G2-control G1 trt-ctrl
+## G2-infected G1 trt-ctrl ## HYP: this will be different
 
 ## Calculate DMS accounting for covariates: family
-rerun=FALSE
-if (rerun==TRUE){
-    cov = data.frame(Family = fullMetadata_PAR$Family)
-    myDiffMeth=calculateDiffMeth(uniteCov2_woSexAndUnknowChr_PAR, 
-                                 covariates = cov, mc.cores = 4)
-
-                                        # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
-                                        # NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
-    myDiff1_15p = getMethylDiff(myDiffMeth,difference=15,qvalue=0.01)
-
-    myDiff1_15p # 6544 positions
-    saveRDS(myDiff1_15p, file = "../../data/myDiff1_15p_parentalDiffMeth.RDS")
+getDMS <- function(myuniteCov, myMetadata){
+  cov = data.frame(Family = myMetadata$Family)
+  myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = 4)
+  # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
+  # NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
+  myDMS_15pc = getMethylDiff(myDiffMeth, difference=15, qvalue=0.01)
+  return(myDMS_15pc)
 }
 
-DMS_PAR <- readRDS("../../data/myDiff1_15p_parentalDiffMeth.RDS")
+##########################################################
+## Comparison 1: BASELINE -> Parents (control vs infected) 
+## Extract DMS from parents (at least in half the fish), annotate them, compare with Kostas results
+
+## rerun or upload
+### RERUN
+# DMS15pc_PAR_half <- getDMS(uniteCov6_G1_woSexAndUnknowChr, fullMetadata_PAR_half)
+# 6603 positions
+# saveRDS(DMS15pc_PAR_half, file = "../../data/DMS15pc_PAR_half.RDS")
+### UPLOAD
+DMS15pc_PAR_half <- readRDS("../../data/DMS15pc_PAR_half.RDS")
+
+## NB Kostas' results: "We found a total of 1,973 CpG sites out of
+# 1,172,887 CpGs (0.17%) across the genome that showed at
+# least 15% differential fractional methylation (differentially
+# methylated site [DMS]; q < 0.01) between infected and uninfected fish"
+
+nrow(uniteCov6_G1_woSexAndUnknowChr)#1 188 179 CpG sites
+nrow(DMS15pc_PAR_half) # 6603 DMS
+nrow(DMS15pc_PAR_half) / nrow(uniteCov6_G1_woSexAndUnknowChr) *100 # 0.55%
+
+##########################################################
+## Comparison 2: Should be like baseline -> G2 from G1 control (control vs infected) 
+
+table(fullMetadata_OFFS_half$trtG1G2, fullMetadata_OFFS_half$trtG1G2_NUM)
+#             2  3  5  6
+# NE_control  0  0 28  0
+# NE_exposed  0  0  0 27
+# E_control  28  0  0  0
+# E_exposed   0 28  0  0
+
+DMS15pc_G2_controlG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+                                                            treatment = fullMetadata_OFFS_half$trtG1G2_NUM[
+                                                              fullMetadata_OFFS_half$trtG1G2_NUM %in% c(5,6)], 
+                                                            sample.ids = fullMetadata_OFFS_half$ID[
+                                                              fullMetadata_OFFS_half$trtG1G2_NUM %in% c(5,6)]), 
+                                    myMetadata = fullMetadata_OFFS_half[
+                                      fullMetadata_OFFS_half$trtG1G2_NUM %in% c(5,6),])
+
+saveRDS(DMS15pc_G2_controlG1_half, file = "../../data/DMS15pc_G2_controlG1_half")
+
+DMS15pc_G2_infectedG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+                                                            treatment = fullMetadata_OFFS_half$trtG1G2_NUM[
+                                                              fullMetadata_OFFS_half$trtG1G2_NUM %in% c(2,3)], 
+                                                            sample.ids = fullMetadata_OFFS_half$ID[
+                                                              fullMetadata_OFFS_half$trtG1G2_NUM %in% c(2,3)]), 
+                                    myMetadata = fullMetadata_OFFS_half[
+                                      fullMetadata_OFFS_half$trtG1G2_NUM %in% c(2,3),])
+
+saveRDS(DMS15pc_G2_infectedG1_half, file = "../../data/DMS15pc_G2_infectedG1_half")
+
+
 
 #############
 ## annotation
 
 ## load genome annotation
-gene.obj=readTranscriptFeatures("../../gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.bed12", remove.unusual = FALSE)
+gene.obj=readTranscriptFeatures("../../gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.bed12", 
+                                remove.unusual = FALSE)
  
+## PARENTS trt-ctrl
+## G2-control G1 trt-ctrl
+## G2-infected G1 trt-ctrl
+
 # annotate differentially methylated CpGs with promoter/exon/intron using annotation data
-diffAnn_PAR=annotateWithGeneParts(as(DMS_PAR,"GRanges"),gene.obj)
+diffAnn_PAR=annotateWithGeneParts(as(DMS15pc_PAR_half,"GRanges"),gene.obj)
 diffAnn_PAR
 plotTargetAnnotation(diffAnn_PAR,precedence=TRUE,
                      main="differential methylation annotation")
+## percentage of target features overlapping with annotation:
+# (with promoter > exon > intron precedence):
+# promoter  exon       intron   intergenic 
+# 9.13      12.75      30.80      47.31 
+
 ## Kostas MBE: The DMSs and regions were predominately
-#found in intergenic regions (47.74% and 48.94%, respecti vely),
-#with introns (26.19% and 23.09), exons (15.07% and 13.98%),and promoters (11% and 13.98%) showing lower proportions
+# found in intergenic regions (47.74% and 48.94%, respectively),
+# with introns (26.19% and 23.09), exons (15.07% and 13.98%), and promoters (11% and 13.98%) showing lower proportions
  
 ###########################
 ## Manhattan plot of DMS ##
 ###########################
 
-# load file with your DMS
-DMS_PAR <- readRDS("../../data/myDiff1_15p_parentalDiffMeth.RDS")
+## Parents trt-ctrl
+
 # load annotation
 annot_PAR <- as.data.frame(diffAnn_PAR@members)
 ## Load file containing length of each gynogen chromosomes 
@@ -67,14 +124,14 @@ annot_PAR <- as.data.frame(diffAnn_PAR@members)
 GYgynogff = read.table("../../data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt")
 names(GYgynogff) = c("chrom","length")
 
-makeManhattanPlots(DMSfile = DMS_PAR, annotFile = annot_PAR, GYgynogff = GYgynogff)
+makeManhattanPlots(DMSfile = DMS15pc_PAR_half, annotFile = annot_PAR, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"))
 
 
 # GO terms --> TBC
 # Networks --> TBC
 
 
-                                        # ### YOU'RE HERE ;)
 # 
 # ###################################################################################################
 # ## Comparison 2: offsprings infected from unifected (trtgroup 4) and infected (trt group 6) fathers

@@ -174,7 +174,8 @@ fullMetadata_OFFS_half  <- mycheckCorFUN(uniteCov14_G2_woSexAndUnknowChr, fullMe
 
 ############
 ## Question: in our 5 datasets,
-## Is there a correlation between nbr of methylated sites and coverage?
+## Is there a correlation between nbr of methylated sites and coverage? 
+# ONLY when we keep CpG shared by at least half the fish. Must be removed when more stringent
 cor.test(fullMetadata_ALL$biallmethy,fullMetadata_ALL$M.Seqs_rawReads, method="pearson")
 ##t = 0.94062, df = 133, p-value = 0.3486
 
@@ -225,19 +226,19 @@ anova(lm(RMS ~ outcome, data = fullMetadata_OFFS_half))
 # with family as random factor: not significant
 anova(lme(RMS ~ outcome, random= ~1|Family, data = fullMetadata_OFFS_half))
 
-# ggplot(fullMetadata_offs, aes(x = outcome, y = RMS, fill =outcome)) +
-#     geom_boxplot() +
-#     scale_fill_manual(values=c("grey","red")) +
-#     theme_minimal()
+ggplot(fullMetadata_OFFS_half, aes(x = outcome, y = RMS, fill =outcome)) +
+    geom_boxplot() +
+    scale_fill_manual(values=c("grey","red")) +
+    theme_minimal()
 
 ## And per group? Not significant
-mod <- lme(RMS ~ trtG1G2, random= ~1|Family, data = fullMetadata_OFFS)
+mod <- lme(RMS ~ trtG1G2, random= ~1|Family, data = fullMetadata_OFFS_half)
 anova(mod)
 
-# ggplot(fullMetadata_offs, aes(x = trtG1G2, y = RMS)) +
-#   geom_violin() +
-#   geom_boxplot(width=.3) +
-#   theme_minimal()
+ggplot(fullMetadata_OFFS_half, aes(x = trtG1G2, y = RMS)) +
+  geom_violin() +
+  geom_boxplot(width=.3) +
+  theme_minimal()
 
 #########################################################################################
 ## Does RMS (ratio of methylated sites) correlated with parasite load in infected fish? ##
@@ -251,12 +252,12 @@ myRMSdf <- fullMetadata_OFFS_half[fullMetadata_OFFS_half$No.Worms > 0,] %>% grou
   summarise(RMS = mean(RMS)) %>% data.frame()
 myRMSdf
 
-# ggplot(fullMetadata_offs[fullMetadata_offs$No.Worms > 0,], aes(x=No.Worms, y = RMS, group = patTrt, col = patTrt))+
-#   geom_point() + geom_line(data=myRMSdf)+
-#   geom_point(data=myRMSdf, aes(fill = patTrt), col = "black", size = 3, pch = 21)+
-#   scale_color_manual(values = c("gray", "red"))+
-#   scale_fill_manual(values = c("gray", "red"))+
-#   theme_bw()
+ggplot(fullMetadata_OFFS_half[fullMetadata_OFFS_half$No.Worms > 0,], aes(x=No.Worms, y = RMS, group = patTrt, col = patTrt))+
+  geom_point() + geom_line(data=myRMSdf)+
+  geom_point(data=myRMSdf, aes(fill = patTrt), col = "black", size = 3, pch = 21)+
+  scale_color_manual(values = c("gray", "red"))+
+  scale_fill_manual(values = c("gray", "red"))+
+  theme_bw()
 
 #################################################################################
 ## Calcul of epi-FST/epi-FIS: Homogeneisation of methylation marks in infected? ##
