@@ -31,9 +31,9 @@ The following object is masked from 'package:lme4':
     lmList
 
 -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
-v tibble  3.1.6     v dplyr   1.0.7
-v tidyr   1.1.4     v stringr 1.4.0
-v readr   2.1.1     v forcats 0.5.1
+v tibble  3.1.6     v dplyr   1.0.8
+v tidyr   1.2.0     v stringr 1.4.0
+v readr   2.1.2     v forcats 0.5.1
 v purrr   0.3.4     
 -- Conflicts ------------------------------------------ tidyverse_conflicts() --
 x dplyr::arrange()   masks plyr::arrange()
@@ -186,33 +186,68 @@ The following object is masked from 'package:dplyr':
 
     select
 
+
+Attaching package: 'magrittr'
+
+The following object is masked from 'package:purrr':
+
+    set_names
+
+The following object is masked from 'package:tidyr':
+
+    extract
+
+Loading required package: dynamicTreeCut
+Loading required package: fastcluster
+
+Attaching package: 'fastcluster'
+
+The following object is masked from 'package:stats':
+
+    hclust
+
+
+
+Attaching package: 'WGCNA'
+
+The following object is masked from 'package:IRanges':
+
+    cor
+
+The following object is masked from 'package:S4Vectors':
+
+    cor
+
+The following object is masked from 'package:stats':
+
+    cor
+
+
+Attaching package: 'ggpubr'
+
+The following object is masked from 'package:dendextend':
+
+    rotate
+
+The following object is masked from 'package:plyr':
+
+    mutate
+
+Welcome to the GoeVeg Package
+[1] 1188179
+[1] 6603
+[1] 0.5557243
+            
+              2  3  5  6
+  NE_control  0  0 28  0
+  NE_exposed  0  0  0 27
+  E_control  28  0  0  0
+  E_exposed   0 28  0  0
 two groups detected:
  will calculate methylation difference as the difference of
-treatment (group: 4) - control (group: 1)
-Reading the table...
-Calculating intron coordinates...
-Calculating exon coordinates...
-Calculating TSS coordinates...
-Calculating promoter coordinates...
-Outputting the final GRangesList...
-
-Summary of target set annotation with genic parts
-Rows in target set: 13737
------------------------
-percentage of target features overlapping with annotation:
-  promoter       exon     intron intergenic 
-      8.72      16.59      33.46      47.54 
-
-percentage of target features overlapping with annotation:
-(with promoter > exon > intron precedence):
-  promoter       exon     intron intergenic 
-      8.72      13.02      30.73      47.54 
-
-percentage of annotation boundaries with feature overlap:
-promoter     exon   intron 
-    3.53     0.73     1.60 
-
-summary of distances to the nearest TSS:
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-      0    3090    8364   15817   19571  413076 
-
+treatment (group: 6) - control (group: 5)
+two groups detected:
+ will calculate methylation difference as the difference of
+treatment (group: 3) - control (group: 2)
+Error: We stop here for now
+Execution halted

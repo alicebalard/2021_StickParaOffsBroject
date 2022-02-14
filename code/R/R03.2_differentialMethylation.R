@@ -7,12 +7,12 @@ source("librariesLoading.R")
 ## load custom functions
 source("customRfunctions.R")
 ## Load samples metadata
-source("R01.3_prepMetadata.R")
+source("R01.3_loadMetadata.R")
 ## define in which machine we're working (apocrita or mythinkpad)
-##machine="apocrita"
-machine="mythinkpad"
+machine="apocrita"
+##machine="mythinkpad"
 ## Load methylation data
-source("R01.4_prepMethyldata.R")
+source("R01.4_loadMethyldata.R")
 
 ###############################################
 ### PART 2: Differential methylation sites ####
@@ -26,7 +26,7 @@ source("R01.4_prepMethyldata.R")
 ## Calculate DMS accounting for covariates: family
 getDMS <- function(myuniteCov, myMetadata){
   cov = data.frame(Family = myMetadata$Family)
-  myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = 4)
+  myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = 10)
   # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
   # NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
   myDMS_15pc = getMethylDiff(myDiffMeth, difference=15, qvalue=0.01)
@@ -57,7 +57,7 @@ nrow(DMS15pc_PAR_half) / nrow(uniteCov6_G1_woSexAndUnknowChr) *100 # 0.55%
 ##########################################################
 ## Comparison 2: Should be like baseline -> G2 from G1 control (control vs infected) 
 
-table(fullMetadata_OFFS_half$trtG1G2, fullMetadata_OFFS_half$trtG1G2_NUM)
+table(fullMetadata_OFFS$trtG1G2, fullMetadata_OFFS$trtG1G2_NUM)
 #             2  3  5  6
 # NE_control  0  0 28  0
 # NE_exposed  0  0  0 27
@@ -65,25 +65,25 @@ table(fullMetadata_OFFS_half$trtG1G2, fullMetadata_OFFS_half$trtG1G2_NUM)
 # E_exposed   0 28  0  0
 
 DMS15pc_G2_controlG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
-                                                            treatment = fullMetadata_OFFS_half$trtG1G2_NUM[
-                                                              fullMetadata_OFFS_half$trtG1G2_NUM %in% c(5,6)], 
-                                                            sample.ids = fullMetadata_OFFS_half$ID[
-                                                              fullMetadata_OFFS_half$trtG1G2_NUM %in% c(5,6)]), 
-                                    myMetadata = fullMetadata_OFFS_half[
-                                      fullMetadata_OFFS_half$trtG1G2_NUM %in% c(5,6),])
+                                                            treatment = fullMetadata_OFFS$trtG1G2_NUM[
+                                                                                              fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)], 
+                                                            sample.ids = fullMetadata_OFFS$ID[
+                                                                                               fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)]), 
+                                    myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
 
 saveRDS(DMS15pc_G2_controlG1_half, file = "../../data/DMS15pc_G2_controlG1_half")
 
 DMS15pc_G2_infectedG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
-                                                            treatment = fullMetadata_OFFS_half$trtG1G2_NUM[
-                                                              fullMetadata_OFFS_half$trtG1G2_NUM %in% c(2,3)], 
-                                                            sample.ids = fullMetadata_OFFS_half$ID[
-                                                              fullMetadata_OFFS_half$trtG1G2_NUM %in% c(2,3)]), 
-                                    myMetadata = fullMetadata_OFFS_half[
-                                      fullMetadata_OFFS_half$trtG1G2_NUM %in% c(2,3),])
+                                                            treatment = fullMetadata_OFFS$trtG1G2_NUM[
+                                                                                              fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)], 
+                                                            sample.ids = fullMetadata_OFFS$ID[
+                                                                                               fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)]), 
+                                    myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
 
 saveRDS(DMS15pc_G2_infectedG1_half, file = "../../data/DMS15pc_G2_infectedG1_half")
 
+## stop here:
+stop("We stop here for now")
 
 
 #############
