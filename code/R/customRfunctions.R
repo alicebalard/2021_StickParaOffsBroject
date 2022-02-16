@@ -64,7 +64,8 @@ get_pos <- function(CHROM,genome){
          POS = sample(x=1:genome$length[genome$chrom == CHROM],size=1))
 }
 
-makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50","grey50","darkred","darkred")){
+makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50","grey50","darkred","darkred"), 
+                               mytitle = "Manhattan plot of DMS"){
   #GA_genome.fa.sizes.txt is a file with chromosome sizes and names
   genome <- GYgynogff %>%
     mutate(chrom_nr=chrom %>% deroman(),
@@ -89,7 +90,7 @@ makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50",
                   qval=DMSfile$qvalue,
                   region=region)
   
-  table(DMSfile$chr)## check that chrXIX and chrUN are well removed!!
+  # table(DMSfile$chr)## check that chrXIX and chrUN are well removed!!
   
   # join DMS and genomic position
   data = left_join(mydata, genome2) %>% 
@@ -105,11 +106,12 @@ makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50",
     scale_color_manual(values = mycols)+
     scale_shape_manual(values=c(21,21,21,21))+
     scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none")+
-    scale_x_continuous(breaks=genome2$gmid,labels=genome2$chrom %>% str_remove(.,"chr"),
+    scale_x_continuous(breaks=genome2$gmid,labels=genome2$chrom %>% str_remove(.,"Gy_chr"),
                        position = "top",expand = c(0,0))+
     theme_minimal()+
     theme(panel.grid = element_blank(),
           axis.line=element_blank(),
           axis.title = element_blank(),
-          strip.placement = "outside")
+          strip.placement = "outside")+
+    ggtitle(mytitle)
 }

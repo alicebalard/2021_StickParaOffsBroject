@@ -20,5 +20,8 @@ library(WGCNA)
 library(ggpubr) ## to merge ggplot2 plots
 theme_set(theme_pubr())
 library(goeveg) # find the best number of dimensions for NMDS
+library(VennDiagram)
+library(RColorBrewer) # for colors in Venn diagrams
+
 
 
