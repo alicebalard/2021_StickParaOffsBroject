@@ -3,29 +3,64 @@
 ## February 2022
 
 #################### Data load & preparation ####################
-source("librariesLoading.R")
-## load custom functions
-source("customRfunctions.R")
-## Load samples metadata
-source("R01.3_prepMetadata.R")
 ## define in which machine we're working (apocrita or mythinkpad)
 ##machine="apocrita"
 machine="mythinkpad"
-## Load methylation data
-source("R01.4_prepMethyldata.R")
+## Load DMS script: needed for here!
+source("R03.2_differentialMethylation.R")
+
+## Prepare datasets needed, remove the rest:
+prepareNetworkData <- function(DMS, uniteCov, fullMetadata){
+  myMethylDiff = DMS
+  ## Keep full methylation data for (1) positions only at DMS and (2) correct samples
+  samples = myMethylDiff@sample.ids
+  pos = myMethylDiff$pos
+  trt = myMethylDiff@treatment
+  myMethylKit_DMS = uniteCov[paste(uniteCov$chr, uniteCov$start, uniteCov$end) %in% pos]
+  myMethylKit_DMS = reorganize(methylObj = myMethylKit_DMS, treatment = trt, sample.ids = samples)
+  ## Keep correct metadata
+  myMetadata = fullMetadata[fullMetadata$trtG1G2_NUM %in% trt,]
+  return(list(myMethylDiff=myMethylDiff, myMethylKit_DMS = myMethylKit_DMS, myMetadata = myMetadata))
+}
+
+myG1list <- prepareNetworkData(DMS = DMS15pc_PAR_half_intersect,
+                               uniteCov = uniteCov6_G1_woSexAndUnknowChr,
+                               fullMetadata = fullMetadata_PAR)
+
+myG2_G1control_list <- prepareNetworkData(DMS = DMS15pc_G2_controlG1_half_intersect,
+                               uniteCov = uniteCov14_G2_woSexAndUnknowChr,
+                               fullMetadata = fullMetadata_OFFS)
+
+myG2_G1infected_list <- prepareNetworkData(DMS = DMS15pc_G2_infectedG1_half_intersect,
+                               uniteCov = uniteCov14_G2_woSexAndUnknowChr,
+                               fullMetadata = fullMetadata_OFFS)
+
+## Remove all but my 3 lists to avoid confusion:
+rm(list = ls()[!ls() %in% c("myG1list", "myG2_G1control_list", "myG2_G1infected_list")])
+
+
+
+## YOU're here
+
 
 ##########################################################
 #### Co-methylation network construction
 ### Help: https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/FemaleLiver-01-dataInput.pdf
-
-## make a function of myMethylKit object and the associated DMS object
-
-myMethylKit = uniteCov2_woSexAndUnknowChr_PAR
-# load file with your DMS
-DMS_PAR <- readRDS("../../data/myDiff1_15p_parentalDiffMeth.RDS")
-myDMS = DMS_PAR # 13737 observation
-myMetaData <- fullMetadata_PAR
 enableWGCNAThreads()
+
+
+
+
+
+
+################# Previous
+
+# 
+# myMethylKit = uniteCov2_woSexAndUnknowChr_PAR
+# # load file with your DMS
+# DMS_PAR <- readRDS("../../data/myDiff1_15p_parentalDiffMeth.RDS")
+# myDMS = DMS_PAR # 13737 observation
+# myMetaData <- fullMetadata_PAR
 
 ## in step gsg$allOK: Removing samples: S70, S95
 
@@ -241,7 +276,7 @@ myGraph %>% # my igraph - tidygraph
   geom_edge_link(aes(alpha=weight)) +
   scale_edge_alpha(range=c(0.1,1))+
   geom_node_point(aes(color=color), size = 7) +
-#  scale_colour_manual(values = c("grey", "turquoise"))+
+  #  scale_colour_manual(values = c("grey", "turquoise"))+
   geom_node_text(aes(label = name), size = 3)
 
 

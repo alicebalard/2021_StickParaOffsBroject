@@ -5,6 +5,9 @@
 ## Load methylation metadata merged with Kostas files
 fullMetadata <- read.csv("../../data/fullMetadata135_Alice.csv")
 
+## Change one term: NbrMethylatedCpG is the one calculated by BSBolt IN TOTAL
+names(fullMetadata)[names(fullMetadata) %in% "NbrMethylatedCpG"] <- "NbrMethylatedCpG_global_BSBolt"
+
 # give a numerical value to treatment, for Methylkit
 fullMetadata$trtG1G2_NUM <- as.numeric(as.factor(fullMetadata$trtG1G2))
 
@@ -36,3 +39,8 @@ fullMetadata_OFFS$patTrt[fullMetadata_OFFS$Tr %in% c("TC", "TT")] <- "infectedP"
 ## Sanity check
 table(fullMetadata_OFFS$offsTrt, fullMetadata_OFFS$trtG1G2)
 table(fullMetadata_OFFS$patTrt, fullMetadata_OFFS$trtG1G2)
+
+## REORDER metadata by sample ID
+fullMetadata = fullMetadata[order(as.numeric(gsub("S", "", fullMetadata$SampleID))),]
+fullMetadata_PAR = fullMetadata_PAR[order(as.numeric(gsub("S", "", fullMetadata_PAR$SampleID))),]
+fullMetadata_OFFS = fullMetadata_OFFS[order(as.numeric(gsub("S", "", fullMetadata_OFFS$SampleID))),]

@@ -4,6 +4,14 @@ library(dplyr)
 library(tidyverse)
 
 makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam){
+  ## Reorder metadata by sample ID, as OBJ methylkit!
+  metadata = metadata[order(as.numeric(gsub("S", "", metadata$SampleID))),]
+  
+  ## Check
+  if (!is.na(table(OBJ@sample.ids == metadata$SampleID)["FALSE"])){
+    stop("check the samples order or similarity before both methylkit and metadata objects!")
+  }
+  
   ## Associate a color with a treatment
   metadata = join(metadata,
                   data.frame(trtG1G2 = unique(metadata$trtG1G2[order(metadata$trtG1G2)]),
@@ -13,30 +21,32 @@ makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam){
   metadata = join(metadata,
                   data.frame(Family = unique(metadata$Family[order(metadata$Family)]),
                              colfam = my.cols.fam))
+  
   ## Make dendrogram
   mydendro <- clusterSamples(OBJ, dist="correlation", method="ward", plot=FALSE)
   dend = as.dendrogram(mydendro)
   
+  metadata[metadata$SampleID %in% c("S37", "S41", "S46"), c("SampleID", "Family", "trtG1G2", "coltrt", "colfam")]
   # Use color
   labels_colors(dend) <- metadata$coltrt[order.dendrogram(dend)]
-  
+
   ## Hard coded methods here:
   dist.method="correlation"; hclust.method="ward.D"
-  
+
   plot(dend, main = paste(OBJ@context, "methylation clustering"),
        sub = paste("Distance method: \"", dist.method,
                    "\"; Clustering method: \"", hclust.method,"\"",sep=""),
        xlab = "Samples", ylab = "Height")
-  
+
   ## Ordered legend:
-  correspDF=data.frame(name=unique(metadata$trtG1G2[order(metadata$trtG1G2)]),
+  # correspDF=data.frame(name=unique(metadata$trtG1G2[order(metadata$trtG1G2)]),
+  correspDF=data.frame(name=unique(metadata$trtG1G2[order.dendrogram(dend)]),
                        color=my.cols.trt)
   legend("topright", title = "Treatment",
          legend = correspDF$name,
          col = correspDF$color, pch = 20,
          bty = "n",  pt.cex = 3, cex = 0.8 ,
          text.col = "black", horiz = FALSE, inset = c(0, 0.1))
-  
   
   ## Add color bars and legend by family
   colored_bars(metadata$colfam, dend, # no need to order, it orders itself

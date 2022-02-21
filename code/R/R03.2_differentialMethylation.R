@@ -23,9 +23,9 @@ source("R01.4_loadMethyldata.R")
 ## G2-control G1 trt-ctrl
 ## G2-infected G1 trt-ctrl ## HYP: this will be different
 
-## Calculate DMS accounting for covariates: family
+## Calculate DMS accounting for covariates: family and sex (new 20/02/22!)
 getDMS <- function(myuniteCov, myMetadata){
-  cov = data.frame(Family = myMetadata$Family)
+  cov = data.frame(Family = myMetadata$Family, Sex = myMetadata$Sex)
   myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = 10)
   # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
   # NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
@@ -33,10 +33,19 @@ getDMS <- function(myuniteCov, myMetadata){
   return(myDMS_15pc)
 }
 
+## Correspondance trtG1G2 and numerical values used by MethylKit
+table(fullMetadata$trtG1G2_NUM, fullMetadata$trtG1G2)
+# Control Exposed NE_control NE_exposed E_control E_exposed
+# 1      12       0          0          0         0         0
+# 2       0       0          0          0        28         0
+# 3       0       0          0          0         0        28
+# 4       0      12          0          0         0         0
+# 5       0       0         28          0         0         0
+# 6       0       0          0         27         0         0
+
 ## Comparison 1: BASELINE -> Parents (control vs infected) 
-# DMS15pc_PAR_half <- getDMS(uniteCov6_G1_woSexAndUnknowChr, fullMetadata_PAR_half)
-# saveRDS(DMS15pc_PAR_half, file = "../../data/DMS15pc_PAR_half.RDS")
-DMS15pc_PAR_half <- readRDS("../../data/DMS15pc_PAR_half.RDS")
+DMS15pc_PAR_half <- getDMS(uniteCov6_G1_woSexAndUnknowChr, fullMetadata_PAR)
+saveRDS(DMS15pc_PAR_half, file = "../../data/DMS15pc_PAR_half.RDS")
 
 ## Comparison 2: Offspring
 ## 2.1. Should be like baseline -> G2 from G1 control (control vs infected) 
@@ -49,26 +58,25 @@ table(fullMetadata_OFFS$trtG1G2, fullMetadata_OFFS$trtG1G2_NUM)
 # E_control  28  0  0  0
 # E_exposed   0 28  0  0
 
-# DMS15pc_G2_controlG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
-#                                                             treatment = fullMetadata_OFFS$trtG1G2_NUM[
-#                                                                                               fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)], 
-#                                                             sample.ids = fullMetadata_OFFS$ID[
-#                                                                                                fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)]), 
-#                                     myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
-# 
-# saveRDS(DMS15pc_G2_controlG1_half, file = "../../data/DMS15pc_G2_controlG1_half.RDS")
+DMS15pc_G2_controlG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+                                                            treatment = fullMetadata_OFFS$trtG1G2_NUM[
+                                                                                              fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)],
+                                                            sample.ids = fullMetadata_OFFS$ID[
+                                                                                               fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)]),
+                                    myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+saveRDS(DMS15pc_G2_controlG1_half, file = "../../data/DMS15pc_G2_controlG1_half.RDS")
 
-# DMS15pc_G2_infectedG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
-#                                                             treatment = fullMetadata_OFFS$trtG1G2_NUM[
-#                                                                                               fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)], 
-#                                                             sample.ids = fullMetadata_OFFS$ID[
-#                                                                                                fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)]), 
-#                                     myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
-# 
-# saveRDS(DMS15pc_G2_infectedG1_half, file = "../../data/DMS15pc_G2_infectedG1_half.RDS")
+DMS15pc_G2_infectedG1_half <- getDMS(myuniteCov = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+                                                             treatment = fullMetadata_OFFS$trtG1G2_NUM[
+                                                                                               fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)], 
+                                                             sample.ids = fullMetadata_OFFS$ID[
+                                                                                                fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)]), 
+                                     myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
+ 
+saveRDS(DMS15pc_G2_infectedG1_half, file = "../../data/DMS15pc_G2_infectedG1_half.RDS")
 
 ## stop here:
-# stop("We stop here for now") # to run getDMS on Apocrita cause it's LONG
+stop("We stop here for now") # to run getDMS on Apocrita cause it's LONG
 
 ### UPLOAD
 ## Control G1 - G2(trt vs control)
@@ -82,24 +90,25 @@ DMS15pc_G2_infectedG1_half <- readRDS("../../data/DMS15pc_G2_infectedG1_half.RDS
 myDMSinfo <- function(methylObject, DMSobject){
   CpGs = paste(methylObject$chr, methylObject$start, methylObject$end)
   DMS = paste(DMSobject$chr, DMSobject$start, DMSobject$end)
+  meth.diff = DMSobject$meth.diff
   percentDMS = length(DMS)/length(CpGs)*100
-  return(list(CpGs = CpGs, DMS = DMS, percentDMS = percentDMS))
+  return(list(CpGs = CpGs, DMS = DMS, meth.diff = meth.diff, percentDMS = percentDMS))
 }
 
 ## Run the function (takes a few minutes)
-# myDMSinfo_PAR <- myDMSinfo(uniteCov6_G1_woSexAndUnknowChr, DMS15pc_PAR_half)
-# myDMSinfo_G2_controlG1_half <- myDMSinfo(methylObject = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
-#                                                                    treatment = fullMetadata_OFFS$trtG1G2_NUM[
-#                                                                      fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)],
-#                                                                    sample.ids = fullMetadata_OFFS$ID[
-#                                                                      fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)]),
-#                                          DMSobject = DMS15pc_G2_controlG1_half)
-# myDMSinfo_G2_infectedG1_half <- myDMSinfo(methylObject = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
-#                                                                     treatment = fullMetadata_OFFS$trtG1G2_NUM[
-#                                                                       fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)],
-#                                                                     sample.ids = fullMetadata_OFFS$ID[
-#                                                                       fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)]),
-#                                           DMSobject = DMS15pc_G2_infectedG1_half)
+myDMSinfo_PAR <- myDMSinfo(uniteCov6_G1_woSexAndUnknowChr, DMS15pc_PAR_half)
+myDMSinfo_G2_controlG1_half <- myDMSinfo(methylObject = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+                                                                   treatment = fullMetadata_OFFS$trtG1G2_NUM[
+                                                                     fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)],
+                                                                   sample.ids = fullMetadata_OFFS$ID[
+                                                                     fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)]),
+                                         DMSobject = DMS15pc_G2_controlG1_half)
+myDMSinfo_G2_infectedG1_half <- myDMSinfo(methylObject = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+                                                                    treatment = fullMetadata_OFFS$trtG1G2_NUM[
+                                                                      fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)],
+                                                                    sample.ids = fullMetadata_OFFS$ID[
+                                                                      fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)]),
+                                          DMSobject = DMS15pc_G2_infectedG1_half)
 
 ##### Calculate DMS after removal of CpG NOT covered in both datasets (G1 & G2)
 intersectCpG <- intersect(intersect(myDMSinfo_PAR$CpGs, myDMSinfo_G2_controlG1_half$CpGs),
@@ -111,8 +120,26 @@ length(intersectCpG) # 1,001,880
 updateIntersectFun <- function(myDMSinfo){
   myDMSinfo$DMS_intersect <- myDMSinfo$DMS[myDMSinfo$DMS %in% intersectCpG]
   myDMSinfo$percentDMS_intersect <- length(myDMSinfo$DMS_intersect) / length(intersectCpG)*100
+  myDMSinfo$meth.diff_intersect <- myDMSinfo$meth.diff[myDMSinfo$DMS %in% intersectCpG]
   return(myDMSinfo)
 }
+
+## Check directioooon
+myDMSinfo_PAR$hypermethInInfectedmyDMSinfo_PAR$DMS_intersect[which(myDMSinfo_PAR$meth.diff_intersect > 0)]
+
+getDMS(uniteCov6_G1_woSexAndUnknowChr, fullMetadata_PAR_half)
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##################
 ### Read out infos
@@ -195,6 +222,14 @@ venn.diagram(
   cat.col = myCols, cat.pos = c(-27, 27, 135), cat.dist = c(0.055, 0.055, 0.055),
   cat.fontfamily = "sans", rotation = 1
 )
+
+#########################################
+## Separate hypo and hyper methylation ##
+#########################################
+
+# myDMSinfo_PAR$DMS_intersect, myDMSinfo_G2_controlG1_half$DMS_intersect, myDMSinfo_G2_infectedG1_half$DMS_intersect
+
+
 
 ######################
 ## Features Annotation (use package genomation v1.24.0)
@@ -351,5 +386,6 @@ pushViewport(plotViewport(layout.pos.col=2, layout.pos.row=2))
 grid.draw(I2) 
 dev.off()
 
-############################## GO terms --> TBC
+############################## Identify Genes associated with positions 
+############################## + GO terms --> TBC
 

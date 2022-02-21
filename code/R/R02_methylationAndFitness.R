@@ -2,26 +2,17 @@
 ## A. Balard
 ## November 2021
 
-library(plyr) # for join (keep row order)
-library(dendextend) # The package dendextend contains many functions for changing the appearance of a dendrogram and for comparing dendrograms.
-library(ggplot2)
-library(ggsignif) ## for significance bars on ggplot
-library(lme4) ## for mixed models
-library(nlme) ## for mixed models
-library(tidyverse)
-library(emmeans) ## for post-hoc Tukey tests
-
+## load libraries
+source("librariesLoading.R")
 ## load custom functions
 source("customRfunctions.R")
-
 ## Load samples metadata
 source("R01.3_loadMetadata.R")
 
 ## Load previously united methylkit data
-
 ## define in which machine we're working (apocrita or mythinkpad)
-machine="apocrita"
-## machine="mythinkpad"
+##machine="apocrita"
+machine="mythinkpad"
 source("R01.4_loadMethyldata.R")
 ## Data getting loaded:
 # uniteCovALL_woSexAndUnknowChr -> CpG positions shared by all fish
@@ -81,7 +72,7 @@ emmeans(mod1.2, list(pairwise ~ trtG1G2), adjust = "tukey")
 ## Control father - treatment offspring has a strongly significantly lower BC than 
 ## every other group, same as Kaufmann et al. 2014
 
-ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI))+
+ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI, fill=trtG1G2))+
   geom_boxplot()+
   geom_signif(comparisons = list(c("NE_control", "NE_exposed")),
               map_signif_level=TRUE, annotations="***",
@@ -92,7 +83,8 @@ ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI))+
   geom_signif(comparisons = list(c("NE_exposed", "E_exposed")),
               map_signif_level=TRUE, annotations="***",
               y_position = 250, tip_length = 0, vjust=0.4) +
-  theme_bw()
+  scale_fill_manual(values = colOffs)+
+  theme_bw() + theme(legend.position = "none")
 
 #######################################################
 ## Nbr/Ratio of Methylated Sites in different groups ##
@@ -109,156 +101,225 @@ mean(fullMetadata$MappingEfficiency.BSBoldvsGynogen)
 qnorm(0.975)*sd(fullMetadata$MappingEfficiency.BSBoldvsGynogen)/sqrt(nrow(fullMetadata))
 
 ########################
-## Calculate (1) Mfr per site, (2) biallelic equivalent, (3) epi-Fst and epi-FIS and (4) number of methylated sites in uniteCov2 (CpG shared by all fish, after filtering and normalising)
+## Calculate (1) number of methylated sites and 
+## (2) ratio of methylated sites (to account for coverage bias)
 
-## Part 1: check correlation between methylation presence (beta > 0.7) and coverage in our 5 datasets
-mycheckCorFUN <- function(myUniteCov, myMetaData){
-    ## (1) Mfr per site
-    df <- methylKit::getData(myUniteCov)
-    MfrData <- data.frame(matrix(ncol=nrow(myMetaData),
-                                 nrow=nrow(df)))
-    namevector <- paste0("Mfr", 1:nrow(myMetaData))
-    vector <- 1:nrow(myMetaData)
-    for(i in vector){
-        colnames(MfrData)[i] <- namevector[i]
-        MfrData[i] <- df[paste0("numCs", i)]/
-            df[paste0("coverage", i)]
-    }
-    ## (2) biallelic equivalent
-### Sagonas et al. 2020 MBE " A  number  of  methylated  sites/regions  were  esti-mated by converting the MFr into ordinal data: sites/regionswith little or no methylation (MFr<30%) were annotated as0  and  treated  as  no  methylated  sites/regions,  sites/regionswith  intermediate  methylation  levels  (30%<MFr<70%)were considered as heterozygote sites/regions and convertedinto  1,  whereas  sites/regions  with  high  or  fixed  methylation(MFr>70%) were treated as homozygous at this site/regionsand were annotated as 2."
-
-    getBiallVal <- function(x){
-        y=NA
-        if(x <= 0.3 & !is.na(x)){
-            y = 0
-        } else if(x > 0.3 & x < 0.7 & !is.na(x)){
-            y = 1
-        } else if(x >= 0.7 & !is.na(x)){
-            y = 2
-        }
-        return(y)
-    }
-    getBiallValVec <- function(vec){sapply(vec, getBiallVal)}
-    system.time(
-        MbiallData <- sapply(MfrData, function(x) {getBiallValVec(x)})
-    )
-
-    ## rename correctly the full biallelic dataframe:
-    colnames(MbiallData) <- myUniteCov@sample.ids
-
-    ## make a data.frame with the sample ID and the biallelic methylation inf
-    ## To target methylated regions, we selected only sites in which methylation  ratio  was  over  70%
-    dfBiallMeth <- data.frame(
-        biallmethy = apply(MbiallData, 2, function(v) sum(v == 2, na.rm=TRUE)),
-        ID=myUniteCov@sample.ids)
-
-    dfBiallMeth
-
-    ## Append myMetaData with this new info
-    idorder <- order(as.numeric(gsub("S", "", myMetaData$ID)))
-    myMetaData <- merge(myMetaData, dfBiallMeth, by = "ID")
-    myMetaData <- myMetaData[idorder, ]
-    
-    return(myMetaData)
+mycalcRMS <- function(myUniteCov, myMetaData){
+  percMethMat = methylKit::percMethylation(myUniteCov)
+  # create a dataframe with all info
+  percMethDF = data.frame(SampleID = colnames(percMethMat),
+                          ## number of methylated sites
+                          Nbr_methCpG = colSums(percMethMat>=70 & !is.na(percMethMat)),#512493
+                          ## number of sites covered in this sample
+                          Nbr_coveredCpG = colSums(!is.na(percMethMat)), #1015735
+                          ## number of sites NOT covered in this sample
+                          Nbr_NOTcoveredCpG = colSums(is.na(percMethMat)))
+  ## RMS in this sample based on covered sites
+  percMethDF$RMS_coveredCpG = percMethDF$Nbr_methCpG / percMethDF$Nbr_coveredCpG #0.5045538
+  ## merge with original metadata:
+  myMetaData = merge(myMetaData, percMethDF)
+  # calculate also RMS global, considering CpG covered or not (to compare)
+  myMetaData$RMS_allCpG_coveredOrNot = myMetaData$Nbr_methCpG / (myMetaData$M.Seqs_rawReads*10e6)
+  # calculate residuals of nbr of methCpG by nbr of covered CpG
+  myMetaData$res_Nbr_methCpG_Nbr_coveredCpG = residuals(
+    lm(myMetaData$Nbr_methCpG ~ myMetaData$Nbr_coveredCpG))
+  return(myMetaData)
 }
 
-fullMetadata_ALL <- mycheckCorFUN(uniteCovALL_woSexAndUnknowChr, fullMetadata)
-
-fullMetadata_PAR_ALL  <- mycheckCorFUN(uniteCovALL_G1_woSexAndUnknowChr, fullMetadata_PAR)
-
-fullMetadata_PAR_half <- mycheckCorFUN(uniteCov6_G1_woSexAndUnknowChr, fullMetadata_PAR)
-
-fullMetadata_OFFS_ALL  <- mycheckCorFUN(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS)
-
-fullMetadata_OFFS_half  <- mycheckCorFUN(uniteCov14_G2_woSexAndUnknowChr, fullMetadata_OFFS)
+fullMetadata_ALL <- mycalcRMS(uniteCovALL_woSexAndUnknowChr, fullMetadata)
+fullMetadata_PAR_ALL  <- mycalcRMS(uniteCovALL_G1_woSexAndUnknowChr, fullMetadata_PAR)
+fullMetadata_PAR_half <- mycalcRMS(uniteCov6_G1_woSexAndUnknowChr, fullMetadata_PAR)
+fullMetadata_OFFS_ALL  <- mycalcRMS(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS)
+fullMetadata_OFFS_half  <- mycalcRMS(uniteCov14_G2_woSexAndUnknowChr, fullMetadata_OFFS)
 
 ############
 ## Question: in our 5 datasets,
 ## Is there a correlation between nbr of methylated sites and coverage? 
-# ONLY when we keep CpG shared by at least half the fish. Must be removed when more stringent
-cor.test(fullMetadata_ALL$biallmethy,fullMetadata_ALL$M.Seqs_rawReads, method="pearson")
-##t = 0.94062, df = 133, p-value = 0.3486
+cor.test(fullMetadata_PAR_half$Nbr_coveredCpG,
+         fullMetadata_PAR_half$Nbr_methCpG, method = "spearman")
+## S = 264, p-value = 2.68e-06, rho = 0.8852174 
+ggplot(fullMetadata_PAR_half, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
+  geom_smooth(method = "lm", col="black")+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = c("grey", "red")) +
+  theme_bw() + ggtitle(label = "Parents, CpG shared by half fish/trt")
 
-cor.test(fullMetadata_PAR_ALL$biallmethy,
-         fullMetadata_PAR_ALL$M.Seqs_rawReads, method="pearson")
-##t = -0.085834, df = 22, p-value = 0.9324
+## Check after RMS correction for coverage bias: CORRECTED (p-value = 0.4485)
+cor.test(fullMetadata_PAR_half$Nbr_coveredCpG,
+         fullMetadata_PAR_half$RMS_coveredCpG, method = "spearman")
+ggplot(fullMetadata_PAR_half, aes(x=Nbr_coveredCpG, y=RMS_coveredCpG))+
+  geom_smooth(method = "lm", col="black")+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = c("grey", "red")) +
+  theme_bw() + ggtitle(label = "Parents, CpG shared by half fish/trt")
 
-cor.test(fullMetadata_PAR_half$biallmethy,
-         fullMetadata_PAR_half$M.Seqs_rawReads, method="pearson")
-## t = 4.106, df = 22, p-value = 0.0004657 cor=0.6586753
+## and with residuals: COMPLETELY CORRECTED p-value = 0.9562
+cor.test(fullMetadata_PAR_half$Nbr_coveredCpG,
+         fullMetadata_PAR_half$res_Nbr_methCpG_Nbr_coveredCpG, method = "spearman")
+ggplot(fullMetadata_PAR_half, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_coveredCpG))+
+  geom_smooth(method = "lm", col="black")+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = c("grey", "red")) +
+  theme_bw() + ggtitle(label = "Parents, CpG shared by half fish/trt")
 
-cor.test(fullMetadata_OFFS_ALL$biallmethy,
-         fullMetadata_OFFS_ALL$M.Seqs_rawReads, method="pearson")
-## t = 1.0553, df = 109, p-value = 0.2936
+############
+## Offspring:
+cor.test(fullMetadata_OFFS_half$Nbr_coveredCpG,
+         fullMetadata_OFFS_half$Nbr_methCpG, method = "spearman")
+## S = 18066, p-value < 2.2e-16 rho = 0.9207353
+ggplot(fullMetadata_OFFS_half, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
+  geom_smooth(method = "lm", col="black")+
+  theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
 
-cor.test(fullMetadata_OFFS_half$biallmethy,
-         fullMetadata_OFFS_half$M.Seqs_rawReads, method="pearson")
-##t = 4.1194, df = 109, p-value = 7.421e-05 cor=0.3670324
+## Check after RMS correction for coverage bias: SEMI CORRECTED (p-value = 0.02218, rho = -0.2172429)
+cor.test(fullMetadata_OFFS_half$Nbr_coveredCpG,
+         fullMetadata_OFFS_half$RMS_coveredCpG, method = "spearman")
+ggplot(fullMetadata_OFFS_half, aes(x=Nbr_coveredCpG, y=RMS_coveredCpG))+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
+  geom_smooth(method = "lm", col="black")+
+  theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
 
-###########################################################
-## Does RMS (ratio of methylated sites) changes with BCI ##
-###########################################################
-calcRMS <- function(myMetaData){
-    myMetaData$biallmethy / (myMetaData$M.Seqs_rawReads*10e6)
-}
+## and with residuals: COMPLETELY CORRECTED p-value = 0.4848
+cor.test(fullMetadata_OFFS_half$Nbr_coveredCpG,
+         fullMetadata_OFFS_half$res_Nbr_methCpG_Nbr_coveredCpG, method = "spearman")
+ggplot(fullMetadata_OFFS_half, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_coveredCpG))+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
+  geom_smooth(method = "lm", col="black")+
+  theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
 
-fullMetadata_ALL$RMS <- calcRMS(fullMetadata_ALL)
-fullMetadata_PAR_ALL$RMS <- calcRMS(fullMetadata_PAR_ALL)
-fullMetadata_PAR_half$RMS <- calcRMS(fullMetadata_PAR_half)
-fullMetadata_OFFS_ALL$RMS <- calcRMS(fullMetadata_OFFS_ALL)
-fullMetadata_OFFS_half$RMS <- calcRMS(fullMetadata_OFFS_half)
+################################
+## Should we correct for sex? ##
+################################
 
-## with family as random factor: not significant
-## in parents:
-anova(lme(RMS ~ BCI, random=~ 1|Family, data = fullMetadata_PAR_half))
+################
+## Does Sex affect the number of methylated sites? YES
+## + family as random factor
+modFull <- lmer(Nbr_methCpG ~ trtG1G2 * Sex + (1|Family), 
+                data = fullMetadata_OFFS_half, REML = F) # REML =F for model comparison
+mod_noSex <- lmer(Nbr_methCpG ~ trtG1G2 + (1|Family), 
+                  data = fullMetadata_OFFS_half, REML = F)
+mod_noTrt <- lmer(Nbr_methCpG ~ Sex + (1|Family), 
+                  data = fullMetadata_OFFS_half, REML = F)
+mod_noInteractions <- lmer(Nbr_methCpG ~ trtG1G2 + Sex + (1|Family), 
+                           data = fullMetadata_OFFS_half, REML = F)
 
-## in offsprings:
-anova(lme(RMS ~ BCI, random=~ 1|Family, data = fullMetadata_OFFS_half))
-anova(lme(RMS ~ BCI*patTrt, random=~ 1|Family, data = fullMetadata_OFFS_half))
+lrtest(modFull, mod_noSex) # sex is VERY VERY significant p = 0.0009209 ***
+lrtest(modFull, mod_noTrt) # trt is signif p = 0.02186 *
+lrtest(modFull, mod_noInteractions) # interactions are significant 0.01674 *
 
-##############################################################################
-## Does RMS (ratio of methylated sites) differ per trt group in offsprings? ##
-##############################################################################
-
-# simple lm, compare to null model: not signif
-anova(lm(RMS ~ outcome, data = fullMetadata_OFFS_half)) 
-
-# with family as random factor: not significant
-anova(lme(RMS ~ outcome, random= ~1|Family, data = fullMetadata_OFFS_half))
-
-ggplot(fullMetadata_OFFS_half, aes(x = outcome, y = RMS, fill =outcome)) +
-    geom_boxplot() +
-    scale_fill_manual(values=c("grey","red")) +
-    theme_minimal()
-
-## And per group? Not significant
-mod <- lme(RMS ~ trtG1G2, random= ~1|Family, data = fullMetadata_OFFS_half)
-anova(mod)
-
-ggplot(fullMetadata_OFFS_half, aes(x = trtG1G2, y = RMS)) +
+## Plot
+ggplot(fullMetadata_OFFS_half, aes(trtG1G2, Nbr_methCpG, group=interaction(trtG1G2, Sex))) + 
+  facet_grid(~Sex) +
   geom_violin() +
-  geom_boxplot(width=.3) +
-  theme_minimal()
+  geom_boxplot(aes(fill = trtG1G2), width = 0.2) +
+  geom_jitter(width = .1, size = 1, pch = 21, fill = "white") + 
+  scale_fill_manual(values = colOffs) +
+  theme_bw()  + theme(legend.position = "none")
 
-#########################################################################################
-## Does RMS (ratio of methylated sites) correlated with parasite load in infected fish? ##
-## -> NOPE
-modRMS <- lme(RMS ~ patTrt*No.Worms, random=~1|Family, data=fullMetadata_OFFS_half[fullMetadata_OFFS_half$No.Worms > 0,])
-anova(modRMS)
+################
+## Does Sex affect the residuals of nbr of methylated sites by nbr of sites? YES
+## + family as random factor
+modFull <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 * Sex + (1|Family), 
+                data = fullMetadata_OFFS_half, REML = F) # REML =F for model comparison
+mod_noSex <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + (1|Family), 
+                  data = fullMetadata_OFFS_half, REML = F)
+mod_noTrt <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ Sex + (1|Family), 
+                  data = fullMetadata_OFFS_half, REML = F)
+mod_noInteractions <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + Sex + (1|Family), 
+                           data = fullMetadata_OFFS_half, REML = F)
 
-#plot(modRMS)
+lrtest(modFull, mod_noSex) # sex is significant p = 0.002163 **
+lrtest(modFull, mod_noTrt) # trt is not significant any longer 
+lrtest(modFull, mod_noInteractions) # interactions are are not significant any longer
 
-myRMSdf <- fullMetadata_OFFS_half[fullMetadata_OFFS_half$No.Worms > 0,] %>% group_by(patTrt, No.Worms) %>% 
-  summarise(RMS = mean(RMS)) %>% data.frame()
-myRMSdf
+## Plot
+ggplot(fullMetadata_OFFS_half, aes(trtG1G2, res_Nbr_methCpG_Nbr_coveredCpG,
+                                   group=interaction(trtG1G2, Sex))) + 
+  facet_grid(~Sex) +
+  geom_violin() +
+  geom_boxplot(aes(fill = trtG1G2), width = 0.2) +
+  geom_jitter(width = .1, size = 1, pch = 21, fill = "white") + 
+  scale_fill_manual(values = colOffs) +
+  theme_bw() + theme(legend.position = "none")
 
-ggplot(fullMetadata_OFFS_half[fullMetadata_OFFS_half$No.Worms > 0,], aes(x=No.Worms, y = RMS, group = patTrt, col = patTrt))+
-  geom_point() + geom_line(data=myRMSdf)+
-  geom_point(data=myRMSdf, aes(fill = patTrt), col = "black", size = 3, pch = 21)+
-  scale_color_manual(values = c("gray", "red"))+
-  scale_fill_manual(values = c("gray", "red"))+
-  theme_bw()
+##################################################
+## Do residuals meth sites differ per trt group ##
+##################################################
 
+# NB: we put sex (in offspring) and family as random factors
+
+## PARENTS
+mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + (1|Family), 
+             data = fullMetadata_PAR_half, REML = F)
+mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|Family), 
+             data = fullMetadata_PAR_half, REML = F)
+lrtest(mod1, mod0) # not significant in parents
+
+## OFFSPRINGS
+mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + (1|Family) + (1|Sex), 
+                data = fullMetadata_OFFS_half, REML = F)
+mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|Family) + (1|Sex), 
+             data = fullMetadata_OFFS_half, REML = F)
+lrtest(mod1, mod0) # not significant in offspring
+
+##############################################################################
+## Decompose: do residuals methylated sites change with PAR & OFF treatment ##
+##############################################################################
+## OFFSPRINGS
+modFull <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ patTrt * outcome + (1|Family) + (1|Sex), 
+             data = fullMetadata_OFFS_half, REML = F)
+mod_noPAT <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ outcome + (1|Family) + (1|Sex), 
+                data = fullMetadata_OFFS_half, REML = F)
+mod_noOFF <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ patTrt + (1|Family) + (1|Sex), 
+                data = fullMetadata_OFFS_half, REML = F)
+mod_noInt <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ patTrt + outcome + (1|Family) + (1|Sex), 
+                data = fullMetadata_OFFS_half, REML = F)
+
+lrtest(modFull, mod_noPAT) # not significant
+lrtest(modFull, mod_noOFF) # not significant
+lrtest(modFull, mod_noInt) # not significant
+
+########################################################################################
+## Decompose: do residuals methylated sites change with BCI & parasite load treatment ##
+########################################################################################
+## OFFSPRINGS
+modFull <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI * No.Worms + (1|Family) + (1|Sex), 
+                data = fullMetadata_OFFS_half, REML = F)
+mod_noBCI <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ No.Worms + (1|Family) + (1|Sex), 
+                  data = fullMetadata_OFFS_half, REML = F)
+mod_noNo.Worms <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + (1|Family) + (1|Sex), 
+                  data = fullMetadata_OFFS_half, REML = F)
+mod_noInt <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + No.Worms + (1|Family) + (1|Sex), 
+                  data = fullMetadata_OFFS_half, REML = F)
+
+lrtest(modFull, mod_noBCI) # significant p = 0.02408 *
+lrtest(modFull, mod_noNo.Worms) # not significant
+lrtest(modFull, mod_noInt) # not significant
+
+### JUST BCI:
+# NB: we put sex (in offspring) and family as random factors
+
+## PARENTS
+mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + (1|Family), 
+             data = fullMetadata_PAR_half, REML = F)
+mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|Family), 
+             data = fullMetadata_PAR_half, REML = F)
+lrtest(mod1, mod0) # not significant in parents
+
+## OFFSPRING
+mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + (1|Family) + (1|Sex), 
+             data = fullMetadata_OFFS_half, REML = F)
+mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|Family)+ (1|Sex), 
+             data = fullMetadata_OFFS_half, REML = F)
+lrtest(mod1, mod0) # VERY significant in offspring p = 0.005427 **
+
+# plot fixed effects depending on random effects
+pred <- ggpredict(mod1, terms = c("BCI", "Sex", "Family"), type = "random")
+plot(pred, ci = F, add.data = TRUE)
+
+
+
+
+
+#### TBC
 #################################################################################
 ## Calcul of epi-FST/epi-FIS: Homogeneisation of methylation marks in infected? ##
 ################################################################################

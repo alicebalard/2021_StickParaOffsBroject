@@ -28,7 +28,7 @@ source("R01.4_loadMethyldata.R")
 
 ## offspring:
 # pdf("../../data/fig/clusterALLCpG_offspings.pdf", width = 17, height = 7)
-makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS_ALL,
+makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
                       my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
                       my.cols.fam = c(1:4))
 # dev.off()
@@ -69,7 +69,7 @@ myadonisFUN <- function(dataset, metadata){
 
 ###################
 ## Let's run Adonis for offspring (considering CpG shared by ALL)
-myadonisFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS_ALL)
+myadonisFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS)
 
 ########## NMDS
 myGOF.NMDS.FUN <- function(dataset){
@@ -167,6 +167,6 @@ myNMDS <- function(dataset, metadata){
   return(list(mystressplot=mystressplot, NMDSplot = figure))
 }
 
-NMDSanalysis <- myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS_ALL)
+NMDSanalysis <- myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS)
 NMDSanalysis$NMDSplot
 #save(NMDSanalysis, file = "../../data/fig/NMDSplots.RData")

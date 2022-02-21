@@ -137,7 +137,7 @@ save(uniteCov14_G2, file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/
 ########################################################################################
 ## Remove reads from sex chromosome X ("Gy_chrXIX") and unmapped contigs ("Gy_chrUn") ##
 ########################################################################################
-print("nbr CpG shared by all 137 samples:")
+print("nbr CpG shared by all 135 samples:")
 length(uniteCovALL$chr)
 print("nbr CpG shared by all parents:")
 length(uniteCovALL_G1$chr)
