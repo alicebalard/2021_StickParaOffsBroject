@@ -9,10 +9,10 @@ machine="mythinkpad"
 ## Load DMS script: needed for here!
 source("R03.2_differentialMethylation.R")
 
-# Work with:
-DMS_G1_final
-DMS_G2_G1c_final
-DMS_G2_G1i_final
+# # Work with:
+# DMS_G1_final
+# DMS_G2_G1c_final
+# DMS_G2_G1i_final
 
 
 ## Prepare datasets needed, remove the rest:
@@ -29,15 +29,15 @@ prepareNetworkData <- function(DMS, uniteCov, fullMetadata){
   return(list(myMethylDiff=myMethylDiff, myMethylKit_DMS = myMethylKit_DMS, myMetadata = myMetadata))
 }
 
-myG1list <- prepareNetworkData(DMS = DMS15pc_PAR_half_intersect,
+myG1list <- prepareNetworkData(DMS = DMS_G1_final,
                                uniteCov = uniteCov6_G1_woSexAndUnknowChr,
                                fullMetadata = fullMetadata_PAR)
 
-myG2_G1control_list <- prepareNetworkData(DMS = DMS15pc_G2_controlG1_half_intersect,
+myG2_G1control_list <- prepareNetworkData(DMS = DMS_G2_G1c_final,
                                uniteCov = uniteCov14_G2_woSexAndUnknowChr,
                                fullMetadata = fullMetadata_OFFS)
 
-myG2_G1infected_list <- prepareNetworkData(DMS = DMS15pc_G2_infectedG1_half_intersect,
+myG2_G1infected_list <- prepareNetworkData(DMS = DMS_G2_G1i_final,
                                uniteCov = uniteCov14_G2_woSexAndUnknowChr,
                                fullMetadata = fullMetadata_OFFS)
 
