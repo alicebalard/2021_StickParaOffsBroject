@@ -9,6 +9,12 @@ machine="mythinkpad"
 ## Load DMS script: needed for here!
 source("R03.2_differentialMethylation.R")
 
+# Work with:
+DMS_G1_final
+DMS_G2_G1c_final
+DMS_G2_G1i_final
+
+
 ## Prepare datasets needed, remove the rest:
 prepareNetworkData <- function(DMS, uniteCov, fullMetadata){
   myMethylDiff = DMS
