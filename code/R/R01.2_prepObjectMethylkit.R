@@ -175,7 +175,6 @@ save(uniteCov14_G2_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/Sti
 ## Put the correct date in bash:
 # for f in uniteCov*; do mv "$f" "$(echo "$f" | sed s/.RData/_10feb22.RData/)"; done
 
-
 ##################### Previous tests with ALL numbers of fish 1 to 12:
 ## we kept for downstream analyses all CpG sites present in at least 1 to 12 individuals per group, or in all individuals:
 # print("Unite and store in a list")

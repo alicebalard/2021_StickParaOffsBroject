@@ -9,8 +9,8 @@ source("customRfunctions.R")
 ## Load samples metadata
 source("R01.3_loadMetadata.R")
 ## define in which machine we're working (apocrita or mythinkpad)
-# machine="apocrita"
-machine="mythinkpad"
+machine="apocrita"
+#machine="mythinkpad"
 ## Load methylation data
 source("R01.4_loadMethyldata.R")
 
@@ -25,12 +25,16 @@ source("R01.4_loadMethyldata.R")
 
 ## Calculate DMS accounting for covariates: family and sex (new 20/02/22!)
 getDMS <- function(myuniteCov, myMetadata){
-  cov = data.frame(Family = myMetadata$Family, Sex = myMetadata$Sex)
-  myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = 10)
-  # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
-  # NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
-  myDMS_15pc = getMethylDiff(myDiffMeth, difference=15, qvalue=0.01)
-  return(myDMS_15pc)
+    if (length(table(myMetadata$Sex)) == 1){
+        cov = data.frame(Family = myMetadata$Family)
+    } else if (length(table(myMetadata$Sex)) == 2){
+        cov = data.frame(Family = myMetadata$Family, Sex = myMetadata$Sex)
+    } 
+    myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = 10)
+    ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
+    ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
+    myDMS_15pc = getMethylDiff(myDiffMeth, difference=15, qvalue=0.01)
+    return(myDMS_15pc)
 }
 
 ## Correspondance trtG1G2 and numerical values used by MethylKit
@@ -77,6 +81,9 @@ saveRDS(DMS15pc_G2_infectedG1_half, file = "../../data/DMS15pc_G2_infectedG1_hal
 
 ## stop here:
 stop("We stop here for now") # to run getDMS on Apocrita cause it's LONG
+
+## To do on bash: rename with DATES 
+## for f in DMS15pc*; do mv "$f" "$(echo "$f" | sed s/.RDS/_21feb22.RDS/)"; done
 
 ### UPLOAD
 ## Control G1 - G2(trt vs control)

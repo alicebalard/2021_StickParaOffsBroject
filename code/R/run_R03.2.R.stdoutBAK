@@ -234,37 +234,9 @@ The following object is masked from 'package:plyr':
     mutate
 
 Welcome to the GoeVeg Package
-Loading required package: futile.logger
-
-Attaching package: 'VennDiagram'
-
-The following object is masked from 'package:ggpubr':
-
-    rotate
-
-The following object is masked from 'package:dendextend':
-
-    rotate
-
-Loading required package: zoo
-
-Attaching package: 'zoo'
-
-The following objects are masked from 'package:base':
-
-    as.Date, as.Date.numeric
-
-   
-    Control Exposed NE_control NE_exposed E_control E_exposed
-  1      12       0          0          0         0         0
-  2       0       0          0          0        28         0
-  3       0       0          0          0         0        28
-  4       0      12          0          0         0         0
-  5       0       0         28          0         0         0
-  6       0       0          0         27         0         0
-two groups detected:
- will calculate methylation difference as the difference of
-treatment (group: 4) - control (group: 1)
+[1] 1188179
+[1] 6603
+[1] 0.5557243
             
               2  3  5  6
   NE_control  0  0 28  0
