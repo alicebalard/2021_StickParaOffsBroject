@@ -2,6 +2,8 @@
 ## A. Balard
 ## 25th of August 2021
 
+## NB: change R01.4 loadMethyldata each time this script is amended
+
 ## R/4.0.2 to run
 library(methylKit)
 library(readxl)
@@ -174,6 +176,19 @@ save(uniteCov14_G2_woSexAndUnknowChr, file = "/data/SBCS-EizaguirreLab/Alice/Sti
 
 ## Put the correct date in bash:
 # for f in uniteCov*; do mv "$f" "$(echo "$f" | sed s/.RData/_10feb22.RData/)"; done
+
+######################################################################################################
+## consider only methylKit object (uniteCov) with OVERLAPPING positions in Parents G1 and Offspring G2
+overlappingCpG_G1G2df <- findOverlaps(as(uniteCov6_G1_woSexAndUnknowChr,"GRanges"), 
+                                      as(uniteCov14_G2_woSexAndUnknowChr,"GRanges"))
+overlappingCpG_G1G2df <- data.frame(overlappingCpG_G1G2df)
+
+uniteCov6_G1_woSexAndUnknowChrOVERLAP <- uniteCov6_G1_woSexAndUnknowChr[overlappingCpG_G1G2df$queryHits,]
+uniteCov14_G2_woSexAndUnknowChrOVERLAP <- uniteCov14_G2_woSexAndUnknowChr[overlappingCpG_G1G2df$subjectHits,]
+
+save(uniteCov6_G1_woSexAndUnknowChrOVERLAP=uniteCov6_G1_woSexAndUnknowChrOVERLAP,
+     uniteCov14_G2_woSexAndUnknowChrOVERLAP=uniteCov14_G2_woSexAndUnknowChrOVERLAP, 
+     file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovhalf_FINAL.RData")
 
 ##################### Previous tests with ALL numbers of fish 1 to 12:
 ## we kept for downstream analyses all CpG sites present in at least 1 to 12 individuals per group, or in all individuals:

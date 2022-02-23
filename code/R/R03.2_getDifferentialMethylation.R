@@ -1,0 +1,162 @@
+## Differential methylation analyses
+## A. Balard
+## February 2022
+
+#################### Data load & preparation ####################
+source("librariesLoading.R")
+## load custom functions
+source("customRfunctions.R")
+## Load samples metadata
+source("R01.3_loadMetadata.R")
+## define in which machine we're working (apocrita or mythinkpad)
+## machine="apocrita"
+machine="mythinkpad"
+## Load methylation data
+source("R01.4_loadMethyldata.R")
+
+#######################################################
+### PART 2: Differential Methylation Sites/Regions ####
+#######################################################
+
+### 3 comparisons to do:
+## PARENTS trt-ctrl
+## G2-control G1 trt-ctrl
+## G2-infected G1 trt-ctrl ## HYP: this will be different
+
+################################################################
+## Correspondance trtG1G2 and numerical values used by MethylKit
+table(fullMetadata$trtG1G2_NUM, fullMetadata$trtG1G2)
+# Control Exposed NE_control NE_exposed E_control E_exposed
+# 1      12       0          0          0         0         0
+# 2       0       0          0          0        28         0
+# 3       0       0          0          0         0        28
+# 4       0      12          0          0         0         0
+# 5       0       0         28          0         0         0
+# 6       0       0          0         27         0         0
+
+
+######################################
+## For DMR: tile the methylation data:
+## Kostas MBE 2020: "To identify DMRs, we used the tileMethylCounts() function in MethylKit
+# v.1.5.0 with a sliding window size of 100 bases and step size of 100 bases."
+
+## Summarize methylation information over tiling windows with a sliding window size of 100 bases and step size of 100 bases
+
+uniteCov6_G1_woSexAndUnknowChr # methylBase object with 1188179 rows
+tiles_G1 = tileMethylCounts(uniteCov6_G1_woSexAndUnknowChr,win.size=100,step.size=100,cov.bases = 10)
+tiles_G1 # methylBase object with 26753 rows
+
+uniteCov14_G2_woSexAndUnknowChr_G1CONTROL <- reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+                                                        treatment = fullMetadata_OFFS$trtG1G2_NUM[
+                                                          fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)],
+                                                        sample.ids = fullMetadata_OFFS$ID[
+                                                          fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)])
+uniteCov14_G2_woSexAndUnknowChr_G1CONTROL # methylBase object with 1050222 rows
+tiles_G2_G1CONTROL = tileMethylCounts(uniteCov14_G2_woSexAndUnknowChr_G1CONTROL,win.size=100,step.size=100,cov.bases = 10)
+tiles_G2_G1CONTROL # methylBase object with 21029 rows
+
+uniteCov14_G2_woSexAndUnknowChr_G1INFECTED <- reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+                                                         treatment = fullMetadata_OFFS$trtG1G2_NUM[
+                                                           fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)],
+                                                         sample.ids = fullMetadata_OFFS$ID[
+                                                           fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)])
+uniteCov14_G2_woSexAndUnknowChr_G1INFECTED # methylBase object with 1050222 rows
+tiles_G2_G1INFECTED = tileMethylCounts(uniteCov14_G2_woSexAndUnknowChr_G1INFECTED,win.size=100,step.size=100,cov.bases = 10)
+tiles_G2_G1INFECTED # methylBase object with 21029 rows
+
+##############################################################################
+## Calculate DMS/DMR accounting for covariates: family and sex (new 20/02/22!)
+getDiffMeth <- function(myuniteCov, myMetadata){
+  if (length(table(myMetadata$Sex)) == 1){
+    cov = data.frame(Family = myMetadata$Family)
+  } else if (length(table(myMetadata$Sex)) == 2){
+    cov = data.frame(Family = myMetadata$Family, Sex = myMetadata$Sex)
+  } 
+  myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = 3)#10 on Apocrita
+  ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
+  ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
+  myDMS_15pc = getMethylDiff(myDiffMeth, difference=15, qvalue=0.01)
+  return(myDMS_15pc)
+}
+
+## Comparison 1: BASELINE -> Parents (control vs infected) 
+## DMS15pc_PAR_half <- getDiffMeth(uniteCov6_G1_woSexAndUnknowChr, fullMetadata_PAR)
+## saveRDS(DMS15pc_PAR_half, file = "../../data/DMS15pc_PAR_half.RDS")
+
+## DMR15pc_PAR_half <- getDiffMeth(tiles_G1, fullMetadata_PAR)
+## saveRDS(DMR15pc_PAR_half, file = "../../data/DMR15pc_PAR_half.RDS")
+
+
+## Comparison 2: Offspring
+## 2.1. Should be like baseline -> G2 from G1 control (control vs infected) 
+# DMS15pc_G2_controlG1_half <- getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1CONTROL,
+#                                     myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+# saveRDS(DMS15pc_G2_controlG1_half, file = "../../data/DMS15pc_G2_controlG1_half.RDS")
+
+# DMR15pc_G2_controlG1_half <- getDiffMeth(tiles_G2_G1CONTROL, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+# saveRDS(DMR15pc_G2_controlG1_half, file = "../../data/DMR15pc_G2_controlG1_half.RDS")
+
+# 
+## 2.2. Should be DIFFERENT if there is a paternal effect -> G2 from G1 infected (control vs infected) 
+# DMS15pc_G2_infectedG1_half <- getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1INFECTED, 
+#                                      myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
+#  
+# saveRDS(DMS15pc_G2_infectedG1_half, file = "../../data/DMS15pc_G2_infectedG1_half.RDS")
+
+# DMR15pc_G2_infectedG1_half <- getDiffMeth(tiles_G2_G1INFECTED, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
+# saveRDS(DMR15pc_G2_infectedG1_half, file = "../../data/DMR15pc_G2_infectedG1_half.RDS")
+
+## stop here:
+# stop("We stop here for now") # to run getDiffMeth on Apocrita cause it's LONG
+
+## To do on bash: rename with DATES 
+## for f in DMS15pc*; do mv "$f" "$(echo "$f" | sed s/.RDS/_21feb22.RDS/)"; done
+## for f in DMR15pc*; do mv "$f" "$(echo "$f" | sed s/.RDS/_23feb22.RDS/)"; done
+
+### UPLOAD methylDiff objects:
+# Parents (Family as covariates)
+DMS15pc_PAR_half <- readRDS("../../data/DMS15pc_PAR_half_21feb22.RDS")
+DMR15pc_PAR_half <- readRDS("../../data/DMR15pc_PAR_half_23feb22.RDS")
+
+## Offspring (Family & Sex as covariates)
+## Control G1 - G2(trt vs control)
+DMS15pc_G2_controlG1_half <- readRDS("../../data/DMS15pc_G2_controlG1_half_21feb22.RDS")
+DMR15pc_G2_controlG1_half <- readRDS("../../data/DMR15pc_G2_controlG1_half_23feb22.RDS")
+
+## Infected G1 - G2(trt vs control)
+DMS15pc_G2_infectedG1_half <- readRDS("../../data/DMS15pc_G2_infectedG1_half_21feb22.RDS")
+DMR15pc_G2_infectedG1_half <- readRDS("../../data/DMR15pc_G2_infectedG1_half_23feb22.RDS")
+
+##########################################################
+##### Get DMS after removal of CpG NOT covered in all 3 datasets (G1 & G2c&i)
+CpG_G1df <- paste(uniteCov6_G1_woSexAndUnknowChr$chr, uniteCov6_G1_woSexAndUnknowChr$start, uniteCov6_G1_woSexAndUnknowChr$end)
+CpG_G2df <- paste(uniteCov14_G2_woSexAndUnknowChr$chr, uniteCov14_G2_woSexAndUnknowChr$start, uniteCov14_G2_woSexAndUnknowChr$end)
+
+## Full CpG covered
+coveredCpGbothdf <- intersect(CpG_G1df, CpG_G2df)
+length(coveredCpGbothdf) # 1,001,880
+
+## Keep only these positions in the 3 DMS datasets:
+DMS_G1_final <- DMS15pc_PAR_half[paste(DMS15pc_PAR_half$chr, DMS15pc_PAR_half$start, DMS15pc_PAR_half$end) %in% coveredCpGbothdf,]
+DMS_G2_G1c_final <- DMS15pc_G2_controlG1_half[paste(DMS15pc_G2_controlG1_half$chr, DMS15pc_G2_controlG1_half$start, DMS15pc_G2_controlG1_half$end) %in% coveredCpGbothdf,]
+DMS_G2_G1i_final <- DMS15pc_G2_infectedG1_half[paste(DMS15pc_G2_infectedG1_half$chr, DMS15pc_G2_infectedG1_half$start, DMS15pc_G2_infectedG1_half$end) %in% coveredCpGbothdf,]
+
+rm(DMS15pc_PAR_half, DMS15pc_G2_controlG1_half, DMS15pc_G2_infectedG1_half)
+
+#######################################################
+######################## DMR ##########################
+#######################################################
+
+## Are DMR15pc_PAR_half covered in uniteCov14_G2_woSexAndUnknowChr?
+DMR15pc_PAR_half
+(uniteCov14_G2_woSexAndUnknowChr)
+
+as(uniteCov14_G2_woSexAndUnknowChr,"GRanges")
+
+
+
+## Are DMR15pc_G2_controlG1_half and DMR15pc_G2_infectedG1_half covered in uniteCov6_G1_woSexAndUnknowChr?
+
+
+
+
