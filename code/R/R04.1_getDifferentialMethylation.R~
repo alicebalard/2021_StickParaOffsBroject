@@ -7,12 +7,12 @@ source("librariesLoading.R")
 ## load custom functions
 source("customRfunctions.R")
 ## Load samples metadata
-source("R01.3_loadMetadata.R")
+source("R02.1_loadMetadata.R")
 ## define in which machine we're working (apocrita or mythinkpad)
-## machine="apocrita"
-machine="mythinkpad"
+machine="apocrita"
+#machine="mythinkpad"
 ## Load methylation data
-source("R01.4_loadMethyldata.R")
+source("R02.2_loadMethyldata.R")
 
 #######################################################
 ### PART 2: Differential Methylation Sites/Regions ####
@@ -42,27 +42,30 @@ table(fullMetadata$trtG1G2_NUM, fullMetadata$trtG1G2)
 
 ## Summarize methylation information over tiling windows with a sliding window size of 100 bases and step size of 100 bases
 
-uniteCov6_G1_woSexAndUnknowChr # methylBase object with 1188179 rows
-tiles_G1 = tileMethylCounts(uniteCov6_G1_woSexAndUnknowChr,win.size=100,step.size=100,cov.bases = 10)
-tiles_G1 # methylBase object with 26753 rows
+nrow(uniteCov6_G1_woSexAndUnknowChrOVERLAP) # methylBase object with 1001880 rows
+tiles_G1 = tileMethylCounts(uniteCov6_G1_woSexAndUnknowChrOVERLAP, win.size=100,step.size=100,cov.bases = 10)
+nrow(tiles_G1) # methylBase object with 20348 rows
 
-uniteCov14_G2_woSexAndUnknowChr_G1CONTROL <- reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+## G2 from control fathers:
+uniteCov14_G2_woSexAndUnknowChr_G1CONTROL <- reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
                                                         treatment = fullMetadata_OFFS$trtG1G2_NUM[
                                                           fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)],
                                                         sample.ids = fullMetadata_OFFS$ID[
                                                           fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)])
-uniteCov14_G2_woSexAndUnknowChr_G1CONTROL # methylBase object with 1050222 rows
-tiles_G2_G1CONTROL = tileMethylCounts(uniteCov14_G2_woSexAndUnknowChr_G1CONTROL,win.size=100,step.size=100,cov.bases = 10)
-tiles_G2_G1CONTROL # methylBase object with 21029 rows
+nrow(uniteCov14_G2_woSexAndUnknowChr_G1CONTROL) # methylBase object with 1001880 rows
 
-uniteCov14_G2_woSexAndUnknowChr_G1INFECTED <- reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChr,
+tiles_G2_G1CONTROL = tileMethylCounts(uniteCov14_G2_woSexAndUnknowChr_G1CONTROL,win.size=100,step.size=100,cov.bases = 10)
+nrow(tiles_G2_G1CONTROL) # methylBase object with 20348 rows
+
+## G2 from infected fathers:
+uniteCov14_G2_woSexAndUnknowChr_G1INFECTED <- reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
                                                          treatment = fullMetadata_OFFS$trtG1G2_NUM[
                                                            fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)],
                                                          sample.ids = fullMetadata_OFFS$ID[
                                                            fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)])
-uniteCov14_G2_woSexAndUnknowChr_G1INFECTED # methylBase object with 1050222 rows
+
 tiles_G2_G1INFECTED = tileMethylCounts(uniteCov14_G2_woSexAndUnknowChr_G1INFECTED,win.size=100,step.size=100,cov.bases = 10)
-tiles_G2_G1INFECTED # methylBase object with 21029 rows
+nrow(tiles_G2_G1INFECTED) # methylBase object with 20348 rows
 
 ##############################################################################
 ## Calculate DMS/DMR accounting for covariates: family and sex (new 20/02/22!)
@@ -80,38 +83,38 @@ getDiffMeth <- function(myuniteCov, myMetadata){
 }
 
 ## Comparison 1: BASELINE -> Parents (control vs infected) 
-## DMS15pc_PAR_half <- getDiffMeth(uniteCov6_G1_woSexAndUnknowChr, fullMetadata_PAR)
-## saveRDS(DMS15pc_PAR_half, file = "../../data/DMS15pc_PAR_half.RDS")
+DMS15pc_PAR_half <- getDiffMeth(uniteCov6_G1_woSexAndUnknowChrOVERLAP, fullMetadata_PAR)
+saveRDS(DMS15pc_PAR_half, file = "../../data/DMS15pc_PAR_half.RDS")
 
-## DMR15pc_PAR_half <- getDiffMeth(tiles_G1, fullMetadata_PAR)
-## saveRDS(DMR15pc_PAR_half, file = "../../data/DMR15pc_PAR_half.RDS")
-
+DMR15pc_PAR_half <- getDiffMeth(tiles_G1, fullMetadata_PAR)
+saveRDS(DMR15pc_PAR_half, file = "../../data/DMR15pc_PAR_half.RDS")
 
 ## Comparison 2: Offspring
 ## 2.1. Should be like baseline -> G2 from G1 control (control vs infected) 
-# DMS15pc_G2_controlG1_half <- getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1CONTROL,
-#                                     myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
-# saveRDS(DMS15pc_G2_controlG1_half, file = "../../data/DMS15pc_G2_controlG1_half.RDS")
+DMS15pc_G2_controlG1_half <- getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1CONTROL,
+                                     myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+saveRDS(DMS15pc_G2_controlG1_half, file = "../../data/DMS15pc_G2_controlG1_half.RDS")
 
-# DMR15pc_G2_controlG1_half <- getDiffMeth(tiles_G2_G1CONTROL, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
-# saveRDS(DMR15pc_G2_controlG1_half, file = "../../data/DMR15pc_G2_controlG1_half.RDS")
+DMR15pc_G2_controlG1_half <- getDiffMeth(tiles_G2_G1CONTROL, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+saveRDS(DMR15pc_G2_controlG1_half, file = "../../data/DMR15pc_G2_controlG1_half.RDS")
 
-# 
 ## 2.2. Should be DIFFERENT if there is a paternal effect -> G2 from G1 infected (control vs infected) 
-# DMS15pc_G2_infectedG1_half <- getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1INFECTED, 
-#                                      myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
-#  
-# saveRDS(DMS15pc_G2_infectedG1_half, file = "../../data/DMS15pc_G2_infectedG1_half.RDS")
+DMS15pc_G2_infectedG1_half <- getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1INFECTED, 
+                                      myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
+  
+saveRDS(DMS15pc_G2_infectedG1_half, file = "../../data/DMS15pc_G2_infectedG1_half.RDS")
 
-# DMR15pc_G2_infectedG1_half <- getDiffMeth(tiles_G2_G1INFECTED, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
-# saveRDS(DMR15pc_G2_infectedG1_half, file = "../../data/DMR15pc_G2_infectedG1_half.RDS")
+DMR15pc_G2_infectedG1_half <- getDiffMeth(tiles_G2_G1INFECTED, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
+saveRDS(DMR15pc_G2_infectedG1_half, file = "../../data/DMR15pc_G2_infectedG1_half.RDS")
 
 ## stop here:
-# stop("We stop here for now") # to run getDiffMeth on Apocrita cause it's LONG
+stop("We stop here for now") # to run getDiffMeth on Apocrita cause it's LONG
 
 ## To do on bash: rename with DATES 
-## for f in DMS15pc*; do mv "$f" "$(echo "$f" | sed s/.RDS/_21feb22.RDS/)"; done
-## for f in DMR15pc*; do mv "$f" "$(echo "$f" | sed s/.RDS/_23feb22.RDS/)"; done
+## for f in DMS15pc*; do mv "$f" "$(echo "$f" | sed s/.RDS/_25feb22.RDS/)"; done
+## for f in DMR15pc*; do mv "$f" "$(echo "$f" | sed s/.RDS/_25feb22.RDS/)"; done
+
+
 
 ### UPLOAD methylDiff objects:
 # Parents (Family as covariates)

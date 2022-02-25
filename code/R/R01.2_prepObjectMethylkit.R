@@ -186,10 +186,13 @@ overlappingCpG_G1G2df <- data.frame(overlappingCpG_G1G2df)
 uniteCov6_G1_woSexAndUnknowChrOVERLAP <- uniteCov6_G1_woSexAndUnknowChr[overlappingCpG_G1G2df$queryHits,]
 uniteCov14_G2_woSexAndUnknowChrOVERLAP <- uniteCov14_G2_woSexAndUnknowChr[overlappingCpG_G1G2df$subjectHits,]
 
-save(uniteCov6_G1_woSexAndUnknowChrOVERLAP=uniteCov6_G1_woSexAndUnknowChrOVERLAP,
-     uniteCov14_G2_woSexAndUnknowChrOVERLAP=uniteCov14_G2_woSexAndUnknowChrOVERLAP, 
-     file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCovhalf_FINAL.RData")
+## Save in 2 bits
+save(uniteCov6_G1_woSexAndUnknowChrOVERLAP,
+     file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov6_G1_woSexAndUnknowChrOVERLAP_23feb2022.RData")
 
+save(uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+     file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov14_G2_woSexAndUnknowChrOVERLAP_23feb2022.RData")
+    
 ##################### Previous tests with ALL numbers of fish 1 to 12:
 ## we kept for downstream analyses all CpG sites present in at least 1 to 12 individuals per group, or in all individuals:
 # print("Unite and store in a list")
