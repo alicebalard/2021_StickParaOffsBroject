@@ -193,6 +193,9 @@ save(uniteCov6_G1_woSexAndUnknowChrOVERLAP,
 save(uniteCov14_G2_woSexAndUnknowChrOVERLAP,
      file = "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/output/uniteCov14_G2_woSexAndUnknowChrOVERLAP_23feb2022.RData")
     
+
+## TBC: with ALL G2, overlapping with G1
+
 ##################### Previous tests with ALL numbers of fish 1 to 12:
 ## we kept for downstream analyses all CpG sites present in at least 1 to 12 individuals per group, or in all individuals:
 # print("Unite and store in a list")

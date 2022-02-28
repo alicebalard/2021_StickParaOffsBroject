@@ -28,8 +28,6 @@ nrow(uniteCov14_G2_woSexAndUnknowChrOVERLAP) # 1 001 880
 ########## Run the following only if we want data for Parents
 ## and offsprings separately (some CpG extra per datasets)
 
-loadALL = FALSE
-
 if (loadALL == TRUE){
     ## Load previously united data for PARENTS
     ## CpG covered in ALL parents

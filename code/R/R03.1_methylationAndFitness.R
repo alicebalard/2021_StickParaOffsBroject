@@ -11,6 +11,7 @@ source("R02.1_loadMetadata.R")
 
 ## Load previously united methylkit data
 ## define in which machine we're working (apocrita or mythinkpad)
+loadALL = FALSE # only load CpG shared by half fish per trt group
 ##machine="apocrita"
 machine="mythinkpad"
 source("R02.2_loadMethyldata.R")

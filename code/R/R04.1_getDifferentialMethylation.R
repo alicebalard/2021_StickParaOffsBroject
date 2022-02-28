@@ -12,6 +12,7 @@ source("R02.1_loadMetadata.R")
 machine="apocrita"
 #machine="mythinkpad"
 ## Load methylation data
+loadALL = FALSE # only load CpG shared by half fish per trt group
 source("R02.2_loadMethyldata.R")
 
 #######################################################

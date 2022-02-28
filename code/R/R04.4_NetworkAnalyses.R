@@ -23,6 +23,14 @@ machine="mythinkpad"
 ## Load methylation data
 source("R02.2_loadMethyldata.R")
 
+## Specifically, load CpG positions covered in ALL OFFSPRING (no NAs)
+loadALL = TRUE
+
+base::load("../../gitignore/bigdata/05MethylKit/output/uniteCovALL_G2_woSexAndUnknownChr_10feb22.RData")
+
+nrow(uniteCovALL_G2_woSexAndUnknowChr)#78384
+
+
 ## Source the previously calculated DMS/DMR
 ## Parents (Family as covariates)
 DMS15pc_G1_half <- readRDS("../../data/DMS15pc_G1_half_25feb22.RDS"); nrow(DMS15pc_G1_half) # 5074
