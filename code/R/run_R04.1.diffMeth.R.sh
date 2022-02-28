@@ -5,8 +5,8 @@
 #$ -cwd
 #$ -j y
 #$ -N runR
-#$ -o /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/run_R04.1.R.stdout
-#$ -e /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/run_R04.1.R.stderr
+#$ -o /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/run_R04.1.diffMeth.R.stdout
+#$ -e /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/R/run_R04.1.diffMeth.R.stderr
 
 module load R/4.0.2
 
