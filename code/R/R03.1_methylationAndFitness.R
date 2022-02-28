@@ -11,8 +11,8 @@ source("R02.1_loadMetadata.R")
 
 ## Load previously united methylkit data
 ## define in which machine we're working (apocrita or mythinkpad)
-machine="apocrita"
-##machine="mythinkpad"
+##machine="apocrita"
+machine="mythinkpad"
 source("R02.2_loadMethyldata.R")
 
 ## Data getting loaded:
@@ -313,6 +313,63 @@ lrtest(mod1, mod0) # VERY significant in offspring p = 0.0057 **
 # plot fixed effects depending on random effects
 pred <- ggpredict(mod1, terms = c("BCI", "Sex", "Family"), type = "random")
 plot(pred, ci = F, add.data = TRUE)
+
+######
+## In the other direction (BCI ~ residualsMeth) to plot with TRT
+## OFFSPRING
+mod1 <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG + (1|Family) + (1|Sex), 
+             data = fullMetadata_OFFS_half, REML = F)
+mod0 <- lmer(BCI ~ 1 + (1|Family)+ (1|Sex), 
+             data = fullMetadata_OFFS_half, REML = F)
+lrtest(mod1, mod0) # significant in offspring 0.0162 *
+
+# plot fixed effects depending on random effects
+pred <- ggpredict(mod1, terms = c("res_Nbr_methCpG_Nbr_coveredCpG", "Sex", "Family"), type = "random")
+plot(pred, ci = F, add.data = TRUE)
+
+##### Prettier picture:
+# Set up scatterplot
+scatterplot <- ggplot(fullMetadata_OFFS_half,
+                      aes(x = res_Nbr_methCpG_Nbr_coveredCpG, 
+                          y = BCI, fill=trtG1G2)) +
+  geom_point(pch=21, size =3, alpha = .8) +
+  guides(color = "none") +
+  scale_fill_manual(values = colOffs) + 
+  theme(plot.margin = margin()) +
+  theme(legend.position = "none")
+
+# Define marginal histogram
+marginal_distribution <- function(x, var, group) {
+  ggplot(x, aes_string(x = var, fill = group)) +
+    # geom_histogram(bins = 30, alpha = 0.4, position = "identity") +
+    geom_density(alpha = 0.6, size = 0.2) +
+    guides(fill = "none") +
+    scale_fill_manual(values = colOffs) + 
+    theme_void() +
+    theme(plot.margin = margin())
+}
+
+# Set up marginal histograms
+x_hist <- marginal_distribution(fullMetadata_OFFS_half, "res_Nbr_methCpG_Nbr_coveredCpG", "trtG1G2")
+y_hist <- marginal_distribution(fullMetadata_OFFS_half, "BCI", "trtG1G2") +
+  coord_flip()
+
+# Align histograms with scatterplot
+aligned_x_hist <- align_plots(x_hist, scatterplot, align = "v")[[1]]
+aligned_y_hist <- align_plots(y_hist, scatterplot, align = "h")[[1]]
+
+# Arrange plots
+plot_grid(
+  aligned_x_hist
+  , NULL
+  , scatterplot
+  , aligned_y_hist
+  , ncol = 2
+  , nrow = 2
+  , rel_heights = c(0.2, 1)
+  , rel_widths = c(1, 0.2)
+)
+
 
 #### TBC
 #################################################################################

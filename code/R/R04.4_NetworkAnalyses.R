@@ -9,111 +9,92 @@ source("customRfunctions.R")
 ## Load samples metadata
 source("R02.1_loadMetadata.R")
 
+#### NB: add BCI (was calculated only in R03.1)
+## Kaufmann et al. 2014: Body condition of the G2 fish, an estimate of fish health and a predictor
+# of energy reserves and reproductive success, was calculated using there residuals from the 
+# regression of body mass on body length (Chellappaet al.1995).
+fullMetadata_OFFS$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|Family), data=fullMetadata_OFFS))
+## and for parents (no sex difference, only males):
+fullMetadata_PAR$BCI <- residuals(lmer(Wnettofin ~ Slfin + (1|Family), data=fullMetadata_PAR))
+
+## define in which machine we're working (apocrita or mythinkpad)
+##machine="apocrita"
+machine="mythinkpad"
+## Load methylation data
+source("R02.2_loadMethyldata.R")
+
 ## Source the previously calculated DMS/DMR
-
-## TO UPDATE 25Feb
-
 ## Parents (Family as covariates)
-DMS15pc_G1_half <- readRDS("../../data/DMS15pc_G1_half_25feb22.RDS")
-DMR15pc_G1_half <- readRDS("../../data/DMR15pc_G1_half_25feb22.RDS")
+DMS15pc_G1_half <- readRDS("../../data/DMS15pc_G1_half_25feb22.RDS"); nrow(DMS15pc_G1_half) # 5074
+DMR15pc_G1_half <- readRDS("../../data/DMR15pc_G1_half_25feb22.RDS"); nrow(DMR15pc_G1_half) # 23
 ## Offspring (Family & Sex as covariates)
 ## Control G1 - G2(trt vs control)
-DMS15pc_G2_controlG1_half <- readRDS("../../data/DMS15pc_G2_controlG1_half_25feb22.RDS")
-DMR15pc_G2_controlG1_half <- readRDS("../../data/DMR15pc_G2_controlG1_half_25feb22.RDS")
+DMS15pc_G2_controlG1_half <- readRDS("../../data/DMS15pc_G2_controlG1_half_25feb22.RDS"); nrow(DMS15pc_G2_controlG1_half) # 1430
+DMR15pc_G2_controlG1_half <- readRDS("../../data/DMR15pc_G2_controlG1_half_25feb22.RDS"); nrow(DMR15pc_G2_controlG1_half) # 6
 ## Infected G1 - G2(trt vs control)
-DMS15pc_G2_infectedG1_half <- readRDS("../../data/DMS15pc_G2_infectedG1_half_25feb22.RDS")
-DMR15pc_G2_infectedG1_half <- readRDS("../../data/DMR15pc_G2_infectedG1_half_25feb22.RDS")
+DMS15pc_G2_infectedG1_half <- readRDS("../../data/DMS15pc_G2_infectedG1_half_25feb22.RDS"); nrow(DMS15pc_G2_infectedG1_half) # 777
+DMR15pc_G2_infectedG1_half <- readRDS("../../data/DMR15pc_G2_infectedG1_half_25feb22.RDS"); nrow(DMR15pc_G2_infectedG1_half) # 8
 
-## Prepare datasets needed, remove the rest:
-prepareNetworkData <- function(DMS, uniteCov, fullMetadata){
-  myMethylDiff = DMS
+###########################################
+#### Co-methylation network construction
+enableWGCNAThreads()
+
+## Prepare datasets needed. We need the individual beta values for the DMS positions:
+prepareNetworkData <- function(myMethylDiff, originalUniteCov, fullMetadata){
   ## Keep full methylation data for (1) positions only at DMS and (2) correct samples
-  samples = myMethylDiff@sample.ids
-  pos = myMethylDiff$pos
-  trt = myMethylDiff@treatment
-  myMethylKit_DMS = uniteCov[paste(uniteCov$chr, uniteCov$start, uniteCov$end) %in% pos]
-  myMethylKit_DMS = reorganize(methylObj = myMethylKit_DMS, treatment = trt, sample.ids = samples)
+  myMethylKit_DMS = originalUniteCov[paste(originalUniteCov$chr, originalUniteCov$start, originalUniteCov$end) %in% 
+                               paste(myMethylDiff$chr, myMethylDiff$start, myMethylDiff$end)]
+  myMethylKit_DMS = reorganize(methylObj = myMethylKit_DMS, 
+                               treatment = myMethylDiff@treatment, 
+                               sample.ids = myMethylDiff@sample.ids)
   ## Keep correct metadata
-  myMetadata = fullMetadata[fullMetadata$trtG1G2_NUM %in% trt,]
+  myMetadata = fullMetadata[fullMetadata$trtG1G2_NUM %in% myMethylDiff@treatment,]
   return(list(myMethylDiff=myMethylDiff, myMethylKit_DMS = myMethylKit_DMS, myMetadata = myMetadata))
 }
 
-myG1list <- prepareNetworkData(DMS = DMS_G1_final,
-                               uniteCov = uniteCov6_G1_woSexAndUnknowChr,
+myG1list <- prepareNetworkData(myMethylDiff = DMS15pc_G1_half,
+                               originalUniteCov = uniteCov6_G1_woSexAndUnknowChrOVERLAP,
                                fullMetadata = fullMetadata_PAR)
 
-myG2_G1control_list <- prepareNetworkData(DMS = DMS_G2_G1c_final,
-                               uniteCov = uniteCov14_G2_woSexAndUnknowChr,
+myG2_G1control_list <- prepareNetworkData(myMethylDiff = DMS15pc_G2_controlG1_half,
+                                          originalUniteCov = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
                                fullMetadata = fullMetadata_OFFS)
 
-myG2_G1infected_list <- prepareNetworkData(DMS = DMS_G2_G1i_final,
-                               uniteCov = uniteCov14_G2_woSexAndUnknowChr,
+myG2_G1infected_list <- prepareNetworkData(myMethylDiff = DMS15pc_G2_infectedG1_half,
+                                           originalUniteCov = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
                                fullMetadata = fullMetadata_OFFS)
 
 ## Remove all but my 3 lists to avoid confusion:
 rm(list = ls()[!ls() %in% c("myG1list", "myG2_G1control_list", "myG2_G1infected_list")])
 
+#### PB: how to deal with missing data?
+## https://elifesciences.org/articles/59201#s4
+## "Missing values were imputed using a kNN sliding window; missing methylation values were assigned the average value of the five nearest neighbors by Euclidean distance within a 3Mb window"
 
 
-
-## YOU're here
-
-
-##########################################################
-#### Co-methylation network construction
-### Help: https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/FemaleLiver-01-dataInput.pdf
-enableWGCNAThreads()
+## OR: network by GENE, with average methylation value of the gene.
 
 
+ARG = myG1list
+#### MAKEFUNTION HERE
 
+### Prepare data
+## https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/FemaleLiver-01-dataInput.pdf
+## 1.a Loading methylation data
 
+## Make a dataframe in which each column is a sample and each row a CpG position, 
+## with values = beta value (methylation frequency = numCs/coverage)
+myDF_betaVal = methylKit::getData(ARG$myMethylKit_DMS)[grep("numCs", names(ARG$myMethylKit_DMS))]/
+  methylKit::getData(ARG$myMethylKit_DMS)[grep("coverage", names(ARG$myMethylKit_DMS))]
+names(myDF_betaVal)= ARG$myMethylKit_DMS@sample.ids
 
+## Transpose
+myDF_betaVal=data.frame(t(myDF_betaVal))
+colnames(myDF_betaVal)=paste0("CpG", colnames(myDF_betaVal))
 
-################# Previous
-
-# 
-# myMethylKit = uniteCov2_woSexAndUnknowChr_PAR
-# # load file with your DMS
-# DMS_PAR <- readRDS("../../data/myDiff1_15p_parentalDiffMeth.RDS")
-# myDMS = DMS_PAR # 13737 observation
-# myMetaData <- fullMetadata_PAR
-
-## in step gsg$allOK: Removing samples: S70, S95
-
-
-#######
-## 1.Data preparation
-
-######################################
-## METHYLATION DATA
-
-## Extract the targeted CpG positions from the methylkit object
-myMethylKit$position <- paste(myMethylKit$chr, myMethylKit$start, myMethylKit$end)
-myDF <- myMethylKit[myMethylKit$position %in% paste(myDMS$chr, myDMS$start, myDMS$end),]
-
-## Make myDF_fr : a dataframe in which each column is a sample or auxilliary info,
-## and each row a CpG position, with values = beta value (methylation frequency = numCs/coverage)
-myDF <-methylKit::getData(myDF)
-myDF_fr <- data.frame(matrix(ncol=length(myMethylKit@sample.ids), nrow=nrow(myDF)))
-names(myDF_fr) = myMethylKit@sample.ids
-for(i in 1:ncol(myDF_fr)){
-  myDF_fr[i] <- myDF[paste0("numCs", i)]/myDF[paste0("coverage", i)]
-}
-
-## Store CpG information (Chr, start, end)
-CpGInfo <- data.frame(CpGpos = paste0("CpG", 1:length(myDF$chr)),
-                      Chromosome = myDF$chr,
-                      start = myDF$start,
-                      end=myDF$end)
-
-## We now transpose the expression data for further analysis.
-datMeth = as.data.frame(t(myDF_fr));
-names(datMeth) = CpGInfo$CpGpos
-
-## We first check for genes and samples with too many missing values:
-gsg = goodSamplesGenes(datMeth, verbose = 3, 
-                       minFraction = 3/4)#increase minFraction because too many Nas at the following steps
-gsg$allOK 
+## 1.b Checking data for excessive missing values and outlier samples
+gsg = goodSamplesGenes(myDF_betaVal, verbose = 3, minFraction = 0.9);
+gsg$allOK
 
 # If the last statement returns TRUE, all genes have passed the cuts. If not, 
 # we remove the offending genes and samples from the data
@@ -121,16 +102,16 @@ if (!gsg$allOK)
 {
   # Optionally, print the gene and sample names that were removed:
   if (sum(!gsg$goodGenes)>0)
-    printFlush(paste("Removing genes:", paste(names(datMeth)[!gsg$goodGenes], collapse = ", ")));
+    printFlush(paste("Removing genes:", paste(names(myDF_betaVal)[!gsg$goodGenes], collapse = ", ")));
   if (sum(!gsg$goodSamples)>0)
-    printFlush(paste("Removing samples:", paste(rownames(datMeth)[!gsg$goodSamples], collapse = ", ")));
+    printFlush(paste("Removing samples:", paste(rownames(myDF_betaVal)[!gsg$goodSamples], collapse = ", ")));
   # Remove the offending genes and samples from the data:
-  datMeth = datMeth[gsg$goodSamples, gsg$goodGenes]
+  myDF_betaVal = myDF_betaVal[gsg$goodSamples, gsg$goodGenes]
 }
 
 ## Cluster the samples (in contrast to clustering genes that will come later) to see if there are any obvious
 ## outliers:
-sampleTree = hclust(dist(datMeth), method = "average");
+sampleTree = hclust(dist(myDF_betaVal), method = "average");
 # Plot the sample tree: Open a graphic output window of size 12 by 9 inches
 # The user should change the dimensions if the window is too large or too small.
 sizeGrWindow(12,9)
@@ -139,42 +120,37 @@ par(mar = c(0,4,2,0))
 plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
      cex.axis = 1.5, cex.main = 2) ## All good!
 
-######################################
-## TRAIT DATA
-
-## Form a data frame analogous to expression data that will hold the individuals traits
-nrow(myMetaData)
-
+## 1.c Loading clinical trait data
+## Form a data frame analogous to methylation data that will hold the individuals traits
 ## Resistance: load of parasites: myMetaData$No.Worms
-## Tolerance: BCI TBC
-myMetaData$Family_NUM = as.numeric(gsub("Fam", "",myMetaData$Family))
-
-traitRows = match(rownames(datMeth), myMetaData$SampleID);
-datTraits = myMetaData[traitRows,];
-rownames(datTraits) = myMetaData[traitRows, "ID"];
-datTraits = datTraits[c("trtG1G2_NUM", "Family_NUM", "No.Worms")] ## here keep interesting CONTINUOUS traits (no "Family", "Sex", "trtG1G2")
+## Tolerance: BCI 
+ARG$myMetadata$Family_NUM = as.numeric(gsub("Fam", "",ARG$myMetadata$Family))
+traitRows = match(rownames(myDF_betaVal), ARG$myMetadata$SampleID);
+datTraits = (ARG$myMetadata)[traitRows,];
+rownames(datTraits) = ARG$myMetadata[traitRows, "ID"];
+datTraits = datTraits[c("trtG1G2_NUM", "Family_NUM", "No.Worms", "BCI")] ## here keep interesting CONTINUOUS traits
 collectGarbage();
 
 ## We now have the methylation data in the variable datMeth, and the corresponding traits in the variable
 ## datTraits. Before we continue with network construction and module detection, we visualize how
 ## the traits relate to the sample dendrogram
 # Re-cluster samples
-sampleTree2 = hclust(dist(datMeth), method = "average")
+sampleTree2 = hclust(dist(myDF_betaVal), method = "average")
 # Convert traits to a color representation: white means low, red means high, grey means missing entry
 traitColors = numbers2colors(datTraits, signed = FALSE);
 # Plot the sample dendrogram and the colors underneath.
 plotDendroAndColors(sampleTree2, traitColors,
                     groupLabels = names(datTraits),
-                    main = "Sample dendrogram and trait heatmap")
-#######
-## 2.Automatic network construction and module detection
+                    main = "Sample dendrogram and trait heatmap\nClustering dendrogram of samples based on their Euclidean distance.")
 
-###
+## 2.Automatic network construction and module detection
+## https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/FemaleLiver-02-networkConstr-auto.pdf
+
 ## 2.1 Choosing the soft-thresholding power: analysis of network topology
 # Choose a set of soft-thresholding powers
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 # Call the network topology analysis function
-sft = pickSoftThreshold(datMeth, powerVector = powers, verbose = 5)
+sft = pickSoftThreshold(myDF_betaVal, powerVector = powers, verbose = 5)
 # Plot the results:
 sizeGrWindow(9, 5) ; par(mfrow = c(1,2)); cex1 = 0.9;
 # Scale-free topology fit index as a function of the soft-thresholding power
@@ -184,7 +160,6 @@ plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
 text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
      labels=powers,cex=cex1,col="red");
 # this line corresponds to using an R^2 cut-off of h
-abline(h=0.8,col="red")
 abline(h=0.9,col="red")
 # Mean connectivity as a function of the soft-thresholding power
 plot(sft$fitIndices[,1], sft$fitIndices[,5],
@@ -194,22 +169,16 @@ text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
 abline(h=30,col="red")
 abline(h=100,col="red")
 ## Figure 1: Analysis of network topology for various soft-thresholding powers. The left panel shows the scale-free fit
-# index (y-axis) as a function of the soft-thresholding power (x-axis). The right panel displays the mean connectivity
+# index (y-axis) as a function of the soft-thresholding power (x-axis). The right pabnel displays the mean connectivity
 # (degree, y-axis) as a function of the soft-thresholding power (x-axis)
-## We choose the power 5 following https://www.biostars.org/p/9477991/
 
-#########
 ## 2.2 One-step network construction and module detection
-net = blockwiseModules(datMeth, power = 12, # 12 is default for signed network
+net = blockwiseModules(myDF_betaVal, power = 12, # 12 is default for signed network
+                       replaceMissingAdjacencies = TRUE,
                        TOMType = "signed", # preserved direction +/- of correlations
-                       maxBlockSize = 10000, # we have about 6000 probes, this value should be higher
-                       corType = "bicor", # handles better outliers than Pearson
-                       maxPOutliers = 0.1,
-                       replaceMissingAdjacencies = TRUE, # to deal with pairs of genes in your data
-                       # that have missing values arranged such that after removing the entries
-                       # that are missing in the other gene, one of the genes becomes constant
-                       saveTOMs = TRUE,
-                       saveTOMFileBase = "../../data/networks/parentalTOM",
+                       saveTOMs = TRUE, checkMissingData = TRUE, 
+                       corType = "bicor", # handles outliers better than Pearson
+                       saveTOMFileBase = "G1TOM",
                        verbose = 3)
 
 # We now return to the network analysis. To see how many modules were identified and what the module sizes are,
@@ -241,10 +210,10 @@ library(patchwork); library(Matrix); library(MASS); library(reshape2)
 ## Export from WGCNA to igraph for visualisation
 
 # Recalculate topological overlap
-TOM = TOMsimilarityFromExpr(datMeth, power = 12);
+TOM = TOMsimilarityFromExpr(myDF_betaVal, power = 12);
 
-rownames(TOM) <- names(datMeth)
-colnames(TOM) <- names(datMeth)
+rownames(TOM) <- names(myDF_betaVal)
+colnames(TOM) <- names(myDF_betaVal)
 # this is an adjacency matrix
 
 ## Make graph:
@@ -255,7 +224,7 @@ myGraph <- TOM %>%
   simplify()%>% # removes self-loops
   as_tbl_graph() %>% # tidygraph with nodes CpG name
   activate(nodes) %>%
-  left_join(CpGInfo, by = c("name" = "CpGpos"))%>% # add CpGInfo: chromosome location
+#  left_join(CpGInfo, by = c("name" = "CpGpos"))%>% # add CpGInfo: chromosome location
   left_join(data.frame(name= names(moduleLabels), color = moduleColors), by = c("name" = "name")) # add previously detected module colors
 
 ## add layout based on algorythms, compare different layouts

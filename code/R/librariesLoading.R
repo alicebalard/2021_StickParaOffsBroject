@@ -2,6 +2,7 @@
 library(plyr) # for join (keep row order)
 library(dendextend) # The package dendextend contains many functions for changing the appearance of a dendrogram and for comparing dendrograms.
 library(ggplot2)
+library(cowplot)
 library(ggsignif) ## for significance bars on ggplot
 library(lme4) ## for mixed models
 library(nlme) ## for mixed models

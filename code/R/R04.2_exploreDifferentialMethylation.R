@@ -8,44 +8,45 @@ source("librariesLoading.R")
 source("customRfunctions.R")
 ## Load samples metadata
 source("R02.1_loadMetadata.R")
+## define in which machine we're working (apocrita or mythinkpad)
+##machine="apocrita"
+machine="mythinkpad"
+## Load methylation data
+source("R02.2_loadMethyldata.R")
 
 ## Source the previously calculated DMS/DMR
-
-## TO UPDATE 25Feb
-
 ## Parents (Family as covariates)
-DMS15pc_G1_half <- readRDS("../../data/DMS15pc_G1_half_25feb22.RDS")
-DMR15pc_G1_half <- readRDS("../../data/DMR15pc_G1_half_25feb22.RDS")
-
+DMS15pc_G1_half <- readRDS("../../data/DMS15pc_G1_half_25feb22.RDS"); nrow(DMS15pc_G1_half) # 5074
+DMR15pc_G1_half <- readRDS("../../data/DMR15pc_G1_half_25feb22.RDS"); nrow(DMR15pc_G1_half) # 23
 ## Offspring (Family & Sex as covariates)
 ## Control G1 - G2(trt vs control)
-DMS15pc_G2_controlG1_half <- readRDS("../../data/DMS15pc_G2_controlG1_half_25feb22.RDS")
-DMR15pc_G2_controlG1_half <- readRDS("../../data/DMR15pc_G2_controlG1_half_25feb22.RDS")
-
+DMS15pc_G2_controlG1_half <- readRDS("../../data/DMS15pc_G2_controlG1_half_25feb22.RDS"); nrow(DMS15pc_G2_controlG1_half) # 1430
+DMR15pc_G2_controlG1_half <- readRDS("../../data/DMR15pc_G2_controlG1_half_25feb22.RDS"); nrow(DMR15pc_G2_controlG1_half) # 6
 ## Infected G1 - G2(trt vs control)
-DMS15pc_G2_infectedG1_half <- readRDS("../../data/DMS15pc_G2_infectedG1_half_25feb22.RDS")
-DMR15pc_G2_infectedG1_half <- readRDS("../../data/DMR15pc_G2_infectedG1_half_25feb22.RDS")
+DMS15pc_G2_infectedG1_half <- readRDS("../../data/DMS15pc_G2_infectedG1_half_25feb22.RDS"); nrow(DMS15pc_G2_infectedG1_half) # 777
+DMR15pc_G2_infectedG1_half <- readRDS("../../data/DMR15pc_G2_infectedG1_half_25feb22.RDS"); nrow(DMR15pc_G2_infectedG1_half) # 8
 
 ###########################
 ## Function to get DMS info
-myDMSinfo <- function(DMSobject){
+myDMSinfo <- function(DMSobject, fromUniteCov){
   DMS = paste(DMSobject$chr, DMSobject$start, DMSobject$end)
   meth.diff = DMSobject$meth.diff
   direction = ifelse(DMSobject$meth.diff > 0, "hyper", "hypo")
-  percentDMS = length(DMS)/length(coveredCpGbothdf)*100
+  percentDMS = length(DMS)/nrow(fromUniteCov)*100
   return(list(DMS = DMS, meth.diff = meth.diff, direction = direction, percentDMS = percentDMS))
 }
 
-## Run the function (takes a few minutes)
-DMS_info_G1 <- myDMSinfo(DMS_G1_final)
-DMS_info_G2_G1c_final <- myDMSinfo(DMS_G2_G1c_final)
-DMS_info_G2_G1i_final <- myDMSinfo(DMS_G2_G1i_final)
+## Run the function
+DMS_info_G1 <- myDMSinfo(DMS15pc_G1_half, uniteCov6_G1_woSexAndUnknowChrOVERLAP)
+DMS_info_G2_G1c_final <- myDMSinfo(DMS15pc_G2_controlG1_half, uniteCov14_G2_woSexAndUnknowChrOVERLAP)
+DMS_info_G2_G1i_final <- myDMSinfo(DMS15pc_G2_infectedG1_half,uniteCov14_G2_woSexAndUnknowChrOVERLAP)
 
-## NB Kostas' results: "We found a total of 1,973 CpG sites out of 1,172,887 CpGs (0.17%) across the genome that showed at
-# least 15% differential fractional methylation (differentially methylated site [DMS]; q < 0.01) between infected and uninfected fish"
+## NB Kostas' results: "We found a total of 1,973 CpG sites out of 1,172,887 CpGs (0.17%)
+# across the genome that showed at least 15% differential fractional methylation 
+# (differentially methylated site [DMS]; q < 0.01) between infected and uninfected fish"
 
 ## Here: number of CpG sites
-length(coveredCpGbothdf) # 1,001,880
+nrow(uniteCov14_G2_woSexAndUnknowChrOVERLAP) # 1,001,880
 
 ## Parents comparison:
 length(DMS_info_G1$DMS)# 5024 DMS
@@ -118,17 +119,17 @@ gene.obj=readTranscriptFeatures("../../gitignore/bigdata/Gy_allnoM_rd3.maker_apo
 par(mfrow=c(1,3))
 par(mar = c(.1,0.1,5,0.1)) # Set the margin on all sides to 2
 ## Parents comparison:
-diffAnn_PAR = annotateWithGeneParts(as(DMS_G1_final,"GRanges"),gene.obj)
+diffAnn_PAR = annotateWithGeneParts(as(DMS15pc_G1_half,"GRanges"),gene.obj)
 diffAnn_PAR
 plotTargetAnnotation(diffAnn_PAR,precedence=TRUE, main="DMS G1", 
                      cex.legend = 1, border="white")
 ## Offspring from control parents comparison:
-diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMS_G2_G1c_final,"GRanges"),gene.obj)
+diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMS15pc_G2_controlG1_half,"GRanges"),gene.obj)
 diffAnn_G2_controlG1
 plotTargetAnnotation(diffAnn_G2_controlG1,precedence=TRUE, main="DMS G2-G1c", 
                      cex.legend = 1, border="white")
 ## Offspring from infected parents comparison:
-diffAnn_G2_infectedG1 = annotateWithGeneParts(as(DMS_G2_G1i_final,"GRanges"),gene.obj)
+diffAnn_G2_infectedG1 = annotateWithGeneParts(as(DMS15pc_G2_infectedG1_half,"GRanges"),gene.obj)
 diffAnn_G2_infectedG1
 plotTargetAnnotation(diffAnn_G2_infectedG1,precedence=TRUE, main="DMS G2-G1i", 
                      cex.legend = 1, border="white")
@@ -143,40 +144,39 @@ test$TSSes
 
 ##########################
 ## Separate hyper and hypo
-
 runHyperHypoAnnot <- function(){
   par(mfrow=c(2,3))
   par(mar = c(.1,0.1,5,0.1)) # Set the margin on all sides to 2
   ####### HYPO
   ## Parents comparison:
   A = annotateWithGeneParts(
-    as(DMS_G1_final[DMS_info_G1$direction %in% "hypo",],"GRanges"),gene.obj)
+    as(DMS15pc_G1_half[DMS_info_G1$direction %in% "hypo",],"GRanges"),gene.obj)
   plotTargetAnnotation(A,precedence=TRUE, main="DMS G1\nhypo", 
                        cex.legend = .4, border="white")
   ## Offspring from control parents comparison:
   B = annotateWithGeneParts(
-    as(DMS_G2_G1c_final[DMS_info_G2_G1c_final$direction %in% "hypo",],"GRanges"),gene.obj)
+    as(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hypo",],"GRanges"),gene.obj)
   plotTargetAnnotation(B,precedence=TRUE, main="DMS G2-G1c\nhypo", 
                        cex.legend = .4, border="white")
   ## Offspring from infected parents comparison:
   C = annotateWithGeneParts(
-    as(DMS_G2_G1i_final[DMS_info_G2_G1i_final$direction %in% "hypo",],"GRanges"),gene.obj)
+    as(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hypo",],"GRanges"),gene.obj)
   plotTargetAnnotation(C,precedence=TRUE, main="DMS G2-G1i\nhypo", 
                        cex.legend = .4, border="white")
   ####### HYPER
   ## Parents comparison:
   D = annotateWithGeneParts(
-    as(DMS_G1_final[DMS_info_G1$direction %in% "hyper",],"GRanges"),gene.obj)
+    as(DMS15pc_G1_half[DMS_info_G1$direction %in% "hyper",],"GRanges"),gene.obj)
   plotTargetAnnotation(D,precedence=TRUE, main="DMS G1\nhyper", 
                        cex.legend = .4, border="white")
   ## Offspring from control parents comparison:
   E = annotateWithGeneParts(
-    as(DMS_G2_G1c_final[DMS_info_G2_G1c_final$direction %in% "hyper",],"GRanges"),gene.obj)
+    as(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hyper",],"GRanges"),gene.obj)
   plotTargetAnnotation(E,precedence=TRUE, main="DMS G2-G1c\nhyper", 
                        cex.legend = .4, border="white")
   ## Offspring from infected parents comparison:
   f = annotateWithGeneParts(
-    as(DMS_G2_G1i_final[DMS_info_G2_G1i_final$direction %in% "hyper",],"GRanges"),gene.obj)
+    as(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hyper",],"GRanges"),gene.obj)
   plotTargetAnnotation(f,precedence=TRUE, main="DMS G2-G1i\nhyper", 
                        cex.legend = .4, border="white")
   par(mfrow=c(1,1))
@@ -209,33 +209,33 @@ myAnnotateDMS <- function(DMS, annot){
   return(DMS)
 }
 
-DMS_G1_final_HYPO = myAnnotateDMS(DMS_G1_final[DMS_info_G1$direction %in% "hypo",],
+DMS15pc_G1_half_HYPO = myAnnotateDMS(DMS15pc_G1_half[DMS_info_G1$direction %in% "hypo",],
                                   as.data.frame(myannot$G1hypo@members))
-DMS_G1_final_HYPER = myAnnotateDMS(DMS_G1_final[DMS_info_G1$direction %in% "hyper",],
+DMS15pc_G1_half_HYPER = myAnnotateDMS(DMS15pc_G1_half[DMS_info_G1$direction %in% "hyper",],
                                    as.data.frame(myannot$G1hyper@members))
 
-DMS_G2_G1c_final_HYPO = myAnnotateDMS(DMS_G2_G1c_final[DMS_info_G2_G1c_final$direction %in% "hypo",],
+DMS15pc_G2_controlG1_half_HYPO = myAnnotateDMS(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hypo",],
                                       as.data.frame(myannot$G2G1chypo@members))
-DMS_G2_G1c_final_HYPER = myAnnotateDMS(DMS_G2_G1c_final[DMS_info_G2_G1c_final$direction %in% "hyper",],
+DMS15pc_G2_controlG1_half_HYPER = myAnnotateDMS(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hyper",],
                                        as.data.frame(myannot$G2G1chyper@members))
 
-DMS_G2_G1i_final_HYPO = myAnnotateDMS(DMS_G2_G1i_final[DMS_info_G2_G1i_final$direction %in% "hypo",],
+DMS15pc_G2_infectedG1_half_HYPO = myAnnotateDMS(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hypo",],
                                       as.data.frame(myannot$G2G1ihypo@members))
-DMS_G2_G1i_final_HYPER = myAnnotateDMS(DMS_G2_G1i_final[DMS_info_G2_G1i_final$direction %in% "hyper",],
+DMS15pc_G2_infectedG1_half_HYPER = myAnnotateDMS(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hyper",],
                                        as.data.frame(myannot$G2G1ihyper@members))
 
 ## Make Venn diagram for each feature
 getFeatureDFHYPO <- function(myfeat){
-  a = DMS_G1_final_HYPO$pos[DMS_G1_final_HYPO$feature %in% myfeat]
-  b = DMS_G2_G1c_final_HYPO$pos[DMS_G2_G1c_final_HYPO$feature %in% myfeat]
-  c = DMS_G2_G1i_final_HYPO$pos[DMS_G2_G1i_final_HYPO$feature %in% myfeat]
+  a = DMS15pc_G1_half_HYPO$pos[DMS15pc_G1_half_HYPO$feature %in% myfeat]
+  b = DMS15pc_G2_controlG1_half_HYPO$pos[DMS15pc_G2_controlG1_half_HYPO$feature %in% myfeat]
+  c = DMS15pc_G2_infectedG1_half_HYPO$pos[DMS15pc_G2_infectedG1_half_HYPO$feature %in% myfeat]
   return(list(a=a,b=b,c=c))
 }
 
 getFeatureDFHYPER <- function(myfeat){
-  a = DMS_G1_final_HYPER$pos[DMS_G1_final_HYPER$feature %in% myfeat]
-  b = DMS_G2_G1c_final_HYPER$pos[DMS_G2_G1c_final_HYPER$feature %in% myfeat]
-  c = DMS_G2_G1i_final_HYPER$pos[DMS_G2_G1i_final_HYPER$feature %in% myfeat]
+  a = DMS15pc_G1_half_HYPER$pos[DMS15pc_G1_half_HYPER$feature %in% myfeat]
+  b = DMS15pc_G2_controlG1_half_HYPER$pos[DMS15pc_G2_controlG1_half_HYPER$feature %in% myfeat]
+  c = DMS15pc_G2_infectedG1_half_HYPER$pos[DMS15pc_G2_infectedG1_half_HYPER$feature %in% myfeat]
   return(list(a=a,b=b,c=c))
 }
 
@@ -301,43 +301,37 @@ names(GYgynogff) = c("chrom","length")
 ## Parents trt-ctrl
 # load annotation
 annot_PAR <- as.data.frame(diffAnn_PAR@members)
-makeManhattanPlots(DMSfile = DMS_G1_final, annotFile = annot_PAR, GYgynogff = GYgynogff, 
+makeManhattanPlots(DMSfile = DMS15pc_G1_half, annotFile = annot_PAR, GYgynogff = GYgynogff, 
                    mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G1 DMS")
 
 ## G2-G1c trt-ctrl
 # load annotation
 annot_G2_G1c <- as.data.frame(diffAnn_G2_controlG1@members)
-makeManhattanPlots(DMSfile = DMS_G2_G1c_final, annotFile = annot_G2_G1c, GYgynogff = GYgynogff, 
+makeManhattanPlots(DMSfile = DMS15pc_G2_controlG1_half, annotFile = annot_G2_G1c, GYgynogff = GYgynogff, 
                    mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1c DMS")
 
 ## G2-G1i trt-ctrl
 # load annotation
 annot_G2_G1i <- as.data.frame(diffAnn_G2_infectedG1@members)
-makeManhattanPlots(DMSfile = DMS_G2_G1i_final, annotFile = annot_G2_G1i, GYgynogff = GYgynogff, 
+makeManhattanPlots(DMSfile = DMS15pc_G2_infectedG1_half, annotFile = annot_G2_G1i, GYgynogff = GYgynogff, 
                    mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1i DMS")
 
 ## Outliers in Manhattan plot: 15% diff + 2SD
-outliers_G1_final <- which(abs(DMS_G1_final$meth.diff) > 15 + 2*sd(abs(DMS_G1_final$meth.diff)))
+outliers_G1_final <- which(abs(DMS15pc_G1_half$meth.diff) > 15 + 2*sd(abs(DMS15pc_G1_half$meth.diff)))
 outliers_annot_G1 <- as.data.frame(diffAnn_PAR@members)[outliers_G1_final,]
-makeManhattanPlots(DMSfile = DMS_G1_final[outliers_G1_final, ],
+makeManhattanPlots(DMSfile = DMS15pc_G1_half[outliers_G1_final, ],
                    annotFile = outliers_annot_G1, GYgynogff = GYgynogff, 
                    mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G1 DMS")
 
-outliers_G2_G1c_final <- which(abs(DMS_G2_G1c_final$meth.diff) > 15 + 2*sd(abs(DMS_G2_G1c_final$meth.diff)))
+outliers_G2_G1c_final <- which(abs(DMS15pc_G2_controlG1_half$meth.diff) > 15 + 2*sd(abs(DMS15pc_G2_controlG1_half$meth.diff)))
 outliers_annot_G2_G1c <- as.data.frame(diffAnn_G2_controlG1@members)[outliers_G2_G1c_final,]
-makeManhattanPlots(DMSfile = DMS_G2_G1c_final[outliers_G2_G1c_final, ],
+makeManhattanPlots(DMSfile = DMS15pc_G2_controlG1_half[outliers_G2_G1c_final, ],
                    annotFile = outliers_annot_G2_G1c, GYgynogff = GYgynogff, 
                    mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1c DMS")
 
-outliers_G2_G1i_final <- which(abs(DMS_G2_G1i_final$meth.diff) > 15 + 2*sd(abs(DMS_G2_G1i_final$meth.diff)))
+outliers_G2_G1i_final <- which(abs(DMS15pc_G2_infectedG1_half$meth.diff) > 15 + 2*sd(abs(DMS15pc_G2_infectedG1_half$meth.diff)))
 outliers_annot_G2_G1i <- as.data.frame(diffAnn_G2_infectedG1@members)[outliers_G2_G1i_final,]
-makeManhattanPlots(DMSfile = DMS_G2_G1i_final[outliers_G2_G1i_final, ],
+makeManhattanPlots(DMSfile = DMS15pc_G2_infectedG1_half[outliers_G2_G1i_final, ],
                    annotFile = outliers_annot_G2_G1i, GYgynogff = GYgynogff, 
                    mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1i DMS")
-
-
-
-############################## Identify Genes associated with positions 
-
-############################## + GO terms --> TBC
 
