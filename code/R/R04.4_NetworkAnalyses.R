@@ -23,25 +23,33 @@ machine="mythinkpad"
 ## Load methylation data
 source("R02.2_loadMethyldata.R")
 
-## Specifically, load CpG positions covered in ALL OFFSPRING (no NAs)
-loadALL = TRUE
-
-base::load("../../gitignore/bigdata/05MethylKit/output/uniteCovALL_G2_woSexAndUnknownChr_10feb22.RData")
-
-nrow(uniteCovALL_G2_woSexAndUnknowChr)#78384
-
-
+###########################################
 ## Source the previously calculated DMS/DMR
 ## Parents (Family as covariates)
-DMS15pc_G1_half <- readRDS("../../data/DMS15pc_G1_half_25feb22.RDS"); nrow(DMS15pc_G1_half) # 5074
-DMR15pc_G1_half <- readRDS("../../data/DMR15pc_G1_half_25feb22.RDS"); nrow(DMR15pc_G1_half) # 23
+### DM from CpG positions shared by half the fish per trt
+DMS15pc_G1_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_half.RDS"); nrow(DMS15pc_G1_half) # 5074
+DMR15pc_G1_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_half.RDS"); nrow(DMR15pc_G1_half) # 23
+### DM from CpG positions shared by all the fish
+DMS15pc_G1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G1_ALL.RDS"); nrow(DMS15pc_G1_ALL) # 127
+# DMR15pc_G1_ALL returned 0 DMR
+
 ## Offspring (Family & Sex as covariates)
 ## Control G1 - G2(trt vs control)
-DMS15pc_G2_controlG1_half <- readRDS("../../data/DMS15pc_G2_controlG1_half_25feb22.RDS"); nrow(DMS15pc_G2_controlG1_half) # 1430
-DMR15pc_G2_controlG1_half <- readRDS("../../data/DMR15pc_G2_controlG1_half_25feb22.RDS"); nrow(DMR15pc_G2_controlG1_half) # 6
+### DM from CpG positions shared by half the fish per trt
+DMS15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_half.RDS"); nrow(DMS15pc_G2_controlG1_half) # 1430
+DMR15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_controlG1_half.RDS"); nrow(DMR15pc_G2_controlG1_half) # 6
+### DM from CpG positions shared by all the fish
+DMS15pc_G2_controlG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_ALL.RDS"); nrow(DMS15pc_G2_controlG1_ALL) # 38
+# DMR15pc_G2_controlG1_ALL returned 0 DMR
+
 ## Infected G1 - G2(trt vs control)
-DMS15pc_G2_infectedG1_half <- readRDS("../../data/DMS15pc_G2_infectedG1_half_25feb22.RDS"); nrow(DMS15pc_G2_infectedG1_half) # 777
-DMR15pc_G2_infectedG1_half <- readRDS("../../data/DMR15pc_G2_infectedG1_half_25feb22.RDS"); nrow(DMR15pc_G2_infectedG1_half) # 8
+### DM from CpG positions shared by half the fish per trt
+DMS15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_half.RDS"); nrow(DMS15pc_G2_infectedG1_half) # 777
+DMR15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_half.RDS"); nrow(DMR15pc_G2_infectedG1_half) # 8
+### DM from CpG positions shared by all the fish
+DMS15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_ALL.RDS"); nrow(DMS15pc_G2_infectedG1_ALL) # 22
+DMR15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_ALL.RDS"); nrow(DMR15pc_G2_infectedG1_ALL) # 1
+###########################################
 
 ###########################################
 #### Co-methylation network construction
@@ -60,15 +68,15 @@ prepareNetworkData <- function(myMethylDiff, originalUniteCov, fullMetadata){
   return(list(myMethylDiff=myMethylDiff, myMethylKit_DMS = myMethylKit_DMS, myMetadata = myMetadata))
 }
 
-myG1list <- prepareNetworkData(myMethylDiff = DMS15pc_G1_half,
+myG1list <- prepareNetworkData(myMethylDiff = DMS15pc_G1_ALL,
                                originalUniteCov = uniteCov6_G1_woSexAndUnknowChrOVERLAP,
                                fullMetadata = fullMetadata_PAR)
 
-myG2_G1control_list <- prepareNetworkData(myMethylDiff = DMS15pc_G2_controlG1_half,
+myG2_G1control_list <- prepareNetworkData(myMethylDiff = DMS15pc_G2_controlG1_ALL,
                                           originalUniteCov = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
                                fullMetadata = fullMetadata_OFFS)
 
-myG2_G1infected_list <- prepareNetworkData(myMethylDiff = DMS15pc_G2_infectedG1_half,
+myG2_G1infected_list <- prepareNetworkData(myMethylDiff = DMS15pc_G2_infectedG1_ALL,
                                            originalUniteCov = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
                                fullMetadata = fullMetadata_OFFS)
 
@@ -79,11 +87,12 @@ rm(list = ls()[!ls() %in% c("myG1list", "myG2_G1control_list", "myG2_G1infected_
 ## https://elifesciences.org/articles/59201#s4
 ## "Missing values were imputed using a kNN sliding window; missing methylation values were assigned the average value of the five nearest neighbors by Euclidean distance within a 3Mb window"
 
-
 ## OR: network by GENE, with average methylation value of the gene.
 
+## OR: we focus now on the CpG positions covered in ALL fish
 
-ARG = myG1list
+
+ARG = myG2_G1infected_list
 #### MAKEFUNTION HERE
 
 ### Prepare data
@@ -181,7 +190,7 @@ abline(h=100,col="red")
 # (degree, y-axis) as a function of the soft-thresholding power (x-axis)
 
 ## 2.2 One-step network construction and module detection
-net = blockwiseModules(myDF_betaVal, power = 12, # 12 is default for signed network
+net = blockwiseModules(myDF_betaVal, power = 3, # 12 is default for signed network
                        replaceMissingAdjacencies = TRUE,
                        TOMType = "signed", # preserved direction +/- of correlations
                        saveTOMs = TRUE, checkMissingData = TRUE, 
