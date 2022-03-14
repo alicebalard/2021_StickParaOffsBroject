@@ -1,0 +1,51 @@
+[main_biscuit_index] Pack bisulfite FASTA... 16.85 sec
+[main_biscuit_index] Construct BWT for the parent strands...
+[BWTIncCreate] textLength=918460332, availableWord=76625844
+[BWTIncConstructFromPacked] 10 iterations done. 99999996 characters processed.
+[BWTIncConstructFromPacked] 20 iterations done. 199999996 characters processed.
+[BWTIncConstructFromPacked] 30 iterations done. 298021052 characters processed.
+[BWTIncConstructFromPacked] 40 iterations done. 386049564 characters processed.
+[BWTIncConstructFromPacked] 50 iterations done. 464285516 characters processed.
+[BWTIncConstructFromPacked] 60 iterations done. 533817852 characters processed.
+[BWTIncConstructFromPacked] 70 iterations done. 595614348 characters processed.
+[BWTIncConstructFromPacked] 80 iterations done. 650535228 characters processed.
+[BWTIncConstructFromPacked] 90 iterations done. 699345020 characters processed.
+[BWTIncConstructFromPacked] 100 iterations done. 742723260 characters processed.
+[BWTIncConstructFromPacked] 110 iterations done. 781273916 characters processed.
+[BWTIncConstructFromPacked] 120 iterations done. 815533820 characters processed.
+[BWTIncConstructFromPacked] 130 iterations done. 845980108 characters processed.
+[BWTIncConstructFromPacked] 140 iterations done. 873036812 characters processed.
+[BWTIncConstructFromPacked] 150 iterations done. 897080844 characters processed.
+[BWTIncConstructFromPacked] 160 iterations done. 918447180 characters processed.
+[main_biscuit_index] 295.12 seconds elapse.
+[main_biscuit_index] Construct BWT for the daughter strands...
+[BWTIncCreate] textLength=918460332, availableWord=76625844
+[BWTIncConstructFromPacked] 10 iterations done. 99999996 characters processed.
+[BWTIncConstructFromPacked] 20 iterations done. 199999996 characters processed.
+[BWTIncConstructFromPacked] 30 iterations done. 298021052 characters processed.
+[BWTIncConstructFromPacked] 40 iterations done. 386049564 characters processed.
+[BWTIncConstructFromPacked] 50 iterations done. 464285516 characters processed.
+[BWTIncConstructFromPacked] 60 iterations done. 533817852 characters processed.
+[BWTIncConstructFromPacked] 70 iterations done. 595614348 characters processed.
+[BWTIncConstructFromPacked] 80 iterations done. 650535228 characters processed.
+[BWTIncConstructFromPacked] 90 iterations done. 699345020 characters processed.
+[BWTIncConstructFromPacked] 100 iterations done. 742723260 characters processed.
+[BWTIncConstructFromPacked] 110 iterations done. 781273916 characters processed.
+[BWTIncConstructFromPacked] 120 iterations done. 815533820 characters processed.
+[BWTIncConstructFromPacked] 130 iterations done. 845980108 characters processed.
+[BWTIncConstructFromPacked] 140 iterations done. 873036812 characters processed.
+[BWTIncConstructFromPacked] 150 iterations done. 897080844 characters processed.
+[BWTIncConstructFromPacked] 160 iterations done. 918447180 characters processed.
+[main_biscuit_index] 293.30 seconds elapse.
+[main_biscuit_index] Update parent BWT... 
+[main_biscuit_index] 2.40 sec
+[main_biscuit_index] Update daughter BWT... 
+[main_biscuit_index] 2.37 sec
+[main_biscuit_index] Pack forward-only FASTA... 1.99 sec
+[main_biscuit_index] Construct parent SA from BWT and Occ... 101.21 sec
+[main_biscuit_index] Construct daughter SA from BWT and Occ... 101.76 sec
+[bwt_gen] Finished constructing BWT in 161 iterations.
+[bwt_gen] Finished constructing BWT in 161 iterations.
+[main] Version: 1.0.0.dev
+[main] CMD: /data/home/btx915/bin/biscuit/biscuit index Gynogen_pchrom_assembly_all.fa
+[main] Real time: 816.392 sec; CPU: 815.020 sec
