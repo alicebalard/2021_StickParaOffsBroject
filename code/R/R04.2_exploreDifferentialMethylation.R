@@ -14,17 +14,33 @@ machine="mythinkpad"
 ## Load methylation data
 source("R02.2_loadMethyldata.R")
 
+###########################################
 ## Source the previously calculated DMS/DMR
 ## Parents (Family as covariates)
-DMS15pc_G1_half <- readRDS("../../data/DMS15pc_G1_half_25feb22.RDS"); nrow(DMS15pc_G1_half) # 5074
-DMR15pc_G1_half <- readRDS("../../data/DMR15pc_G1_half_25feb22.RDS"); nrow(DMR15pc_G1_half) # 23
+### DM from CpG positions shared by half the fish per trt
+DMS15pc_G1_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_half.RDS"); nrow(DMS15pc_G1_half) # 5074
+DMR15pc_G1_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_half.RDS"); nrow(DMR15pc_G1_half) # 23
+### DM from CpG positions shared by all the fish
+DMS15pc_G1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G1_ALL.RDS"); nrow(DMS15pc_G1_ALL) # 127
+# DMR15pc_G1_ALL returned 0 DMR
+
 ## Offspring (Family & Sex as covariates)
 ## Control G1 - G2(trt vs control)
-DMS15pc_G2_controlG1_half <- readRDS("../../data/DMS15pc_G2_controlG1_half_25feb22.RDS"); nrow(DMS15pc_G2_controlG1_half) # 1430
-DMR15pc_G2_controlG1_half <- readRDS("../../data/DMR15pc_G2_controlG1_half_25feb22.RDS"); nrow(DMR15pc_G2_controlG1_half) # 6
+### DM from CpG positions shared by half the fish per trt
+DMS15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_half.RDS"); nrow(DMS15pc_G2_controlG1_half) # 1430
+DMR15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_controlG1_half.RDS"); nrow(DMR15pc_G2_controlG1_half) # 6
+### DM from CpG positions shared by all the fish
+DMS15pc_G2_controlG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_ALL.RDS"); nrow(DMS15pc_G2_controlG1_ALL) # 38
+# DMR15pc_G2_controlG1_ALL returned 0 DMR
+
 ## Infected G1 - G2(trt vs control)
-DMS15pc_G2_infectedG1_half <- readRDS("../../data/DMS15pc_G2_infectedG1_half_25feb22.RDS"); nrow(DMS15pc_G2_infectedG1_half) # 777
-DMR15pc_G2_infectedG1_half <- readRDS("../../data/DMR15pc_G2_infectedG1_half_25feb22.RDS"); nrow(DMR15pc_G2_infectedG1_half) # 8
+### DM from CpG positions shared by half the fish per trt
+DMS15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_half.RDS"); nrow(DMS15pc_G2_infectedG1_half) # 777
+DMR15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_half.RDS"); nrow(DMR15pc_G2_infectedG1_half) # 8
+### DM from CpG positions shared by all the fish
+DMS15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_ALL.RDS"); nrow(DMS15pc_G2_infectedG1_ALL) # 22
+DMR15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_ALL.RDS"); nrow(DMR15pc_G2_infectedG1_ALL) # 1
+###########################################
 
 ###########################
 ## Function to get DMS info
