@@ -9,10 +9,10 @@ source("customRfunctions.R")
 ## Load samples metadata
 source("R02.1_loadMetadata.R")
 ## define in which machine we're working (apocrita or mythinkpad)
-machine="apocrita"
-#machine="mythinkpad"
+#machine="apocrita"
+machine="mythinkpad"
 ## Load methylation data
-loadALL = FALSE # only load CpG shared by half fish per trt group
+loadALL = TRUE # load all uniteCov objects
 source("R02.2_loadMethyldata.R")
 
 #############################################################
@@ -21,18 +21,22 @@ source("R02.2_loadMethyldata.R")
 
 ## Dendogram of methylations
 ## All samples:
-# pdf("../../data/fig/clusterALLCpG.pdf", width = 16, height = 7)
-# makePrettyMethCluster(fullMethylKitObj, fullMetadata,
-#                       my.cols.trt=c("#333333ff","#ff0000ff","#ffe680ff","#ff6600ff","#aaccffff","#aa00d4ff"),
-#                       my.cols.fam = c(1:4))
-# dev.off()
+pdf("Rfigures/clusterALLCpG.pdf", width = 16, height = 7)
+makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr, fullMetadata,
+                      my.cols.trt=c("#333333ff","#ff0000ff","#ffe680ff","#ff6600ff","#aaccffff","#aa00d4ff"),
+                      my.cols.fam = c(1:4))
+dev.off()
 
 ## offspring: (add TRUE to script loadMethylData)
-# pdf("../../data/fig/clusterALLCpG_offspings.pdf", width = 17, height = 7)
-# makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
-#                       my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
-#                       my.cols.fam = c(1:4))
-# # dev.off()
+pdf("Rfigures/clusterALLCpG_offspings.pdf", width = 17, height = 7)
+makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
+                      my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
+                      my.cols.fam = c(1:4))
+dev.off()
+
+uniteCovALL_G2_woSexAndUnknowChr@treatment
+fullMetadata_OFFS$trtG1G2_NUM
+
 
 ############################
 makePercentMetMat <- function(dataset){
@@ -66,11 +70,19 @@ myadonisFUN <- function(dataset, metadata){
   print(adonis2(data.dist ~ PAT * outcome * Sex, data = metadata, permutations = perm))
   ## remove the non significant interactions
   print(adonis2(data.dist ~ PAT + outcome + Sex, data = metadata, permutations = perm))
+  ## with the offspring treatments only (result of PAT + outcome)
+  print(adonis2(data.dist ~ trtG1G2 + Sex, data = metadata, permutations = perm))
 }
 
 ###################
 ## Let's run Adonis for offspring (considering CpG shared by ALL)
 myadonisFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS)
+# PAT        1 0.002782 0.01470 1.6344 0.000999 ***
+#   outcome    1 0.001909 0.01009 1.1216 0.068931 .  
+# Sex        1 0.002418 0.01277 1.4202 0.010989 *  
+
+# trtG1G2    3 0.006418 0.03391 1.2568 0.000999 ***
+#   Sex        1 0.002407 0.01272 1.4141 0.008991 ** 
 
 ########## NMDS
 myGOF.NMDS.FUN <- function(dataset){
@@ -170,4 +182,4 @@ myNMDS <- function(dataset, metadata){
 
 NMDSanalysis <- myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS)
 NMDSanalysis$NMDSplot
-#save(NMDSanalysis, file = "../../data/fig/NMDSplots.RData")
+save(NMDSanalysis, file = "../../data/fig/NMDSplots.RData")

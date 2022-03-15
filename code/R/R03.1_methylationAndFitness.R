@@ -86,6 +86,50 @@ ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI, fill=trtG1G2))+
   scale_fill_manual(values = colOffs)+
   theme_bw() + theme(legend.position = "none")
 
+############################################
+## Calculate tolerance as a reaction norm ##
+############################################
+mod1 <- lmer(BCI ~ No.Worms : trtG1G2 + (1|Family) + (1|Sex), 
+              data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),], 
+              REML = FALSE)
+mod0 <- lmer(BCI ~ No.Worms + (1|Family) + (1|Sex),
+           data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),], 
+           REML = FALSE)
+
+lrtest(mod0, mod1)
+# LRT: parental treatment groups (infected or not): G = 14.4, df = 6, p < 0.001***
+
+modFULL <- lmer(BCI ~ No.Worms : trtG1G2 + (1|Family) + (1|Sex), 
+                data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
+
+coef(modFULL)
+# infected father: BCI = 4.3 NoWorms + various intercepts by family and sex
+# control father: BCI = -18.9 NoWorms + various intercepts by family and sex
+
+# plot fixed effects
+pred <- ggpredict(modFULL, terms = c("No.Worms", "trtG1G2"))
+
+plot(pred, add.data = TRUE)+ theme_bw() +
+  scale_x_continuous(name = "Number of parasites", breaks = 1:10)+
+  scale_y_continuous("Body Condition Index")+
+  ggtitle("Predicted values of Body Condition Index")+
+  scale_color_manual(values = colOffs[c(2,4)])
+
+## And in fathers:
+modFULL <- lmer(BCI ~ No.Worms + (1|Family), 
+                data = fullMetadata_PAR[fullMetadata_PAR$trtG1G2 %in% "Exposed",])
+
+coef(modFULL)
+# BCI = -7.3 NoWorms + 38.5
+
+# plot fixed effects
+pred <- ggpredict(modFULL, terms = "No.Worms")
+
+plot(pred, add.data = TRUE)+ theme_bw() +
+  scale_x_continuous(name = "Number of parasites", breaks = 1:10)+
+  scale_y_continuous("Body Condition Index")+
+  ggtitle("Predicted values of Body Condition Index")
+
 #######################################################
 ## Nbr/Ratio of Methylated Sites in different groups ##
 #######################################################
@@ -164,9 +208,24 @@ ggplot(fullMetadata_PAR_half, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_covere
 cor.test(fullMetadata_OFFS_half$Nbr_coveredCpG,
          fullMetadata_OFFS_half$Nbr_methCpG, method = "spearman")
 ## S = 20254, p-value < 2.2e-16 rho = 0.91
-ggplot(fullMetadata_OFFS_half, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
-  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
+ggplot(plotdf, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
   geom_smooth(method = "lm", col="black")+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
+  scale_x_continuous("Number of cytosines covered") +
+  scale_y_continuous("Number of methylated cytosines") +
+  theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
+
+## Plot distance to residuals:
+fit <- lm(Nbr_methCpG ~ Nbr_coveredCpG, data = fullMetadata_OFFS_half)
+plotdf <- fullMetadata_OFFS_half
+plotdf$predicted <- predict(fit)   # Save the predicted values
+plotdf$residuals <- residuals(fit) 
+ggplot(plotdf, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
+  geom_smooth(method = "lm", col="black")+
+  geom_segment(aes(xend = Nbr_coveredCpG, yend = predicted), col = "grey") +
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
+  scale_x_continuous("Number of cytosines covered") +
+  scale_y_continuous("Number of methylated cytosines") +
   theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
 
 ## Check after RMS correction for coverage bias: SEMI CORRECTED (p-value = 0.01, rho = -0.24)
@@ -183,6 +242,8 @@ cor.test(fullMetadata_OFFS_half$Nbr_coveredCpG,
 ggplot(fullMetadata_OFFS_half, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_coveredCpG))+
   geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
   geom_smooth(method = "lm", col="black")+
+  scale_x_continuous("Number of cytosines covered") +
+  scale_y_continuous("Residuals of number of methylated cytosines\n on number of cytosines covered") +
   theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
 
 ################################
@@ -240,9 +301,75 @@ ggplot(fullMetadata_OFFS_half, aes(trtG1G2, res_Nbr_methCpG_Nbr_coveredCpG,
   scale_fill_manual(values = colOffs) +
   theme_bw() + theme(legend.position = "none")
 
+#####################################################################
+## Are mean residuals meth sites different in NE_E and E_E groups? ##
+#####################################################################
+
+## By group, tolerance slope as a function of methylation residuals:
+
+modFULL <- lmer(BCI ~ No.Worms : trtG1G2 + (1|Family) + (1|Sex), 
+                data = fullMetadata_OFFS_half[fullMetadata_OFFS_half$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
+
+coef(modFULL)[1]
+# infected father: BCI = 4.3 NoWorms + various intercepts by family and sex
+# control father: BCI = -18.9 NoWorms + various intercepts by family and sex
+
+predict <- ggpredict(modFULL, terms = c("No.Worms", "trtG1G2"))
+
+slope_NE_exposed <- predict[predict$group %in% "NE_exposed",][2,2] - predict[predict$group %in% "NE_exposed",][1,2]
+slope_E_exposed <- predict[predict$group %in% "E_exposed",][2,2] - predict[predict$group %in% "E_exposed",][1,2]
+
+slope_NE_exposed
+
+meanMeth_NE_exposed <- mean(fullMetadata_OFFS_half[fullMetadata_OFFS_half$trtG1G2 %in% c("NE_exposed"),"res_Nbr_methCpG_Nbr_coveredCpG"])
+meanMeth_E_exposed <- mean(fullMetadata_OFFS_half[fullMetadata_OFFS_half$trtG1G2 %in% c("E_exposed"),"res_Nbr_methCpG_Nbr_coveredCpG"])
+
+df <- data.frame(group = c("NE_exposed", "E_exposed"),
+           slope = c(slope_NE_exposed, slope_E_exposed),
+           meanMeth = c(meanMeth_NE_exposed, meanMeth_E_exposed))
+
+ggplot(df, aes(x = slope, y = meanMeth, col =group))+
+  geom_point() + theme_bw()
+
+## Low tolerance = high methylation / high tolerance = low methylation
+
+
+modTOLfamsex <- lm(BCI ~ No.Worms : trtG1G2 : Family : Sex, 
+                data = fullMetadata_OFFS_half[fullMetadata_OFFS_half$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
+
+coef(modTOLfamsex)[1]
+
+
+predTOLfamsex <- ggpredict(modTOLfamsex, terms = c("trtG1G2", "Family", "Sex"))
+
+plot(predTOLfamsex)
+
 ##################################################
 ## Do residuals meth sites differ per trt group ##
 ##################################################
+
+#############START
+mod1.2 <- lme(BCI ~  trtG1G2, random=~1|Family,data=fullMetadata_OFFS)
+## pairwise posthoc test
+emmeans(mod1.2, list(pairwise ~ trtG1G2), adjust = "tukey")
+## Control father - treatment offspring has a strongly significantly lower BC than 
+## every other group, same as Kaufmann et al. 2014
+
+ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI, fill=trtG1G2))+
+  geom_boxplot()+
+  geom_signif(comparisons = list(c("NE_control", "NE_exposed")),
+              map_signif_level=TRUE, annotations="***",
+              y_position = 150, tip_length = 0, vjust=0.4) +
+  geom_signif(comparisons = list(c("NE_exposed", "E_control")),
+              map_signif_level=TRUE, annotations="***",
+              y_position = 200, tip_length = 0, vjust=0.4) +
+  geom_signif(comparisons = list(c("NE_exposed", "E_exposed")),
+              map_signif_level=TRUE, annotations="***",
+              y_position = 250, tip_length = 0, vjust=0.4) +
+  scale_fill_manual(values = colOffs)+
+  theme_bw() + theme(legend.position = "none")
+#############END
+
 
 # NB: we put sex (in offspring) and family as random factors
 
@@ -259,6 +386,14 @@ mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + (1|Family) + (1|Sex),
 mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|Family) + (1|Sex), 
              data = fullMetadata_OFFS_half, REML = F)
 lrtest(mod1, mod0) # not significant in offspring
+
+## Plot
+ggplot(fullMetadata_OFFS_half, aes(x=trtG1G2, y = res_Nbr_methCpG_Nbr_coveredCpG, fill=trtG1G2))+
+  geom_boxplot()+
+  scale_x_discrete("Treatment")+
+  scale_y_continuous("Residuals of number of methylated cytosines\n on number of cytosines covered") +
+  scale_fill_manual(values = colOffs)+
+  theme_bw() + theme(legend.position = "none")
 
 ##############################################################################
 ## Decompose: do residuals methylated sites change with PAR & OFF treatment ##
@@ -312,21 +447,28 @@ mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|Family)+ (1|Sex),
 lrtest(mod1, mod0) # VERY significant in offspring p = 0.0057 **
 
 # plot fixed effects depending on random effects
-pred <- ggpredict(mod1, terms = c("BCI", "Sex", "Family"), type = "random")
+pred <- ggpredict(mod1, terms = c("BCI", "Family", "Sex"), type = "random")
 plot(pred, ci = F, add.data = TRUE)
 
-######
-## In the other direction (BCI ~ residualsMeth) to plot with TRT
-## OFFSPRING
-mod1 <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG + (1|Family) + (1|Sex), 
-             data = fullMetadata_OFFS_half, REML = F)
-mod0 <- lmer(BCI ~ 1 + (1|Family)+ (1|Sex), 
-             data = fullMetadata_OFFS_half, REML = F)
-lrtest(mod1, mod0) # significant in offspring 0.0162 *
+## Plotted in the other direction
+plot(pred, ci = F, add.data = TRUE)+
+  coord_flip()
 
-# plot fixed effects depending on random effects
-pred <- ggpredict(mod1, terms = c("res_Nbr_methCpG_Nbr_coveredCpG", "Sex", "Family"), type = "random")
-plot(pred, ci = F, add.data = TRUE)
+## In the other direction:
+### to avoid scaling error:
+# fullMetadata_OFFS_half$res_Nbr_methCpG_Nbr_coveredCpG_DIVBY1000 <- fullMetadata_OFFS_half$res_Nbr_methCpG_Nbr_coveredCpG/1000
+# 
+# mod1 <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_DIVBY1000 + (1|Family) + (1|Sex), 
+#              data = fullMetadata_OFFS_half, REML = F)
+# mod0 <- lmer(BCI ~ 1 + (1|Family)+ (1|Sex), 
+#              data = fullMetadata_OFFS_half, REML = F)
+# lrtest(mod1, mod0) # significant in offspring p = 0.0162 *
+# 
+# # plot fixed effects depending on random effects
+# pred <- ggpredict(mod1, terms = c("res_Nbr_methCpG_Nbr_coveredCpG", "Family", "Sex"), type = "random")
+# plot(pred, ci = F, add.data = TRUE)
+
+
 
 ##### Prettier picture:
 # Set up scatterplot

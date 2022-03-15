@@ -104,15 +104,15 @@ hyperVenn <- myVennFUN(A = DMS_info_G1$DMS[DMS_info_G1$direction %in% "hyper"],
                        catnames = c("DMS G1\nhyper" , "DMS G2-c\nhyper", "DMS G2-i\nhyper"))
 
 # Output the diagrams
-png(file="Rfigures/VennDMSinhalffish_intersectingCpGs_hyper_hypo.png", width = 5, height = 5.5, units = 'in', res = 300)
-pushViewport(plotViewport(layout=grid.layout(2, 2)))
-pushViewport(plotViewport(layout.pos.col=1, layout.pos.row=1))
+png(file="Rfigures/VennDMSinhalffish_intersectingCpGs_hyper_hypo.png", width = 5.5, height = 4.5, units = 'in', res = 300)
+pushViewport(plotViewport(layout=grid.layout(2, 3)))
+pushViewport(plotViewport(layout.pos.col=2, layout.pos.row=1))
 grid.draw(allVenn)
 popViewport()
 pushViewport(plotViewport(layout.pos.col=1, layout.pos.row=2))
 grid.draw(hypoVenn)
 popViewport()
-pushViewport(plotViewport(layout.pos.col=2, layout.pos.row=2))
+pushViewport(plotViewport(layout.pos.col=3, layout.pos.row=2))
 grid.draw(hyperVenn)
 dev.off()
 
@@ -120,17 +120,14 @@ rm(allVenn, hypoVenn, hyperVenn)
 
 ######################
 ## Features Annotation (use package genomation v1.24.0)
+## NB Promoters are defined by options at genomation::readTranscriptFeatures function. 
+## The default option is to take -1000,+1000bp around the TSS and you can change that. 
+## -> following Heckwolf 2020 and Sagonas 2020, we consider 1500bp upstream and 500 bp downstream
 
+#########################
 ## load genome annotation
 gene.obj=readTranscriptFeatures("../../gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.bed12", 
-                                remove.unusual = FALSE)
-
-## NB Promoters are defined by options at genomation::readTranscriptFeatures function. The default option is to take -1000,+1000bp around the TSS and you can change that. S
-
-## annotate differentially methylated CpGs with promoter/exon/intron using annotation data
-## Kostas MBE: The DMSs and regions were predominately
-# found in intergenic regions (47.74% and 48.94%, respectively),
-# with introns (26.19% and 23.09), exons (15.07% and 13.98%), and promoters (11% and 13.98%) showing lower proportions
+                                remove.unusual = FALSE, up.flank = 1500, down.flank = 500)
 
 par(mfrow=c(1,3))
 par(mar = c(.1,0.1,5,0.1)) # Set the margin on all sides to 2
@@ -139,6 +136,7 @@ diffAnn_PAR = annotateWithGeneParts(as(DMS15pc_G1_half,"GRanges"),gene.obj)
 diffAnn_PAR
 plotTargetAnnotation(diffAnn_PAR,precedence=TRUE, main="DMS G1", 
                      cex.legend = 1, border="white")
+
 ## Offspring from control parents comparison:
 diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMS15pc_G2_controlG1_half,"GRanges"),gene.obj)
 diffAnn_G2_controlG1
@@ -150,13 +148,6 @@ diffAnn_G2_infectedG1
 plotTargetAnnotation(diffAnn_G2_infectedG1,precedence=TRUE, main="DMS G2-G1i", 
                      cex.legend = 1, border="white")
 par(mfrow=c(1,1)) 
-
-## Get distance to TSS:
-head(getAssociationWithTSS(diffAnn_PAR))
-head(diffAnn_PAR@members)
-
-test <- head(gene.obj)
-test$TSSes
 
 ##########################
 ## Separate hyper and hypo
@@ -225,16 +216,19 @@ myAnnotateDMS <- function(DMS, annot){
   return(DMS)
 }
 
+DMS15pc_G1_half = myAnnotateDMS(DMS15pc_G1_half, as.data.frame(diffAnn_PAR@members))
 DMS15pc_G1_half_HYPO = myAnnotateDMS(DMS15pc_G1_half[DMS_info_G1$direction %in% "hypo",],
                                   as.data.frame(myannot$G1hypo@members))
 DMS15pc_G1_half_HYPER = myAnnotateDMS(DMS15pc_G1_half[DMS_info_G1$direction %in% "hyper",],
                                    as.data.frame(myannot$G1hyper@members))
 
+DMS15pc_G2_controlG1_half = myAnnotateDMS(DMS15pc_G2_controlG1_half, as.data.frame(diffAnn_G2_controlG1@members))
 DMS15pc_G2_controlG1_half_HYPO = myAnnotateDMS(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hypo",],
                                       as.data.frame(myannot$G2G1chypo@members))
 DMS15pc_G2_controlG1_half_HYPER = myAnnotateDMS(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hyper",],
                                        as.data.frame(myannot$G2G1chyper@members))
 
+DMS15pc_G2_infectedG1_half = myAnnotateDMS(DMS15pc_G2_infectedG1_half, as.data.frame(diffAnn_G2_infectedG1@members))
 DMS15pc_G2_infectedG1_half_HYPO = myAnnotateDMS(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hypo",],
                                       as.data.frame(myannot$G2G1ihypo@members))
 DMS15pc_G2_infectedG1_half_HYPER = myAnnotateDMS(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hyper",],
@@ -351,3 +345,37 @@ makeManhattanPlots(DMSfile = DMS15pc_G2_infectedG1_half[outliers_G2_G1i_final, ]
                    annotFile = outliers_annot_G2_G1i, GYgynogff = GYgynogff, 
                    mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1i DMS")
 
+###############################
+## Gene association with DMS ##
+###############################
+
+## Keep CpG on genes:
+
+## Heckwolf 2020: To be associated to a gene, the pop-DMS had to be either inside the gene or, 
+## if intergenic, not further than 10 kb away from the TSS. 
+rows2rm <- which(diffAnn_PAR@dist.to.TSS$dist.to.feature>10000 & 
+                   rowSums(diffAnn_PAR@members) %in% 0)
+
+DMS15pc_G1_half_GENES <- DMS15pc_G1_half[-rows2rm,]
+
+# 4393 to keep, 681 to rm
+############ Follow up
+gene.obj$promoters
+
+DMS15pc_G1_half_GENES
+
+
+
+
+
+setwd("/home/user/R/x86_64-pc-linux-gnu-library/4.0/genomation/extdata")
+gff.file=system.file("extdata/Bubalus_bubalis.gtf", package = "genomation")
+gff = gffToGRanges(gff.file)
+head(gff)
+Anno <- GRangesList(gff)
+setwd("~/Desktop/Final_sort")
+diffAnnhyper3=annotateWithGeneParts(as(myDiff25p.hyper,"Granges"),Anno)
+
+
+?readTranscriptFeatures
+head(getAssociationWithTSS(diffAnn_PAR))

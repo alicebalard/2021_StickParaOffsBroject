@@ -25,8 +25,8 @@ makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam){
   ## Make dendrogram
   mydendro <- clusterSamples(OBJ, dist="correlation", method="ward", plot=FALSE)
   dend = as.dendrogram(mydendro)
-  
-  metadata[metadata$SampleID %in% c("S37", "S41", "S46"), c("SampleID", "Family", "trtG1G2", "coltrt", "colfam")]
+  # test
+  print(metadata[metadata$SampleID %in% c("S37", "S41", "S46"), c("SampleID", "Family", "trtG1G2", "coltrt", "colfam")])
   # Use color
   labels_colors(dend) <- metadata$coltrt[order.dendrogram(dend)]
 
@@ -40,7 +40,8 @@ makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam){
 
   ## Ordered legend:
   # correspDF=data.frame(name=unique(metadata$trtG1G2[order(metadata$trtG1G2)]),
-  correspDF=data.frame(name=unique(metadata$trtG1G2[order.dendrogram(dend)]),
+  # correspDF=data.frame(name=unique(metadata$trtG1G2[order.dendrogram(dend)]),
+  correspDF=data.frame(name=levels(metadata$trtG1G2),
                        color=my.cols.trt)
   legend("topright", title = "Treatment",
          legend = correspDF$name,
