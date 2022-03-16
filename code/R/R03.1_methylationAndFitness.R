@@ -448,7 +448,17 @@ lrtest(mod1, mod0) # VERY significant in offspring p = 0.0057 **
 
 # plot fixed effects depending on random effects
 pred <- ggpredict(mod1, terms = c("BCI", "Family", "Sex"), type = "random")
-plot(pred, ci = F, add.data = TRUE)
+plot(pred, ci = F, add.data = TRUE)+
+  ggtitle("Predicted values of global methylation")+
+  scale_y_continuous("Residuals of number of methylated cytosines\n on number of cytosines covered") +
+  scale_x_continuous("Body Condition Index")
+
+# Créer le graphique
+p + facet_grid(
+  dose ~ supp, 
+  labeller = labeller(dose = dose.labs, supp = supp.labs)
+)
+
 
 ## Plotted in the other direction
 plot(pred, ci = F, add.data = TRUE)+
