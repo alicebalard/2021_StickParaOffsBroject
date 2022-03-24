@@ -27,6 +27,7 @@ library(ggeffects) # to plot random effects predictions
 library(reshape2)
 library(png)
 library(grid)
+library(gridExtra)
 
 ## offspring colors for all kind of plots
 colOffs <- c("#ffe67f", "#ff6300","#a8caff","#a800d4")

@@ -256,3 +256,55 @@ myNMDS <- function(dataset, metadata){
   
   return(list(mystressplot=mystressplot, NMDSplot = figure))
 }
+
+## Calculate beta values (methylation proportion per CpG site) for the 1001880 positions covered in half G1 and half G2
+getPMdataset <- function(uniteCov, MD, gener){
+  PM = methylKit::percMethylation(uniteCov)
+  
+  ## Each row is a CpG sites, let's give them a proper "pos" row name
+  rownames(PM) <- paste(uniteCov$chr, 
+                        uniteCov$start, 
+                        uniteCov$end)
+  
+  ## Select only the positions corresponding in DMS in G1 comparison control/infected
+  length(DMS_info_G1$DMS)# 5074 DMS
+  PM <- PM[rownames(PM) %in% DMS_info_G1$DMS, ]
+  nrow(PM) # all good 
+  
+  ## Melt
+  PM <- melt(PM)
+  
+  ## Extract chromosome, position, and assign correct names
+  PM$Chr <- sapply(strsplit(as.character(PM$Var1), " +"), `[`, 1)
+  PM$Pos <- sapply(strsplit(as.character(PM$Var1), " +"), `[`, 2)
+  names(PM) <- c("Var1",  "ID",  "BetaValue", "Chr", "Pos")
+  PM$rankpos <- 1:nrow(PM)
+  
+  ## Add treatment, Sex and Family
+  dfTrt = data.frame(ID = MD$SampleID, Treatment = MD$trtG1G2, Sex = MD$Sex, Family= MD$Family)
+  PM = merge(PM, dfTrt)
+  
+  if (gener=="parents"){
+    PM$G1_trt <- PM$Treatment
+    PM$G2_trt <- NA
+  } else if (gener=="offspring"){
+    PM$G1_trt <- sapply(strsplit(as.character(PM$Treatment), "_"), `[`, 1)
+    PM$G2_trt <- sapply(strsplit(as.character(PM$Treatment), "_"), `[`, 2)
+    PM$G1_trt[PM$G1_trt %in% "E"] <- "exposed"
+    PM$G1_trt[PM$G1_trt %in% "NE"] <- "control"
+  }
+  ## Add the value of the DM in the parental comparison:
+  names(PM)[names(PM) %in% "Var1"] <- "CpGSite"
+  PM <- merge(PM, data.frame(CpGSite = DMS_info_G1$DMS, meth.diff.parentals = DMS_info_G1$meth.diff))
+  
+  ## Remove NA
+  PM <- PM[!is.na(PM$BetaValue),]
+  
+  ## Add direction methylation diff in parental comparison
+  PM$hypohyper <- "hypo"
+  PM$hypohyper[PM$meth.diff.parentals > 0] <- "hyper"
+  PM$hypohyper <- as.factor(PM$hypohyper)
+  PM$hypohyper <- factor(PM$hypohyper, levels = c("hypo", "hyper"))
+  
+  return(PM)
+}

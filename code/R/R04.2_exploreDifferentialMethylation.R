@@ -12,6 +12,7 @@ source("R02.1_loadMetadata.R")
 ##machine="apocrita"
 machine="mythinkpad"
 ## Load methylation data
+loadALL = FALSE # only load CpG shared by half fish per trt group + ALL
 source("R02.2_loadMethyldata.R")
 ## Load file containing length of each gynogen chromosomes 
 ## grep "contig" gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff | awk '{print $1, $5}' > data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt
@@ -80,151 +81,224 @@ DMS_info_G2_G1c_final$percentDMS # 0.14% of the CpGs are DMS
 length(DMS_info_G2_G1i_final$DMS) # 777 DMS
 DMS_info_G2_G1i_final$percentDMS # 0.08% of the CpGs are DMS
 
-###############################################################################
-## Question: how are the beta values in the 4 G2 groups for the parental DMS?##
-###############################################################################
+####################################################################################
+## Question: how are the beta values in the different groups for the parental DMS?##
+####################################################################################
+##############
+## Prepare dataset
+##############
+PM_G1 <- getPMdataset(uniteCov = uniteCov6_G1_woSexAndUnknowChrOVERLAP, MD = fullMetadata_PAR, gener="parents")
+PM_G2 <- getPMdataset(uniteCov = uniteCov14_G2_woSexAndUnknowChrOVERLAP, MD = fullMetadata_OFFS, gener="offspring")
 
-## Calculate beta values (methylation proportion per CpG site)
-percMethMat_uniteCov14_G2_woSexAndUnknowChrOVERLAP = 
-  methylKit::percMethylation(uniteCov14_G2_woSexAndUnknowChrOVERLAP)
-
-## Each row is a CpG sites, let's give them a proper "pos" row name
-rownames(percMethMat_uniteCov14_G2_woSexAndUnknowChrOVERLAP) <- paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, 
-                                                                      uniteCov14_G2_woSexAndUnknowChrOVERLAP$start, 
-                                                                      uniteCov14_G2_woSexAndUnknowChrOVERLAP$end)
-
-## Select only the positions corresponding in DMS in G1 comparison control/infected
-length(DMS_info_G1$DMS)# 5074 DMS
-
-percMethMat_halfG2_atDMS <- percMethMat_uniteCov14_G2_woSexAndUnknowChrOVERLAP[
-  rownames(percMethMat_uniteCov14_G2_woSexAndUnknowChrOVERLAP) %in% DMS_info_G1$DMS, ]
-
-nrow(percMethMat_halfG2_atDMS) # all good 
-
-percMethMat_halfG2_atDMS <- melt(percMethMat_halfG2_atDMS)
-
-## Extract chromosome, position, and assign correct names
-percMethMat_halfG2_atDMS$Chr <- sapply(strsplit(as.character(percMethMat_halfG2_atDMS$Var1), " +"), `[`, 1)
-percMethMat_halfG2_atDMS$Pos <- sapply(strsplit(as.character(percMethMat_halfG2_atDMS$Var1), " +"), `[`, 2)
-names(percMethMat_halfG2_atDMS) <- c("Var1",  "ID",  "BetaValue", "Chr", "Pos")
-percMethMat_halfG2_atDMS$rankpos <- 1:nrow(percMethMat_halfG2_atDMS)
-
-## Add treatment, Sex and Family
-dfTrt = data.frame(ID = fullMetadata_OFFS$SampleID, Treatment = fullMetadata_OFFS$trtG1G2,
-                   Sex = fullMetadata_OFFS$Sex, Family= fullMetadata_OFFS$Family)
-percMethMat_halfG2_atDMS = merge(percMethMat_halfG2_atDMS, dfTrt)
-percMethMat_halfG2_atDMS$G1_trt <- sapply(strsplit(as.character(percMethMat_halfG2_atDMS$Treatment), "_"), `[`, 1)
-percMethMat_halfG2_atDMS$G2_trt <- sapply(strsplit(as.character(percMethMat_halfG2_atDMS$Treatment), "_"), `[`, 2)
-percMethMat_halfG2_atDMS$G1_trt[percMethMat_halfG2_atDMS$G1_trt %in% "E"] <- "exposed"
-percMethMat_halfG2_atDMS$G1_trt[percMethMat_halfG2_atDMS$G1_trt %in% "NE"] <- "control"
-
-head(percMethMat_halfG2_atDMS)
-
-## Linear model: does the beta value at DMS depends on treatment Parent x Offspring?
-modFull <- lmer(BetaValue ~ G1_trt * G2_trt + (1|Sex) + (1|Family), 
-                data = percMethMat_halfG2_atDMS, REML = F) # REML =F for model comparison
-mod_noG1trt <- lmer(BetaValue ~ G2_trt + (1|Sex) + (1|Family), 
-                    data = percMethMat_halfG2_atDMS, REML = F)
-mod_noG2trt <-lmer(BetaValue ~ G1_trt + (1|Sex) + (1|Family), 
-                   data = percMethMat_halfG2_atDMS, REML = F)
-mod_noInteractions <- lmer(BetaValue ~ G1_trt + G2_trt + (1|Sex) + (1|Family), 
-                           data = percMethMat_halfG2_atDMS, REML = F)
+##############
+## Linear model: does the beta value of offspring at DMS depends on treatment Parent x Offspring?
+##############
+modFull <- lmer(BetaValue ~ G1_trt * G2_trt + (1|Sex) + (1|Family),data = PM_G2, REML = F) # REML =F for model comparison
+mod_noG1trt <- lmer(BetaValue ~ G2_trt + (1|Sex) + (1|Family), data = PM_G2, REML = F)
+mod_noG2trt <-lmer(BetaValue ~ G1_trt + (1|Sex) + (1|Family), data = PM_G2, REML = F)
+mod_noInteractions <- lmer(BetaValue ~ G1_trt + G2_trt + (1|Sex) + (1|Family), data = PM_G2, REML = F)
 
 lrtest(modFull, mod_noG1trt) # G1 trt is VERY VERY significant p = 4.758e-07 ***
-lrtest(modFull, mod_noG2trt) # G1 trt is not significant (p<0.05)
+lrtest(modFull, mod_noG2trt) # G2 trt is not significant (p<0.05)
 lrtest(modFull, mod_noInteractions) # interactions are not not significant (p<0.05)
 
-modFinal <- lmer(BetaValue ~ G1_trt + (1|Sex) + (1|Family), 
-                 data = percMethMat_halfG2_atDMS)
+modFinal <- lmer(BetaValue ~ G1_trt + (1|Sex) + (1|Family), data = PM_G2)
 
 ggpredict(modFinal, terms = c("G1_trt"))
 ## Higher beta values at the parental DMS for G2 from exposed G1
+# Predicted values of BetaValue
 
+# G1_trt  | Predicted |         95% CI
+# ------------------------------------
+# control |     58.08 | [56.73, 59.43]
+# exposed |     58.55 | [57.20, 59.90]
+# 
+# Adjusted for:
+#   *    Sex = 0 (population-level)
+# * Family = 0 (population-level)
 
+######--> the beta value of offspring at parental DMS depends on  parental treatment only
 
-###############################################################################
-## Beta values of offsprings at parental DMS, per trt, along the chromosomes ##
-###############################################################################
+##############
+## Plot mean Beta values of offsprings at parental DMS, per trt, along the chromosomes
+##############
+meanBeta_G2_simple <- PM_G2 %>% group_by(Chr, Pos, Treatment) %>%
+  dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
+names(meanBeta_G2_simple) <- c("Chr", "Pos", "Treatment_G2", "MeanBetaG2")
 
-## Too heavy to run on my thinkpad
-# modG1G2beta <- lmer(BetaValue ~ Var1 : Treatment + (1|Sex) + (1|Family), 
-#                 data = percMethMat_halfG2_atDMS, REML = T)
-
-
-
-
-predPosBeta <- ggpredict(modG1G2beta, terms = c("Var1", "G1_trt", "G2_trt"))
-
-
-# makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50","grey50","darkred","darkred"), 
-#                                mytitle = "Manhattan plot of DMS"){
-#GA_genome.fa.sizes.txt is a file with chromosome sizes and names
 genome <- GYgynogff %>%
-  mutate(chrom_nr=chrom %>% deroman(),
-         chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
+  mutate(chrom_nr=chrom %>% deroman(), chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
   arrange(chrom_order) %>%
-  mutate(gstart=lag(length,default=0) %>% cumsum(),
-         gend=gstart+length, 
-         type=LETTERS[2-(chrom_order%%2)],
-         gmid=(gstart+gend)/2)
+  mutate(gstart=lag(length,default=0) %>% cumsum(), gend=gstart+length, 
+         type=LETTERS[2-(chrom_order%%2)],   gmid=(gstart+gend)/2)
 
-# region=as.factor(ifelse(annotFile$prom==1,"promoter",
-#                         ifelse(annotFile$exon==1,"exon",
-#                                ifelse(annotFile$intron==1, "intron","intergenic"))))
+mydata = tibble(trt=meanBeta_G2_simple$Treatment_G2, chrom=meanBeta_G2_simple$Chr, 
+                pos=meanBeta_G2_simple$Pos, beta=meanBeta_G2_simple$MeanBetaG2)
+mydata$pos <- as.numeric(mydata$pos)
 
-
-head(percMethMat_halfG2_atDMS)
-
-head(melt(G2BetaAtDMS))
-
-# DMSfile = 
-head(DMS15pc_G1_half)
-
-## Offspring methylation file:
-
-
-mydata = tibble(chrom=DMSfile$chr,
-                pos=DMSfile$start,
-                meth.diff=DMSfile$meth.diff,
-                qval=DMSfile$qvalue)#,
-# region=region)
-
-# table(DMSfile$chr)## check that chrXIX and chrUN are well removed!!
+table(mydata$chrom)## check that chrXIX and chrUN are well removed!!
 
 # join DMS and genomic position
-data = left_join(mydata, genome2) %>% 
-  mutate(gpos=pos+gstart,significance= ifelse(abs(qval>0.0125) | abs(meth.diff)<15,"not significant","significant"))
+data = dplyr::left_join(mydata, genome) %>% dplyr::mutate(gpos=pos+gstart)
 
-table(data$significance) # all signif
-
-#plot only significant DMS:
+# plot:
 ggplot()+
-  geom_rect(data=genome2,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=type), alpha=.2)+
-  geom_point(data=data[abs(data$meth.diff)>15 & data$significance=="significant",],
-             aes(x=gpos,y=meth.diff,col=region,shape=region),fill="white", size = 2)+
-  scale_color_manual(values = mycols)+
+  geom_rect(data=genome,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=type), alpha=.2)+
+  geom_point(data=data, aes(x=gpos,y=beta, shape=trt, col=trt),fill="white", size = 1)+
+  scale_color_manual(values = colOffs)+
   scale_shape_manual(values=c(21,21,21,21))+
   scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none")+
-  scale_x_continuous(breaks=genome2$gmid,labels=genome2$chrom %>% str_remove(.,"Gy_chr"),
+  scale_x_continuous(breaks=genome$gmid,labels=genome$chrom %>% str_remove(.,"Gy_chr"),
                      position = "top",expand = c(0,0))+
   theme_minimal()+
   theme(panel.grid = element_blank(),
         axis.line=element_blank(),
         axis.title = element_blank(),
         strip.placement = "outside")+
-  ggtitle(mytitle)
-}
+  facet_grid(trt~.)+
+  ggtitle("Mean methylation proportions at the 5074 parental DMS for each offspring group")
 
+##############
+## Beta values of offsprings at parental DMS, per trt, along the percent DM
+##############
+dfHypo <- PM_G2[PM_G2$hypohyper %in% "hypo",]
+dfHyper <- PM_G2[PM_G2$hypohyper %in% "hyper",]
 
+### PLOTS
+## to insert image (expe design)
+img <- readPNG("../../data/designExpeSimple.png")
+g <- rasterGrob(img, interpolate=TRUE)
 
+## Hypo
+mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|Sex) + (1|Family), 
+            data = dfHypo, REML = F)
+mod0 <- lmer(BetaValue ~ meth.diff.parentals + (1|Sex) + (1|Family), 
+             data = dfHypo, REML = F)
+lrtest(mod, mod0) # trt significant chisq=326.26, p < 2.2e-16 ***
 
+mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|Sex) + (1|Family), 
+            data = dfHypo, REML = T)
+predPosBeta <- ggpredict(mod, terms = c("meth.diff.parentals", "Treatment"))
+plotHypo <- plot(predPosBeta)+
+  scale_color_manual(values = colOffs) +
+  theme_bw()+
+  theme(legend.position = "none")+
+  scale_x_continuous(limits = c(-60,-15))+
+  scale_y_continuous(limits = c(35,65))+
+  ggtitle("Predicted methylation percentage in offspring at parental hypomethylated DMS")
 
+## Hyper
+mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|Sex) + (1|Family), 
+            data = dfHyper, REML = F)
+mod0 <- lmer(BetaValue ~ meth.diff.parentals + (1|Sex) + (1|Family), 
+             data = dfHyper, REML = F)
+lrtest(mod, mod0) # trt significant chisq=433.91, p < 2.2e-16 ***
 
+mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|Sex) + (1|Family), 
+            data = dfHyper, REML = T)
+predPosBeta <- ggpredict(mod, terms = c("meth.diff.parentals", "Treatment"))
+plotHyper <- plot(predPosBeta)+
+  scale_color_manual(values = colOffs) +
+  theme_bw()+
+  theme(legend.position = "none") +
+  annotation_custom(g, xmin=35, xmax=60, ymin=55, ymax=65)+
+  scale_x_continuous(limits = c(15,60))+
+  scale_y_continuous(limits = c(35,65))+
+  ggtitle("Predicted methylation percentage in offspring at parental hypermethylated DMS")
 
+grid.arrange(plotHypo, plotHyper, ncol=2)
 
+##############
+## Does beta offspring predicted by beta parent, at parental DMS, differ by trt?
+##############
+# meanBeta_G1 <- PM_G1 %>% group_by(Chr, Pos, Treatment, Sex, Family, hypohyper) %>%
+#   dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
+# names(meanBeta_G1) <- c("Chr", "Pos", "Treatment_G1", "Sex_G1", "Family_G1", "hypohyper", "MeanBetaG1")
+# 
+# meanBeta_G2 <- PM_G2 %>% group_by(Chr, Pos, Treatment, Sex, Family, hypohyper) %>%
+#   dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
+# names(meanBeta_G2) <- c("Chr", "Pos", "Treatment_G2", "Sex_G2", "Family_G2", "hypohyper", "MeanBetaG2")
+# 
+# meanBetaG1G2 <- merge(meanBeta_G1, meanBeta_G2, all = T)
 
+PM_G1_temp <- PM_G1
+PM_G2_temp <- PM_G2
 
+names(PM_G1_temp)[names(PM_G1_temp)%in% c("ID", "BetaValue", "Treatment", "Sex")] <- 
+  paste0(names(PM_G1_temp)[names(PM_G1_temp)%in% c("ID", "BetaValue", "Treatment", "Sex")], "_G1")
+PM_G1_temp <- PM_G1_temp[!names(PM_G1_temp) %in% c("rankpos", "G1_trt", "G2_trt")]
 
+names(PM_G2_temp)[names(PM_G2_temp)%in% c("ID", "BetaValue", "Treatment", "Sex")] <- 
+  paste0(names(PM_G2_temp)[names(PM_G2_temp)%in% c("ID", "BetaValue", "Treatment", "Sex")], "_G2")
+PM_G2_temp <- PM_G2_temp[!names(PM_G2_temp) %in% c("rankpos", "G1_trt", "G2_trt")]
+
+PM_G1G2 <- merge(PM_G1_temp, PM_G2_temp, all = T)
+
+rm(PM_G1_temp, PM_G2_temp)
+
+head(PM_G1G2)
+
+## Remove combinations that don't exist 
+PM_G1G2 <- PM_G1G2[(PM_G1G2$Treatment_G1 %in% "Control" & (PM_G1G2$Treatment_G2 %in% c("NE_control", "NE_exposed"))) |
+                     (PM_G1G2$Treatment_G1 %in% "Exposed" & (PM_G1G2$Treatment_G2 %in% c("E_control", "E_exposed"))),]
+
+# Correctly rename PM_G1G2$Treatment_G2
+PM_G1G2$Treatment_G2 <- as.character(PM_G1G2$Treatment_G2)
+PM_G1G2$Treatment_G2[grep("_exposed", PM_G1G2$Treatment_G2)] <- "Exposed"
+PM_G1G2$Treatment_G2[grep("_control", PM_G1G2$Treatment_G2)] <- "Control"
+
+PM_G1G2$Treatment <- paste(PM_G1G2$Treatment_G1,PM_G1G2$Treatment_G2, sep="_")
+
+## hypo
+modFull <- lmer(BetaValue_G2 ~ BetaValue_G1 : (Treatment_G1:Treatment_G2) + (1|Sex_G2) + (1|Family), 
+                data = PM_G1G2[PM_G1G2$hypohyper %in% "hypo",], REML = F)
+modnoInter <- lmer(BetaValue_G2 ~ BetaValue_G1 : (Treatment_G1+Treatment_G2) + (1|Sex_G2) + (1|Family), 
+                   data = PM_G1G2[PM_G1G2$hypohyper %in% "hypo",], REML = F)
+modNoG1 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G2 + (1|Sex_G2) + (1|Family), 
+                data = PM_G1G2[PM_G1G2$hypohyper %in% "hypo",], REML = F)
+modNoG2 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G1 + (1|Sex_G2) + (1|Family), 
+                data = PM_G1G2[PM_G1G2$hypohyper %in% "hypo",], REML = F)
+
+lrtest(modFull, modnoInter) # no significant interactions
+lrtest(modFull, modNoG1) # effect of G1 p< 2.2e-16 ***
+lrtest(modFull, modNoG2) # effect of G2 p=0.001188 **
+
+modHypo <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment + (1|Sex_G2) + (1|Family), 
+                data = PM_G1G2[PM_G1G2$hypohyper %in% "hypo",])
+predPosBeta <- ggpredict(modHypo, terms = c("BetaValue_G1", "Treatment"))
+
+PHypo <- plot(predPosBeta)+
+  scale_color_manual(values = colOffs) +
+  theme_bw()+
+  theme(legend.position = "none") +
+  annotation_custom(g, xmin=0, xmax=40, ymin=60, ymax=80)+
+  ggtitle("Predicted values of beta G2 in function of beta G1\nfor parental DMS HYPOmethylated in infected parents")
+
+## hyper
+modFull <- lmer(BetaValue_G2 ~ BetaValue_G1 : (Treatment_G1:Treatment_G2) + (1|Sex_G2) + (1|Family), 
+                data = PM_G1G2[PM_G1G2$hypohyper %in% "hyper",], REML = F)
+modnoInter <- lmer(BetaValue_G2 ~ BetaValue_G1 : (Treatment_G1+Treatment_G2) + (1|Sex_G2) + (1|Family), 
+                   data = PM_G1G2[PM_G1G2$hypohyper %in% "hyper",], REML = F)
+modNoG1 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G2 + (1|Sex_G2) + (1|Family), 
+                data = PM_G1G2[PM_G1G2$hypohyper %in% "hyper",], REML = F)
+modNoG2 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G1 + (1|Sex_G2) + (1|Family), 
+                data = PM_G1G2[PM_G1G2$hypohyper %in% "hyper",], REML = F)
+
+lrtest(modFull, modnoInter) # no significant interactions
+lrtest(modFull, modNoG1) # effect of G1 p< 2.2e-16 ***
+lrtest(modFull, modNoG2) # effect of G2 p=0.01913 *
+
+modHyper <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment + (1|Sex_G2) + (1|Family), 
+                data = PM_G1G2[PM_G1G2$hypohyper %in% "hyper",])
+predPosBeta <- ggpredict(modHyper, terms = c("BetaValue_G1", "Treatment"))
+
+PHyper <- plot(predPosBeta)+
+  scale_color_manual(values = colOffs) +
+  theme_bw()+
+  theme(legend.position = "none") +
+  ggtitle("Predicted values of beta G2 in function of beta G1\nfor parental DMS HYPERmethylated in infected parents")
+
+grid.arrange(PHypo, PHyper, ncol=2)
 
 #########################
 ## Clustering analysis ##
