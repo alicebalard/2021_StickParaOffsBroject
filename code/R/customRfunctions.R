@@ -262,9 +262,7 @@ getPMdataset <- function(uniteCov, MD, gener){
   PM = methylKit::percMethylation(uniteCov)
   
   ## Each row is a CpG sites, let's give them a proper "pos" row name
-  rownames(PM) <- paste(uniteCov$chr, 
-                        uniteCov$start, 
-                        uniteCov$end)
+  rownames(PM) <- paste(uniteCov$chr, uniteCov$start, uniteCov$end)
   
   ## Select only the positions corresponding in DMS in G1 comparison control/infected
   length(DMS_info_G1$DMS)# 5074 DMS
@@ -290,8 +288,10 @@ getPMdataset <- function(uniteCov, MD, gener){
   } else if (gener=="offspring"){
     PM$G1_trt <- sapply(strsplit(as.character(PM$Treatment), "_"), `[`, 1)
     PM$G2_trt <- sapply(strsplit(as.character(PM$Treatment), "_"), `[`, 2)
-    PM$G1_trt[PM$G1_trt %in% "E"] <- "exposed"
-    PM$G1_trt[PM$G1_trt %in% "NE"] <- "control"
+    PM$G2_trt[PM$G2_trt %in% "control"] <- "Control"
+    PM$G2_trt[PM$G2_trt %in% "exposed"] <- "Exposed"
+    PM$G1_trt[PM$G1_trt %in% "E"] <- "Exposed"
+    PM$G1_trt[PM$G1_trt %in% "NE"] <- "Control"
   }
   ## Add the value of the DM in the parental comparison:
   names(PM)[names(PM) %in% "Var1"] <- "CpGSite"
