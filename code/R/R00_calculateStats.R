@@ -14,8 +14,8 @@ library(ggsignif) # plot significance
 ## Data loading & prep ##
 #########################
 
-# Kostas previous results to compare and have the data
-Kostas <- readxl::read_xlsx("../../data/Kostas_G2_info.xlsx")
+# Raw data including Kostas previous results to compare and have the data
+Kostas <- read.csv("../../data/cleanedRawData144fishG1G2.csv")
 Kostas$SampleID <- Kostas$ID
 
 rerun = FALSE
