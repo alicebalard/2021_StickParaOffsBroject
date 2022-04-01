@@ -1,8 +1,8 @@
 #!/bin/bash
 # Functional annotation of gynogen genome
-#$ -pe smp 8
+#$ -pe smp 1
 #$ -l h_vmem=5G
-#$ -l h_rt=240:0:0
+#$ -l h_rt=1:0:0
 #$ -o /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/run_gynofuncal.stdout
 #$ -e /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/run_gynofuncal.stderr
 #$ -V
@@ -13,8 +13,8 @@
 ## this was blastp -query $GYNOGENOME -db $PROTDB num_threads 8 -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out $DIR/output.blastp        merged with the reference American genome (Peichel et al. 2017) GCF_016920845.1_GAculeatus_UGA_version5_protein.faa 
 ## cat GCF_016920845.1_GAculeatus_UGA_version5_protein.faa uniprot_sprot.fasta >> GCF_016920845.1_GAculeatus_UGA_version5_protein_AND_uniprot_sprot_02march2022.faa
 
-# module load anaconda3/2020.02
-# conda activate agat
+module load anaconda3/2020.02
+conda activate agat
 module load blast+
 
 DIR=/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/06GynoGen_functionalAnnotation
@@ -44,8 +44,8 @@ cd $DIR
 # blastp -query $DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa -db $PROTDB -num_threads 8 -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out $DIR/output.blastp
 
 ## 2. uniprot only
-makeblastdb -in $UNIPROTDB -dbtype prot
-blastp -query $DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa -db $UNIPROTDB -num_threads 8 -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out $DIR/output_onlyuniprot.blastp
+# makeblastdb -in $UNIPROTDB -dbtype prot
+# blastp -query $DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa -db $UNIPROTDB -num_threads 8 -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out $DIR/output_onlyuniprot.blastp
 
 ## PARSE FUNCTIONAL ANNOTATIONS:
 ## Chema: I think you can use AGAT to modify your original GFF file incorporating the sequence similarity info into the comments section for each gene (I think you can use this tool from the AGAT package: https://agat.readthedocs.io/en/latest/tools/agat_sq_add_attributes_from_tsv.html).
@@ -55,9 +55,19 @@ blastp -query $DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa -db $UNIPROTDB -num_
 
 ## 1. uniprot + US Peichel stick
 #  TO DO : add PE=to make annotation (like uniprot) https://github.com/NBISweden/AGAT/issues/157
+## Integer - The PE (protein existence) in the uniprot header indicates the type of evidence that supports the existence of the protein. You can decide until which protein existence level you want to consider to lift the finctional information. Default 5.
+## 1. Experimental evidence at protein level 2. Experimental evidence at transcript level 3. Protein inferred from homology 4. Protein predicted 5. Protein uncertain
+# sed -E "s|^>(.+)$|>\1 PE=4|" GCF_016920845.1_GAculeatus_UGA_version5_protein.faa > temp
+# cat temp uniprot_sprot.fasta >> GCF_016920845.1_GAculeatus_UGA_version5_protein_AND_uniprot_sprot_23march2022.faa
+
+COMPLETEDB=$DIR/GCF_016920845.1_GAculeatus_UGA_version5_protein_AND_uniprot_sprot_23march2022.faa
+
+## PB HERE: the annotation file has ALREADY candidate genes... How to replace them?
+
+agat_sp_manage_functional_annotation.pl -f $GFF1.streamlined_for_AGAT.gff -b $DIR/output_onlyuniprot.blastp --db $COMPLETEDB --output $DIR/RESULTDIR/functiano_fullprot_dir
 
 ## 2. uniprot only
-agat_sp_manage_functional_annotation.pl -f $GFF1.streamlined_for_AGAT.gff -b $DIR/output_onlyuniprot.blastp --db $UNIPROTDB --output $DIR/functiano_uniprot_dir
+agat_sp_manage_functional_annotation.pl -f $GFF1.streamlined_for_AGAT.gff -b $DIR/output_onlyuniprot.blastp --db $UNIPROTDB --output $DIR/RESULTDIR/functiano_uniprot_dir
 
 ###########################################################
 ############################# ERROR works only with uniprot

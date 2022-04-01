@@ -15,8 +15,8 @@ library(ggsignif) # plot significance
 #########################
 
 # Raw data including Kostas previous results to compare and have the data
-Kostas <- read.csv("../../data/cleanedRawData144fishG1G2.csv")
-Kostas$SampleID <- Kostas$ID
+rawData <- read.csv("../../data/cleanedRawData144fishG1G2.csv")
+rawData$SampleID <- rawData$ID
 
 rerun = FALSE
 
@@ -47,7 +47,7 @@ if (rerun==TRUE){
   methylBSdf$SampleID <- gsub("_L00*.","", gsub(".*-L1_","", gsub("_R1_001", "", methylBSdf$Sample_Name)))
   
   ## Merge metadata:
-  fullMetadata <- merge(merge(merge(merge(methylBSdf, mappDatBSB), file), fileT),Kostas)
+    fullMetadata <- merge(merge(merge(merge(methylBSdf, mappDatBSB), file), fileT), rawData)
   fullMetadata <- fullMetadata[!names(fullMetadata) %in% c("Sample.Name", "Sample")]
   names(fullMetadata)[names(fullMetadata) %in% "MappingEfficiency"] <- "MappingEfficiency%BSBoldvsGynogen"
   
