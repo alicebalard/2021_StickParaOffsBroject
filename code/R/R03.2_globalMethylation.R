@@ -21,17 +21,17 @@ source("R02.2_loadMethyldata.R")
 
 ## Dendogram of methylations
 ## All samples:
-pdf("Rfigures/clusterALLCpG.pdf", width = 16, height = 7)
+pdf("Rfigures/clusterALLCpG.pdf", width = 17, height = 8)
 makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr, fullMetadata,
                       my.cols.trt=c("#333333ff","#ff0000ff","#ffe680ff","#ff6600ff","#aaccffff","#aa00d4ff"),
-                      my.cols.fam = c(1:4))
+                      my.cols.fam = c(1:4), nbrk = 8)
 dev.off()
 
 ## offspring: (add TRUE to script loadMethylData)
-pdf("Rfigures/clusterALLCpG_offspings.pdf", width = 17, height = 7)
+pdf("Rfigures/clusterALLCpG_offspings.pdf", width = 17, height = 8)
 makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
                       my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
-                      my.cols.fam = c(1:4))
+                      my.cols.fam = c(1:4), nbrk = 8)
 dev.off()
 
 ###################
@@ -40,57 +40,126 @@ dev.off()
 # multivariate statistical test. It is used to compare groups of objects and test
 # the null hypothesis that the centroids and dispersion of the groups as defined by
 # measure space are equivalent for all groups.
-myadonisFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS)
-## Interactions not significant - run without:
+## NB: we define the permutation structure considering brother pairs (N = 8)
+table(fullMetadata_OFFS$brotherPairID)
+
+# make distance matrix with B-C distances
+data.dist = makeDatadistFUN(uniteCovALL_G2_woSexAndUnknowChr)
+
+# We use a PERMANOVA to test the hypothesis that paternal treatment, 
+# offspring treatment, sex and their interactions significantly influencing global methylation
+perm <- how(nperm = 1000) # 1000 permutations
+setBlocks(perm) <- with(fullMetadata_OFFS, brotherPairID) # define the permutation structure considering brotherPairID
+## Full model
+print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permutations = perm))
+## remove the non significant interactions
+print(adonis2(data.dist ~ PAT + outcome + Sex, data = fullMetadata_OFFS, permutations = perm))
+# Permutation test for adonis under reduced model
+# Terms added sequentially (first to last)
+# Blocks:  with(metadata, brotherPairID) 
+# Permutation: free
+# Number of permutations: 1000
+# 
 # adonis2(formula = data.dist ~ PAT + outcome + Sex, data = metadata, permutations = perm)
-#            Df SumOfSqs      R2      F   Pr(>F)    
+#           Df SumOfSqs      R2      F   Pr(>F)    
 # PAT        1 0.002782 0.01470 1.6344 0.000999 *** --> 1.5% of the variation explained by PAT
-# outcome    1 0.001909 0.01009 1.1216 0.070929 .  --> 1% of the variation explained by outcome
-# Sex        1 0.002418 0.01277 1.4202 0.004995 ** --> 1.3% of the variation explained by Sex
+# outcome    1 0.001909 0.01009 1.1216 0.041958 *  --> 1% of the variation explained by outcome
+# Sex        1 0.002418 0.01277 1.4202 0.006993 ** --> 1.3% of the variation explained by Sex
 # Residual 107 0.182139 0.96244                    
+
+## Using brotherPairID : G1trt as block
+perm <- how(nperm = 1000) # 1000 permutations
+
+dat = fullMetadata_OFFS
+dat$brotherPairID_PAT = paste(dat$brotherPairID, dat$PAT)
+setBlocks(perm) <- with(dat, brotherPairID_PAT) # define the permutation structure
+
+## with the offspring treatments (result of PAT + outcome)
+adonis2(data.dist ~ outcome + Sex, data = dat, permutations = perm)
+# Permutation test for adonis under reduced model
+# Terms added sequentially (first to last)
+# Blocks:  with(dat, brotherPairID_PAT) 
+# Permutation: free
+# Number of permutations: 1000
+# 
+# adonis2(formula = data.dist ~ outcome + Sex, data = dat, permutations = perm)
+# Df SumOfSqs      R2      F   Pr(>F)    
+# outcome    1 0.001901 0.01005 1.1113 0.025974 *  <-- within c
+# Sex        1 0.002568 0.01357 1.5011 0.000999 ***
+# Residual 108 0.184778 0.97638                    
 # Total    110 0.189247 1.00000                    
 # ---
 # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-# Permutation test for adonis under reduced model
-# Terms added sequentially (first to last)
-# Blocks:  with(metadata, Family) 
-# Permutation: free
-# Number of permutations: 1000
 
-######################################################################
-## Test the effect of treatment and sex in both groups by parental trt
-## 1. Parents are NOT infected. Is there a difference in global methylation between infected/control trt?
-trtgp = c(2,3)
-# make distance matrix with B-C distances
-data.dist = makeDatadistFUN(reorganize(methylObj = uniteCovALL_G2_woSexAndUnknowChr,
-                                       treatment = fullMetadata_OFFS$trtG1G2_NUM[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp],
-                                       sample.ids = fullMetadata_OFFS$ID[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp]))
-perm <- how(nperm = 1000) # 1000 permutations
-setBlocks(perm) <- with(fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp,], Family) # define the permutation structure considering family
-## Full model
-adonis2(data.dist ~ outcome * Sex, data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp,], permutations = perm)
-## remove the non significant interactions
-adonis2(data.dist ~ outcome + Sex, data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp,], permutations = perm)
-## only sex is significant! It explains 2.3% of variation (outcome: 1.6%, non signif)
 
-## 2. Parents are infected. Is there a difference in global methylation between infected/control trt?
-# make distance matrix with B-C distances
-trtgp = c(5,6)
-data.dist = makeDatadistFUN(reorganize(methylObj = uniteCovALL_G2_woSexAndUnknowChr,
-                                       treatment = fullMetadata_OFFS$trtG1G2_NUM[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp],
-                                       sample.ids = fullMetadata_OFFS$ID[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp]))
-perm <- how(nperm = 1000) # 1000 permutations
-setBlocks(perm) <- with(fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp,], Family) # define the permutation structure considering family
-## Full model
-adonis2(data.dist ~ outcome * Sex, data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp,], permutations = perm)
-## remove the non significant interactions
-adonis2(data.dist ~ outcome + Sex, data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp,], permutations = perm)
-## outcome is significant! It explains 2.3% of variation (Sex: 2.2%, non signif)
+
+
+### Pairwise comparison between treatments:
+# myPairAdonisFUN <- function(dataset, metadata){
+#   # make distance matrix with B-C distances
+#   data.dist = makeDatadistFUN(dataset)
+#   pairwise.adonis(x = data.dist, factors = metadata$trtG1G2)
+# }
+# myPairAdonisFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS)
+## interactions were not significant so we can't expect differences between trtG1G2
 
 ########## NMDS
 #### RUN Goodness of fit
 # myGOF.NMDS.FUN(dataset = uniteCovALL_G2_woSexAndUnknowChr) # Goodness of fit for NMDS 
 # suggested the presence of six dimensions with a stress value <0.1 and 2 with > 0.2
-NMDSanalysis <- myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS)
+
+## to find the seed that allows convergence: 
+# sapply(3:10, function(x) myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = x))
+NMDSanalysis <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = 4)
+png(filename = "Rfigures/NMDSplot_allG2.png", width = 900, height = 1100)
 NMDSanalysis$NMDSplot
-save(NMDSanalysis, file = "../../data/fig/NMDSplots.RData")
+dev.off()
+
+#############################################################################################################
+## Adonis test WITHIN both parental trt: are G2 from infected G1 more homogeneous than G2 from control G1? ##
+#############################################################################################################
+table(fullMetadata$trtG1G2, fullMetadata$trtG1G2_NUM)
+
+## 1. Parents are NOT infected. Is there a difference in global methylation between infected/control trt?
+AdonisWithinG1trtFUN(trtgp = c(2,3))
+#               Df SumOfSqs      R2      F   Pr(>F)   
+# outcome        1 0.001475 0.01622 1.0073 0.509491   
+# Sex            1 0.002094 0.02302 1.4301 0.002997 **
+# brotherPairID  7 0.020026 0.22018 1.9537 0.003996 **
+## Clutch explains 22% of the observed variance
+## Offspring trt explains 1.6% of the observed variance (non significant)
+
+NMDSanalysis_G1control <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, 
+                                    metadata = fullMetadata_OFFS, myseed = 25,
+                                    byParentTrt=TRUE,
+                                    trtgp = c(2,3))
+png(filename = "Rfigures/NMDSplot_G1fromControlG2.png", width = 900, height = 900)
+NMDSanalysis_G1control$NMDSplot
+dev.off()
+
+## 2. Parents are infected. Is there a difference in global methylation between infected/control trt?
+AdonisWithinG1trtFUN(trtgp = c(5,6))
+#               Df SumOfSqs      R2      F   Pr(>F)   
+# outcome        1 0.002160 0.02262 1.4047 0.003996 **
+# Sex            1 0.002053 0.02150 1.3349 0.174825   
+# brotherPairID  7 0.022076 0.23117 2.0507 0.018981 * 
+## Clutch explains 23% of the observed variance
+## Offspring trt explains 2.3% of the observed variance
+
+
+# testConvergence <-sapply(1:20, function(x){
+#   run = myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr,
+#                   metadata = fullMetadata_OFFS, myseed = x,
+#                   byParentTrt=TRUE,
+#                   trtgp = c(5,6))
+#   return(run$NMDS$converged)})# 
+# which(testConvergence %in% TRUE)
+
+NMDSanalysis_G1infected <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, 
+                                     metadata = fullMetadata_OFFS, myseed = 10,
+                                     byParentTrt=TRUE,
+                                     trtgp = c(5,6))
+png(filename = "Rfigures/NMDSplot_G1fromInfectedG2.png", width = 900, height = 900)
+NMDSanalysis_G1infected$NMDSplot
+dev.off()
+

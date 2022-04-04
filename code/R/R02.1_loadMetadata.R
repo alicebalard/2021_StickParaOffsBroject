@@ -21,6 +21,9 @@ fullMetadata$Family <- as.factor(fullMetadata$Family)
 fullMetadata$PAT="Exposed father group"
 fullMetadata$PAT[fullMetadata$trtG1G2 %in% c("Control", "NE_control", "NE_exposed")]="Control father group"
 
+## Add brother pairs
+fullMetadata$brotherPairID <- sapply(str_split(fullMetadata$clutch.ID, "_"), "[", 2 )
+
 ########################
 ## Parents only metadata
 fullMetadata_PAR <- fullMetadata[fullMetadata$Generat %in% "P",]

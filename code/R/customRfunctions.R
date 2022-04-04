@@ -1,9 +1,10 @@
-library(dendextend)
-# for Manhattan plot:
-library(dplyr)
-library(tidyverse)
+## I. Functions used in R03.2
 
-makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam){
+#########################
+## Clustering function ##
+#########################
+
+makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam, nbrk){
   ## Reorder metadata by sample ID, as OBJ methylkit!
   metadata = metadata[order(as.numeric(gsub("S", "", metadata$SampleID))),]
   
@@ -12,49 +13,38 @@ makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam){
     stop("check the samples order or similarity before both methylkit and metadata objects!")
   }
   
-  ## Associate a color with a treatment
-  metadata = join(metadata,
-                  data.frame(trtG1G2 = unique(metadata$trtG1G2[order(metadata$trtG1G2)]),
-                             coltrt = my.cols.trt))
-  
-  ## Associate a color with a family
-  metadata = join(metadata,
-                  data.frame(Family = unique(metadata$Family[order(metadata$Family)]),
-                             colfam = my.cols.fam))
+  ## To add color bars:
+  # Generate color palette
+  pal = qualpalr::qualpal(55, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
+  ## Family
+  fam <- factor(metadata$Family)
+  col_fam <- pal$hex[1:length(unique(metadata$Family))][fam]
+  ## Treatment
+  trt <- factor(metadata$outcome)
+  col_trt <- c("grey", "red")[trt]
+  ## Paternal treatment
+  trtPAT <- factor(metadata$PAT)
+  col_trtPAT <- c("grey", "red")[trtPAT]
+  ## Brother pair of the father
+  brotherPairID <- factor(metadata$brotherPairID)
+  x = length(levels(brotherPairID))
+  col_brotherPairID <- sample(pal$hex, x)[brotherPairID]
+  ## Clutch ID
+  clutch <- factor(metadata$clutch.ID)
+  x = length(levels(clutch))
+  col_clutch <- sample(pal$hex, x)[clutch]
   
   ## Make dendrogram
   mydendro <- clusterSamples(OBJ, dist="correlation", method="ward", plot=FALSE)
   dend = as.dendrogram(mydendro)
-  # test
-  print(metadata[metadata$SampleID %in% c("S37", "S41", "S46"), c("SampleID", "Family", "trtG1G2", "coltrt", "colfam")])
-  # Use color
-  labels_colors(dend) <- metadata$coltrt[order.dendrogram(dend)]
-
-  ## Hard coded methods here:
-  dist.method="correlation"; hclust.method="ward.D"
-
-  plot(dend, main = paste(OBJ@context, "methylation clustering"),
-       sub = paste("Distance method: \"", dist.method,
-                   "\"; Clustering method: \"", hclust.method,"\"",sep=""),
-       xlab = "Samples", ylab = "Height")
-
-  ## Ordered legend:
-  # correspDF=data.frame(name=unique(metadata$trtG1G2[order(metadata$trtG1G2)]),
-  # correspDF=data.frame(name=unique(metadata$trtG1G2[order.dendrogram(dend)]),
-  correspDF=data.frame(name=levels(metadata$trtG1G2),
-                       color=my.cols.trt)
-  legend("topright", title = "Treatment",
-         legend = correspDF$name,
-         col = correspDF$color, pch = 20,
-         bty = "n",  pt.cex = 3, cex = 0.8 ,
-         text.col = "black", horiz = FALSE, inset = c(0, 0.1))
   
-  ## Add color bars and legend by family
-  colored_bars(metadata$colfam, dend, # no need to order, it orders itself
-               rowLabels = "Family")
-  ## Legend
-  legend("topleft", legend = unique(metadata$Family[mydendro$order]),
-         fill = unique(metadata$colfam[mydendro$order]), bty = "n", title = "Family")
+  ## and plot
+  dend %>% plot(main=paste(OBJ@context, "methylation clustering\n", 
+                           "Distance method: correlation; Clustering method: ward.D"),
+                ylab = "Height")
+  dend %>% rect.dendrogram(k=nbrk, border = 8, lty = 5, lwd = 2)
+  colored_bars(cbind(col_trt, col_trtPAT, col_clutch, brotherPairID, col_fam), dend, y_shift = -0.1,
+               rowLabels = c("Treatment", "Paternal treatment", "Clutch", "Brother pair",  "Father's family"))
 }
 
 ####################
@@ -127,10 +117,9 @@ makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50",
     ggtitle(mytitle)
 }
 
-
-###########################
-## Adonis/NMDS functions ##
-###########################
+######################
+## Adonis functions ##
+######################
 makePercentMetMat <- function(dataset){
   # creates a matrix containing percent methylation values
   perc.meth=percMethylation(dataset)
@@ -149,23 +138,21 @@ makeDatadistFUN <- function(dataset){
   data.dist = as.matrix((vegdist(x, "bray", upper = FALSE))) 
 }
 
-myadonisFUN <- function(dataset, metadata){
+AdonisWithinG1trtFUN <- function(trtgp){
   # make distance matrix with B-C distances
-  data.dist = makeDatadistFUN(dataset)
-  
-  # We use a PERMANOVA to test the hypothesis that paternal treatment, 
-  # offspring treatment, sex and their interactions significantly influencing global methylation
+  data.dist = makeDatadistFUN(reorganize(methylObj = uniteCovALL_G2_woSexAndUnknowChr,
+                                         treatment = fullMetadata_OFFS$trtG1G2_NUM[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp],
+                                         sample.ids = fullMetadata_OFFS$ID[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp]))
   perm <- how(nperm = 1000) # 1000 permutations
-  setBlocks(perm) <- with(metadata, Family) # define the permutation structure considering family
-  
-  ## Full model
-  print(adonis2(data.dist ~ PAT * outcome * Sex, data = metadata, permutations = perm))
-  ## remove the non significant interactions
-  print(adonis2(data.dist ~ PAT + outcome + Sex, data = metadata, permutations = perm))
-  ## with the offspring treatments only (result of PAT + outcome)
-  print(adonis2(data.dist ~ trtG1G2 + Sex, data = metadata, permutations = perm))
+  # define the permutation structure considering brotherPairID
+  setBlocks(perm) <- with(fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp,], brotherPairID)
+  adonis2(data.dist ~ outcome + Sex + brotherPairID,
+          data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% trtgp,], permutations = perm)
 }
 
+####################
+## NMDS functions ##
+####################
 myGOF.NMDS.FUN <- function(dataset){
   # make distance matrix with B-C distances
   data.dist = makeDatadistFUN(dataset)
@@ -184,19 +171,25 @@ myGOF.NMDS.FUN <- function(dataset){
   abline(h = 0.1, col = "darkgreen")
 }
 
-myNMDS <- function(dataset, metadata){
+myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
+  
+  print(paste0("my seed = ", myseed))
+  
+  if (byParentTrt==TRUE){
+    dataset = reorganize(methylObj = dataset,
+                         treatment = metadata$trtG1G2_NUM[metadata$trtG1G2_NUM %in% trtgp],
+                         sample.ids = metadata$ID[metadata$trtG1G2_NUM %in% trtgp])
+    metadata = metadata[metadata$trtG1G2_NUM %in% trtgp, ]
+  }
   
   ## make percent methylation matrix
   x=makePercentMetMat(dataset)
-  
   #Create NMDS based on bray-curtis distances - metaMDS finds the
   # most stable NMDS solution by randomly starting from different points in your data
-  set.seed(38)
+  set.seed(myseed)
   NMDS <- metaMDS(comm = x, distance = "bray", maxit=1000, k = 6)
-  
   #check to see stress of NMDS
   mystressplot <- stressplot(NMDS) 
-  
   #extract plotting coordinates
   MDS1 = NMDS$points[,1] ; MDS2 = NMDS$points[,2] ; MDS3 = NMDS$points[,3]
   ## OR #extract NMDS scores (x and y coordinates)
@@ -204,11 +197,22 @@ myNMDS <- function(dataset, metadata){
   
   #create new data table (important for later hulls finding)
   # with plotting coordinates and variables to test (dim 1,2,3)
-  NMDS_dt = data.table::data.table(MDS1 = MDS1, MDS2 = MDS2, MDS3 = MDS3,
-                                   ID = metadata$ID,
-                                   PAT=as.factor(metadata$PAT), 
-                                   outcome=as.factor(metadata$outcome), 
-                                   Sex = as.factor(metadata$Sex))
+  
+  if (byParentTrt==FALSE){
+    NMDS_dt = data.table::data.table(MDS1 = MDS1, MDS2 = MDS2, MDS3 = MDS3,
+                                     ID = metadata$ID,
+                                     PAT=as.factor(metadata$PAT), 
+                                     outcome=as.factor(metadata$outcome), 
+                                     Sex = as.factor(metadata$Sex),
+                                     brotherPairID = as.factor(metadata$brotherPairID))
+  } else if (byParentTrt==TRUE){
+    NMDS_dt = data.table::data.table(MDS1 = MDS1, MDS2 = MDS2, MDS3 = MDS3,
+                                     ID = metadata$ID,
+                                     outcome=as.factor(metadata$outcome), 
+                                     Sex = as.factor(metadata$Sex),
+                                     brotherPairID = as.factor(metadata$brotherPairID))
+  }
+  
   #### start sub fun 
   makeNMDSplots <- function(dim, myvar){
     if (dim == "1_2"){
@@ -220,11 +224,13 @@ myNMDS <- function(dataset, metadata){
     }
     
     if (myvar == "PAT"){
-      mycols = c("black","yellow")
+      mycols = c("black","yellow"); myshape = c(21,22)
     } else if (myvar == "Sex"){
-      mycols = c("pink","blue")
+      mycols = c("pink","blue"); myshape = c(21,22)
     } else if (myvar == "outcome"){
-      mycols = c("grey","red")
+      mycols = c("grey","red"); myshape = c(21,22)
+    } else if (myvar == "brotherPairID"){
+      mycols = c(1:8); myshape = rep(21, 8)
     }
     
     # generating convex hulls splitted by myvar in my metadata:
@@ -237,25 +243,42 @@ myNMDS <- function(dataset, metadata){
       scale_fill_manual(values = mycols)+
       geom_point(aes_string(fill=myvar, shape=myvar), size = 3, alpha = .6) +
       #  geom_label(aes(label=row.names(NMDS2)))+
-      scale_shape_manual(values = c(21,22)) +
+      scale_shape_manual(values = myshape) +
       theme(legend.title=element_blank(), legend.position = "top")
     
     return(myNMDSplot)
   }
   
-  figure <-  ggarrange(makeNMDSplots(dim= "1_2", myvar = "PAT"),
-                       makeNMDSplots(dim= "1_3", myvar = "PAT"),
-                       makeNMDSplots(dim= "2_3", myvar = "PAT"),
-                       makeNMDSplots(dim= "1_2", myvar = "Sex"),
-                       makeNMDSplots(dim= "1_3", myvar = "Sex"),
-                       makeNMDSplots(dim= "2_3", myvar = "Sex"),
-                       makeNMDSplots(dim= "1_2", myvar = "outcome"),
-                       makeNMDSplots(dim= "1_3", myvar = "outcome"),
-                       makeNMDSplots(dim= "2_3", myvar = "outcome"),
-                       ncol = 3, nrow = 3)
-  
-  return(list(mystressplot=mystressplot, NMDSplot = figure))
+  if (byParentTrt==FALSE){
+    figure <-  ggarrange(makeNMDSplots(dim= "1_2", myvar = "PAT"),
+                         makeNMDSplots(dim= "1_3", myvar = "PAT"),
+                         makeNMDSplots(dim= "2_3", myvar = "PAT"),
+                         makeNMDSplots(dim= "1_2", myvar = "Sex"),
+                         makeNMDSplots(dim= "1_3", myvar = "Sex"),
+                         makeNMDSplots(dim= "2_3", myvar = "Sex"),
+                         makeNMDSplots(dim= "1_2", myvar = "outcome"),
+                         makeNMDSplots(dim= "1_3", myvar = "outcome"),
+                         makeNMDSplots(dim= "2_3", myvar = "outcome"),
+                         makeNMDSplots(dim= "1_2", myvar = "brotherPairID"),
+                         makeNMDSplots(dim= "1_3", myvar = "brotherPairID"),
+                         makeNMDSplots(dim= "2_3", myvar = "brotherPairID"),
+                         ncol = 3, nrow = 4)
+  } else if (byParentTrt==TRUE){
+    figure <-  ggarrange(makeNMDSplots(dim= "1_2", myvar = "Sex"),
+                         makeNMDSplots(dim= "1_3", myvar = "Sex"),
+                         makeNMDSplots(dim= "2_3", myvar = "Sex"),
+                         makeNMDSplots(dim= "1_2", myvar = "outcome"),
+                         makeNMDSplots(dim= "1_3", myvar = "outcome"),
+                         makeNMDSplots(dim= "2_3", myvar = "outcome"),
+                         makeNMDSplots(dim= "1_2", myvar = "brotherPairID"),
+                         makeNMDSplots(dim= "1_3", myvar = "brotherPairID"),
+                         makeNMDSplots(dim= "2_3", myvar = "brotherPairID"),
+                         ncol = 3, nrow = 3)
+  }
+  return(list(NMDS = NMDS, mystressplot=mystressplot, NMDSplot = figure))
 }
+
+## II. Functions used in tbc
 
 ## Calculate beta values (methylation proportion per CpG site) for the 1001880 positions covered in half G1 and half G2
 getPMdataset <- function(uniteCov, MD, gener){
@@ -278,8 +301,8 @@ getPMdataset <- function(uniteCov, MD, gener){
   names(PM) <- c("Var1",  "ID",  "BetaValue", "Chr", "Pos")
   PM$rankpos <- 1:nrow(PM)
   
-  ## Add treatment, Sex and Family
-  dfTrt = data.frame(ID = MD$SampleID, Treatment = MD$trtG1G2, Sex = MD$Sex, Family= MD$Family)
+  ## Add treatment, Sex and brotherPairID
+  dfTrt = data.frame(ID = MD$SampleID, Treatment = MD$trtG1G2, Sex = MD$Sex, brotherPairID= MD$brotherPairID)
   PM = merge(PM, dfTrt)
   
   if (gener=="parents"){
