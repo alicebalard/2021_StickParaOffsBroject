@@ -106,12 +106,12 @@ tiles_G2_G1INFECTED_ALL = tileMethylCounts(uniteCovALL_G2_woSexAndUnknowChr_G1IN
 nrow(tiles_G2_G1INFECTED_ALL) # methylBase object with 413 rows
 
 ##############################################################################
-## Calculate DMS/DMR accounting for covariates: family and sex (new 20/02/22!)
+## Calculate DMS/DMR accounting for covariates: brotherPairID and sex (new 04/04/22!)
 getDiffMeth <- function(myuniteCov, myMetadata){
   if (length(table(myMetadata$Sex)) == 1){
-    cov = data.frame(Family = myMetadata$Family)
+    cov = data.frame(brotherPairID = myMetadata$brotherPairID)
   } else if (length(table(myMetadata$Sex)) == 2){
-    cov = data.frame(Family = myMetadata$Family, Sex = myMetadata$Sex)
+    cov = data.frame(brotherPairID = myMetadata$brotherPairID, Sex = myMetadata$Sex)
   } 
   myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = 10)#10 on Apocrita
   ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
