@@ -29,10 +29,10 @@ uniteCov14_G2_woSexAndUnknowChrOVERLAP#-> CpG positions shared by half the offsp
 ## Kaufmann et al. 2014: Body condition of the G2 fish, an estimate of fish health and a predictor
 # of energy reserves and reproductive success, was calculated using there residuals from the 
 # regression of body mass on body length (Chellappaet al.1995).
-fullMetadata_OFFS$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|Family), data=fullMetadata_OFFS))
+fullMetadata_OFFS$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|brotherPairID), data=fullMetadata_OFFS))
 
 ## and for parents (no sex difference, only males):
-fullMetadata_PAR$BCI <- residuals(lmer(Wnettofin ~ Slfin + (1|Family), data=fullMetadata_PAR))
+fullMetadata_PAR$BCI <- residuals(lmer(Wnettofin ~ Slfin + (1|brotherPairID), data=fullMetadata_PAR))
 
 ## Effect of paternal treatment on body condition of offspring:
 ## Kaufmann et al. 2014:
@@ -44,29 +44,29 @@ fullMetadata_PAR$BCI <- residuals(lmer(Wnettofin ~ Slfin + (1|Family), data=full
 # half-sibship identity was set as a random effect
 
 ## Effect of paternal exposure on tolerance:
-modTol <- lme(BCI ~ patTrt + patTrt:No.Worms,random=~1|Family,data=fullMetadata_OFFS)
+modTol <- lme(BCI ~ patTrt + patTrt:No.Worms,random=~1|brotherPairID,data=fullMetadata_OFFS)
 anova(modTol)
 
 ## Or modTol <- lme(BCI ~ patTrt*No.Worms,random=~1|Family,data=fullMetadata_offs)
 
-myBCdf <- fullMetadata_OFFS %>% group_by(patTrt, No.Worms) %>% 
-  summarise(BCI = mean(BCI)) %>% data.frame()
-ggplot(fullMetadata_OFFS, aes(x=No.Worms, y = BCI, group = patTrt, col = patTrt))+
-  geom_point() + geom_line(data=myBCdf)+
-  geom_point(data=myBCdf, aes(fill = patTrt), col = "black", size = 3, pch = 21)+
-  scale_color_manual(values = c("gray", "red"))+
-  scale_fill_manual(values = c("gray", "red"))+
-  theme_bw()
+# myBCdf <- fullMetadata_OFFS %>% group_by(patTrt, No.Worms) %>% 
+#   summarise(BCI = mean(BCI)) %>% data.frame()
+# ggplot(fullMetadata_OFFS, aes(x=No.Worms, y = BCI, group = patTrt, col = patTrt))+
+#   geom_point() + geom_line(data=myBCdf)+
+#   geom_point(data=myBCdf, aes(fill = patTrt), col = "black", size = 3, pch = 21)+
+#   scale_color_manual(values = c("gray", "red"))+
+#   scale_fill_manual(values = c("gray", "red"))+
+#   theme_bw()
 
 ## Effect of treatment groups of offspring on body condition:
 ## Kaufmann et al. 2014:
 # The linear mixed effect model (nlme function in R) included G2 body condition as dependent variable, 
 # sex, G2 treatment (exposed vs. control), paternal G1 treatment (exposed vs. control) 
 # and their interactions as fixed effects as well as maternal G2 half-sibship identity as a random effect
-mod1 <- lme(BCI ~ offsTrt * patTrt, random=~1|Family,data=fullMetadata_OFFS)
+mod1 <- lme(BCI ~ offsTrt * patTrt, random=~1|brotherPairID,data=fullMetadata_OFFS)
 anova(mod1) # strong significant effect of both offspring trt & paternal + interactions
 
-mod1.2 <- lme(BCI ~  trtG1G2, random=~1|Family,data=fullMetadata_OFFS)
+mod1.2 <- lme(BCI ~  trtG1G2, random=~1|brotherPairID,data=fullMetadata_OFFS)
 ## pairwise posthoc test
 emmeans(mod1.2, list(pairwise ~ trtG1G2), adjust = "tukey")
 ## Control father - treatment offspring has a strongly significantly lower BC than 
@@ -89,22 +89,22 @@ ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI, fill=trtG1G2))+
 ############################################
 ## Calculate tolerance as a reaction norm ##
 ############################################
-mod1 <- lmer(BCI ~ No.Worms : trtG1G2 + (1|Family) + (1|Sex), 
-              data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),], 
-              REML = FALSE)
-mod0 <- lmer(BCI ~ No.Worms + (1|Family) + (1|Sex),
-           data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),], 
-           REML = FALSE)
+mod1 <- lmer(BCI ~ No.Worms : trtG1G2 + (1|brotherPairID) + (1|Sex), 
+             data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),], 
+             REML = FALSE)
+mod0 <- lmer(BCI ~ No.Worms + (1|brotherPairID) + (1|Sex),
+             data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),], 
+             REML = FALSE)
 
 lrtest(mod0, mod1)
-# LRT: parental treatment groups (infected or not): G = 14.4, df = 6, p < 0.001***
+# LRT: parental treatment groups (infected or not): G = 18.598, df = 6, p = 1.614e-05 ***
 
-modFULL <- lmer(BCI ~ No.Worms : trtG1G2 + (1|Family) + (1|Sex), 
+modFULL <- lmer(BCI ~ No.Worms : trtG1G2 + (1|brotherPairID) + (1|Sex), 
                 data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
 
 coef(modFULL)
-# infected father: BCI = 4.3 NoWorms + various intercepts by family and sex
-# control father: BCI = -18.9 NoWorms + various intercepts by family and sex
+# infected father: BCI = 7.103 NoWorms + various intercepts by family and sex
+# control father: BCI = -15.594 NoWorms + various intercepts by family and sex
 
 # plot fixed effects
 pred <- ggpredict(modFULL, terms = c("No.Worms", "trtG1G2"))
@@ -253,18 +253,18 @@ ggplot(fullMetadata_OFFS_half, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_cover
 ################
 ## Does Sex affect the number of methylated sites? YES
 ## + family as random factor
-modFull <- lmer(Nbr_methCpG ~ trtG1G2 * Sex + (1|Family), 
+modFull <- lmer(Nbr_methCpG ~ trtG1G2 * Sex + (1|brotherPairID), 
                 data = fullMetadata_OFFS_half, REML = F) # REML =F for model comparison
-mod_noSex <- lmer(Nbr_methCpG ~ trtG1G2 + (1|Family), 
+mod_noSex <- lmer(Nbr_methCpG ~ trtG1G2 + (1|brotherPairID), 
                   data = fullMetadata_OFFS_half, REML = F)
-mod_noTrt <- lmer(Nbr_methCpG ~ Sex + (1|Family), 
+mod_noTrt <- lmer(Nbr_methCpG ~ Sex + (1|brotherPairID), 
                   data = fullMetadata_OFFS_half, REML = F)
-mod_noInteractions <- lmer(Nbr_methCpG ~ trtG1G2 + Sex + (1|Family), 
+mod_noInteractions <- lmer(Nbr_methCpG ~ trtG1G2 + Sex + (1|brotherPairID), 
                            data = fullMetadata_OFFS_half, REML = F)
 
-lrtest(modFull, mod_noSex) # sex is VERY VERY significant p = 0.000851 ***
-lrtest(modFull, mod_noTrt) # trt is signif p = 0.01754 *
-lrtest(modFull, mod_noInteractions) # interactions are significant 0.01602 *
+lrtest(modFull, mod_noSex) # sex is VERY VERY significant p = 0.001776 **
+lrtest(modFull, mod_noTrt) # trt is signif p = 0.0208 *
+lrtest(modFull, mod_noInteractions) # interactions are significant 0.0151 *
 
 ## Plot
 ggplot(fullMetadata_OFFS_half, aes(trtG1G2, Nbr_methCpG, group=interaction(trtG1G2, Sex))) + 
@@ -278,16 +278,16 @@ ggplot(fullMetadata_OFFS_half, aes(trtG1G2, Nbr_methCpG, group=interaction(trtG1
 ################
 ## Does Sex affect the residuals of nbr of methylated sites by nbr of sites? YES
 ## + family as random factor
-modFull <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 * Sex + (1|Family), 
+modFull <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 * Sex + (1|brotherPairID), 
                 data = fullMetadata_OFFS_half, REML = F) # REML =F for model comparison
-mod_noSex <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + (1|Family), 
+mod_noSex <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + (1|brotherPairID), 
                   data = fullMetadata_OFFS_half, REML = F)
-mod_noTrt <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ Sex + (1|Family), 
+mod_noTrt <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ Sex + (1|brotherPairID), 
                   data = fullMetadata_OFFS_half, REML = F)
-mod_noInteractions <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + Sex + (1|Family), 
+mod_noInteractions <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + Sex + (1|brotherPairID), 
                            data = fullMetadata_OFFS_half, REML = F)
 
-lrtest(modFull, mod_noSex) # sex is significant p = 0.0015 **
+lrtest(modFull, mod_noSex) # sex is significant p = 0.0002124 ***
 lrtest(modFull, mod_noTrt) # trt is not significant any longer 
 lrtest(modFull, mod_noInteractions) # interactions are are not significant any longer
 
@@ -307,12 +307,12 @@ ggplot(fullMetadata_OFFS_half, aes(trtG1G2, res_Nbr_methCpG_Nbr_coveredCpG,
 
 ## By group, tolerance slope as a function of methylation residuals:
 
-modFULL <- lmer(BCI ~ No.Worms : trtG1G2 + (1|Family) + (1|Sex), 
+modFULL <- lmer(BCI ~ No.Worms : trtG1G2 + (1|brotherPairID) + (1|Sex), 
                 data = fullMetadata_OFFS_half[fullMetadata_OFFS_half$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
 
 coef(modFULL)[1]
-# infected father: BCI = 4.3 NoWorms + various intercepts by family and sex
-# control father: BCI = -18.9 NoWorms + various intercepts by family and sex
+# infected father: BCI = 7.1 NoWorms + various intercepts by family and sex
+# control father: BCI = -15.6 NoWorms + various intercepts by family and sex
 
 predict <- ggpredict(modFULL, terms = c("No.Worms", "trtG1G2"))
 
@@ -325,22 +325,21 @@ meanMeth_NE_exposed <- mean(fullMetadata_OFFS_half[fullMetadata_OFFS_half$trtG1G
 meanMeth_E_exposed <- mean(fullMetadata_OFFS_half[fullMetadata_OFFS_half$trtG1G2 %in% c("E_exposed"),"res_Nbr_methCpG_Nbr_coveredCpG"])
 
 df <- data.frame(group = c("NE_exposed", "E_exposed"),
-           slope = c(slope_NE_exposed, slope_E_exposed),
-           meanMeth = c(meanMeth_NE_exposed, meanMeth_E_exposed))
+                 slope = c(slope_NE_exposed, slope_E_exposed),
+                 meanMeth = c(meanMeth_NE_exposed, meanMeth_E_exposed))
 
 ggplot(df, aes(x = slope, y = meanMeth, col =group))+
   geom_point() + theme_bw()
 
 ## Low tolerance = high methylation / high tolerance = low methylation
 
-
-modTOLfamsex <- lm(BCI ~ No.Worms : trtG1G2 : Family : Sex, 
-                data = fullMetadata_OFFS_half[fullMetadata_OFFS_half$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
+modTOLfamsex <- lm(BCI ~ No.Worms : trtG1G2 : brotherPairID : Sex, 
+                   data = fullMetadata_OFFS_half[fullMetadata_OFFS_half$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
 
 coef(modTOLfamsex)[1]
 
 
-predTOLfamsex <- ggpredict(modTOLfamsex, terms = c("trtG1G2", "Family", "Sex"))
+predTOLfamsex <- ggpredict(modTOLfamsex, terms = c("trtG1G2", "brotherPairID", "Sex"))
 
 plot(predTOLfamsex)
 
@@ -349,7 +348,7 @@ plot(predTOLfamsex)
 ##################################################
 
 #############START
-mod1.2 <- lme(BCI ~  trtG1G2, random=~1|Family,data=fullMetadata_OFFS)
+mod1.2 <- lme(BCI ~  trtG1G2, random=~1|brotherPairID,data=fullMetadata_OFFS)
 ## pairwise posthoc test
 emmeans(mod1.2, list(pairwise ~ trtG1G2), adjust = "tukey")
 ## Control father - treatment offspring has a strongly significantly lower BC than 
@@ -374,16 +373,16 @@ ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI, fill=trtG1G2))+
 # NB: we put sex (in offspring) and family as random factors
 
 ## PARENTS
-mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + (1|Family), 
+mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + (1|brotherPairID), 
              data = fullMetadata_PAR_half, REML = F)
-mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|Family), 
+mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|brotherPairID), 
              data = fullMetadata_PAR_half, REML = F)
 lrtest(mod1, mod0) # not significant in parents
 
 ## OFFSPRINGS
-mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + (1|Family) + (1|Sex), 
-                data = fullMetadata_OFFS_half, REML = F)
-mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|Family) + (1|Sex), 
+mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ trtG1G2 + (1|brotherPairID) + (1|Sex), 
+             data = fullMetadata_OFFS_half, REML = F)
+mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|brotherPairID) + (1|Sex), 
              data = fullMetadata_OFFS_half, REML = F)
 lrtest(mod1, mod0) # not significant in offspring
 
@@ -399,14 +398,14 @@ ggplot(fullMetadata_OFFS_half, aes(x=trtG1G2, y = res_Nbr_methCpG_Nbr_coveredCpG
 ## Decompose: do residuals methylated sites change with PAR & OFF treatment ##
 ##############################################################################
 ## OFFSPRINGS
-modFull <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ patTrt * outcome + (1|Family) + (1|Sex), 
-             data = fullMetadata_OFFS_half, REML = F)
-mod_noPAT <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ outcome + (1|Family) + (1|Sex), 
+modFull <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ patTrt * outcome + (1|brotherPairID) + (1|Sex), 
                 data = fullMetadata_OFFS_half, REML = F)
-mod_noOFF <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ patTrt + (1|Family) + (1|Sex), 
-                data = fullMetadata_OFFS_half, REML = F)
-mod_noInt <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ patTrt + outcome + (1|Family) + (1|Sex), 
-                data = fullMetadata_OFFS_half, REML = F)
+mod_noPAT <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ outcome + (1|brotherPairID) + (1|Sex), 
+                  data = fullMetadata_OFFS_half, REML = F)
+mod_noOFF <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ patTrt + (1|brotherPairID) + (1|Sex), 
+                  data = fullMetadata_OFFS_half, REML = F)
+mod_noInt <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ patTrt + outcome + (1|brotherPairID) + (1|Sex), 
+                  data = fullMetadata_OFFS_half, REML = F)
 
 lrtest(modFull, mod_noPAT) # not significant
 lrtest(modFull, mod_noOFF) # not significant
@@ -416,38 +415,49 @@ lrtest(modFull, mod_noInt) # not significant
 ## Decompose: do residuals methylated sites change with BCI & parasite load treatment ##
 ########################################################################################
 ## OFFSPRINGS
-modFull <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI * No.Worms + (1|Family) + (1|Sex), 
+modFull <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI * No.Worms + (1|brotherPairID) + (1|Sex), 
                 data = fullMetadata_OFFS_half, REML = F)
-mod_noBCI <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ No.Worms + (1|Family) + (1|Sex), 
+mod_noBCI <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ No.Worms + (1|brotherPairID) + (1|Sex), 
                   data = fullMetadata_OFFS_half, REML = F)
-mod_noNo.Worms <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + (1|Family) + (1|Sex), 
-                  data = fullMetadata_OFFS_half, REML = F)
-mod_noInt <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + No.Worms + (1|Family) + (1|Sex), 
+mod_noNo.Worms <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + (1|brotherPairID) + (1|Sex), 
+                       data = fullMetadata_OFFS_half, REML = F)
+mod_noInt <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + No.Worms + (1|brotherPairID) + (1|Sex), 
                   data = fullMetadata_OFFS_half, REML = F)
 
-lrtest(modFull, mod_noBCI) # significant p = 0.025 *
+lrtest(modFull, mod_noBCI) # not significant
 lrtest(modFull, mod_noNo.Worms) # not significant
 lrtest(modFull, mod_noInt) # not significant
 
 ### JUST BCI:
 # NB: we put sex (in offspring) and family as random factors
 
+df = data.frame(BCI = c(fullMetadata_PAR_half$BCI, fullMetadata_OFFS_half$BCI),
+                brotherPairID = c(fullMetadata_PAR_half$brotherPairID, fullMetadata_OFFS_half$brotherPairID),
+                res_Nbr_methCpG_Nbr_coveredCpG = c(fullMetadata_PAR_half$res_Nbr_methCpG_Nbr_coveredCpG, fullMetadata_OFFS_half$res_Nbr_methCpG_Nbr_coveredCpG))
+
+## ALL
+mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + (1|brotherPairID), 
+             data = df, REML = F)
+mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|brotherPairID), 
+             data = df, REML = F)
+lrtest(mod1, mod0) # not significant
+
 ## PARENTS
-mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + (1|Family), 
+mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + (1|brotherPairID), 
              data = fullMetadata_PAR_half, REML = F)
-mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|Family), 
+mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|brotherPairID), 
              data = fullMetadata_PAR_half, REML = F)
 lrtest(mod1, mod0) # not significant in parents
 
 ## OFFSPRING
-mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + (1|Family) + (1|Sex), 
+mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ BCI + (1|brotherPairID) + (1|Sex), 
              data = fullMetadata_OFFS_half, REML = F)
-mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|Family)+ (1|Sex), 
+mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ 1 + (1|brotherPairID)+ (1|Sex), 
              data = fullMetadata_OFFS_half, REML = F)
-lrtest(mod1, mod0) # VERY significant in offspring p = 0.0057 **
+lrtest(mod1, mod0) # not significant in offspring
 
 # plot fixed effects depending on random effects
-pred <- ggpredict(mod1, terms = c("BCI", "Family", "Sex"), type = "random")
+pred <- ggpredict(mod1, terms = c("BCI", "brotherPairID", "Sex"), type = "random")
 plot(pred, ci = F, add.data = TRUE)+
   ggtitle("Predicted values of global methylation")+
   scale_y_continuous("Residuals of number of methylated cytosines\n on number of cytosines covered") +
