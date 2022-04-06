@@ -92,8 +92,6 @@ adonis2(data.dist ~ outcome + Sex, data = dat, permutations = perm)
 # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 
-
-
 ### Pairwise comparison between treatments:
 # myPairAdonisFUN <- function(dataset, metadata){
 #   # make distance matrix with B-C distances
@@ -163,3 +161,58 @@ png(filename = "Rfigures/NMDSplot_G1fromInfectedG2.png", width = 900, height = 9
 NMDSanalysis_G1infected$NMDSplot
 dev.off()
 
+##################################################################################################
+## Is the BC methylation distance between clutches bigger between BROTHER PAIR or PATERNAL TRT? ##
+##################################################################################################
+
+percMethMatG2 = makePercentMetMat(uniteCovALL_G2_woSexAndUnknowChr)
+## Percentage methylation for:
+nrow(percMethMatG2) # 111 samples
+ncol(percMethMatG2) # 78246 positions
+
+percMethMatG2_controlP <- percMethMatG2[
+  rownames(percMethMatG2) %in% fullMetadata_OFFS$SampleID[fullMetadata_OFFS$patTrt %in% "controlP"],]
+nrow(percMethMatG2_controlP)# 55 samples
+
+percMethMatG2_infectedP <- percMethMatG2[
+  rownames(percMethMatG2) %in% fullMetadata_OFFS$SampleID[fullMetadata_OFFS$patTrt %in% "infectedP"],]
+nrow(percMethMatG2_infectedP)# 56 samples
+
+## Multiple Response Permutation Procedure (MRPP) provides a test of whether there 
+## is a significant difference between two or more groups of sampling units:
+G2.mrpp_controlP <- with(fullMetadata_OFFS[fullMetadata_OFFS$patTrt %in% "controlP", ],
+                mrpp(percMethMatG2_controlP, Family, distance = "bray"))
+G2.mrpp_controlP
+
+G2.mrpp_infectedP <- with(fullMetadata_OFFS[fullMetadata_OFFS$patTrt %in% "infectedP", ],
+                         mrpp(percMethMatG2_infectedP, Family, distance = "bray"))
+G2.mrpp_infectedP
+
+## Multiple Response Permutation Procedure (MRPP) provides a test of whether there 
+## is a significant difference between two or more groups of sampling units:
+G2.mrpp <- with(fullMetadata_OFFS, mrpp(percMethMatG2, clutch.ID, distance = "bray"))
+G2.mrpp
+
+G2.mrpp_brotherPairID <- with(fullMetadata_OFFS, mrpp(percMethMatG2, brotherPairID, distance = "bray"))
+G2.mrpp_brotherPairID
+
+G2.mrpp_patTrt <- with(fullMetadata_OFFS, mrpp(percMethMatG2, patTrt, distance = "bray"))
+G2.mrpp_patTrt
+
+## meandist between each of the 16 clutches
+dat = fullMetadata_OFFS
+dat$trtG1G2 <- gsub("exposed", "E", dat$trtG1G2)
+dat$trtG1G2 <- gsub("control", "C", dat$trtG1G2)
+dat$trtG1G2 <- gsub("NE", "C", dat$trtG1G2)
+dat$clutch.ID <- paste(dat$trtG1G2, sapply(strsplit(as.character(dat$clutch.ID), "_"), `[`, 2))
+
+G2.md <- with(dat, meandist(vegdist(percMethMatG2), clutch.ID, distance = "bray"))
+G2.md
+summary(G2.md)
+heatmap(G2.md)
+fullMetadata_OFFS$clutch.ID
+
+
+# fullMetadata_OFFS$clutch.ID
+# fullMetadata_OFFS$brotherPairID
+# fullMetadata_OFFS$patTrt

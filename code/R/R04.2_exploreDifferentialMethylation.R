@@ -21,30 +21,37 @@ names(GYgynogff) = c("chrom","length")
 
 ###########################################
 ## Source the previously calculated DMS/DMR
-## Parents (Family as covariates)
+## Parents (brotherPairID as covariates)
 ### DM from CpG positions shared by half the fish per trt
-DMS15pc_G1_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_half.RDS"); nrow(DMS15pc_G1_half) # 5074
+DMS15pc_G1_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_half.RDS"); nrow(DMS15pc_G1_half) # 3648
 DMR15pc_G1_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_half.RDS"); nrow(DMR15pc_G1_half) # 23
 ### DM from CpG positions shared by all the fish
-DMS15pc_G1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G1_ALL.RDS"); nrow(DMS15pc_G1_ALL) # 127
+DMS15pc_G1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G1_ALL.RDS"); nrow(DMS15pc_G1_ALL) # 125
 # DMR15pc_G1_ALL returned 0 DMR
 
-## Offspring (Family & Sex as covariates)
+## Offspring (brotherPairID & Sex as covariates)
 ## Control G1 - G2(trt vs control)
 ### DM from CpG positions shared by half the fish per trt
-DMS15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_half.RDS"); nrow(DMS15pc_G2_controlG1_half) # 1430
-DMR15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_controlG1_half.RDS"); nrow(DMR15pc_G2_controlG1_half) # 6
+DMS15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_half.RDS")
+nrow(DMS15pc_G2_controlG1_half) # 1197
+DMR15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_controlG1_half.RDS")
+nrow(DMR15pc_G2_controlG1_half) # 6
 ### DM from CpG positions shared by all the fish
-DMS15pc_G2_controlG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_ALL.RDS"); nrow(DMS15pc_G2_controlG1_ALL) # 38
+DMS15pc_G2_controlG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_ALL.RDS")
+nrow(DMS15pc_G2_controlG1_ALL) # 38
 # DMR15pc_G2_controlG1_ALL returned 0 DMR
 
 ## Infected G1 - G2(trt vs control)
 ### DM from CpG positions shared by half the fish per trt
-DMS15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_half.RDS"); nrow(DMS15pc_G2_infectedG1_half) # 777
-DMR15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_half.RDS"); nrow(DMR15pc_G2_infectedG1_half) # 8
+DMS15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_half.RDS")
+nrow(DMS15pc_G2_infectedG1_half) # 690
+DMR15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_half.RDS")
+nrow(DMR15pc_G2_infectedG1_half) # 8
 ### DM from CpG positions shared by all the fish
-DMS15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_ALL.RDS"); nrow(DMS15pc_G2_infectedG1_ALL) # 22
-DMR15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_ALL.RDS"); nrow(DMR15pc_G2_infectedG1_ALL) # 1
+DMS15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_ALL.RDS")
+nrow(DMS15pc_G2_infectedG1_ALL) # 22
+DMR15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_ALL.RDS")
+nrow(DMR15pc_G2_infectedG1_ALL) # 1
 ###########################################
 
 ###########################
@@ -70,16 +77,16 @@ DMS_info_G2_G1i_final <- myDMSinfo(DMS15pc_G2_infectedG1_half,uniteCov14_G2_woSe
 nrow(uniteCov14_G2_woSexAndUnknowChrOVERLAP) # 1,001,880
 
 ## Parents comparison:
-length(DMS_info_G1$DMS)# 5074 DMS
-DMS_info_G1$percentDMS # 0.51% of the CpGs are DMS
+length(DMS_info_G1$DMS)# 3648 DMS
+DMS_info_G1$percentDMS # 0.36% of the CpGs are DMS
 
 ## Offspring from control parents comparison:
-length(DMS_info_G2_G1c_final$DMS) # 1430 DMS
-DMS_info_G2_G1c_final$percentDMS # 0.14% of the CpGs are DMS
+length(DMS_info_G2_G1c_final$DMS) # 1197 DMS
+DMS_info_G2_G1c_final$percentDMS # 0.12% of the CpGs are DMS
 
 ## Offspring from infected parents comparison:
-length(DMS_info_G2_G1i_final$DMS) # 777 DMS
-DMS_info_G2_G1i_final$percentDMS # 0.08% of the CpGs are DMS
+length(DMS_info_G2_G1i_final$DMS) # 690 DMS
+DMS_info_G2_G1i_final$percentDMS # 0.07% of the CpGs are DMS
 
 ####################################################################################
 ## Question: how are the beta values in the different groups for the parental DMS?##
@@ -96,7 +103,7 @@ head(PM_G2)
 ##############
 ## In parents
 ##############
-parmod <- lmer(data = PM_G1, BetaValue ~ meth.diff.parentals : Treatment + (1|CpGSite) + (1|Family))
+parmod <- lmer(data = PM_G1, BetaValue ~ meth.diff.parentals : Treatment + (1|CpGSite) + (1|brotherPairID))
 
 ## check normality of residuals assumption
 plot(resid(parmod) ~ fitted(parmod))
@@ -115,11 +122,11 @@ plot(pred, add.data = T)+
 ##############
 ## Linear model: does the beta value of offspring at DMS depends on treatment Parent x Offspring?
 ##############
-modFull <- lmer(BetaValue ~ (G1_trt * G2_trt):hypohyper + (1|CpGSite) + (1|Sex) + (1|Family),data = PM_G2, REML = F) # REML =F for model comparison
-mod_noG1trt <- lmer(BetaValue ~ G2_trt:hypohyper + (1|CpGSite)+ (1|Sex) + (1|Family), data = PM_G2, REML = F)
-mod_noG2trt <-lmer(BetaValue ~ G1_trt:hypohyper + (1|CpGSite) + (1|Sex) + (1|Family), data = PM_G2, REML = F)
-mod_noInteractions <- lmer(BetaValue ~ (G1_trt + G2_trt):hypohyper + (1|CpGSite) + (1|Sex) + (1|Family), data = PM_G2, REML = F)
-mod_noHypoHyper <- lmer(BetaValue ~ (G1_trt * G2_trt) + (1|CpGSite) + (1|Sex) + (1|Family), data = PM_G2, REML = F)
+modFull <- lmer(BetaValue ~ (G1_trt * G2_trt):hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID),data = PM_G2, REML = F) # REML =F for model comparison
+mod_noG1trt <- lmer(BetaValue ~ G2_trt:hypohyper + (1|CpGSite)+ (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+mod_noG2trt <-lmer(BetaValue ~ G1_trt:hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+mod_noInteractions <- lmer(BetaValue ~ (G1_trt + G2_trt):hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+mod_noHypoHyper <- lmer(BetaValue ~ (G1_trt * G2_trt) + (1|CpGSite) + (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
 
 ## check normality of residuals assumption
 plot(resid(modFull) ~ fitted(modFull))
@@ -129,18 +136,18 @@ qqline(resid(modFull))
 
 ## Likelihood ratio tests for all variables:
 lrtest(modFull, mod_noG1trt) # G1 trt is VERY VERY significant p < 2.2e-16 ***
-lrtest(modFull, mod_noG2trt) # G2 trt is significant (p = 0.01734 *)
-lrtest(modFull, mod_noInteractions) # interactions are not not significant (p = 0.2611)
+lrtest(modFull, mod_noG2trt) # G2 trt is VERY VERY significant (p = 4.844e-06 ***) NB that changed when brotherpair is used instead of family!
+lrtest(modFull, mod_noInteractions) # interactions are significant (p = 00.009997 **)
 lrtest(modFull, mod_noHypoHyper) # hypo/hyper VERY VERY significant p < 2.2e-16 ***
 
-modFinal <- lmer(BetaValue ~ Treatment:hypohyper + (1|CpGSite) + (1|Sex) + (1|Family), data = PM_G2)
+modFinal <- lmer(BetaValue ~ Treatment:hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID), data = PM_G2)
 modFinal
 ## lm(BetaValue ~ Treatment:hypohyper, data = PM_G2)
 # TreatmentE_exposed:hypohyperhyper -> NA EXACT COLINEARITY 
 
-## Prediction and plot (with random term Family)
-# pred <- ggpredict(modFinal, terms = c("hypohyper", "Treatment", "Family"), type = "random")
-pred <- ggpredict(modFinal, terms = c("Family", "Treatment", "hypohyper"), type = "random")
+## Prediction and plot (with random term brotherPairID)
+# pred <- ggpredict(modFinal, terms = c("hypohyper", "Treatment", "brotherPairID"), type = "random")
+pred <- ggpredict(modFinal, terms = c("brotherPairID", "Treatment", "hypohyper"), type = "random")
 
 plot(pred, dot.size=5)+
   theme_bw() +
@@ -163,16 +170,16 @@ plot(pred, dot.size=5)+
 # ## Who is the father of who? WAIT FOR JOSHKA'S DATASET
 # head(fullMetadata_OFFS)
 # 
-# # 1. Calculate mean beta value per family, per G1_trt group, per CpG site in G1
-# # 2. Calculate mean beta value per family, per G1_trt & G2_trt group, per sex, per CpG site in G2
-# # 3. Merge by CpG site, Family, G1_trt
+# # 1. Calculate mean beta value per brotherPairID, per G1_trt group, per CpG site in G1
+# # 2. Calculate mean beta value per brotherPairID, per G1_trt & G2_trt group, per sex, per CpG site in G2
+# # 3. Merge by CpG site, brotherPairID, G1_trt
 # 
-# # 1. Calculate mean beta value per family, per treatment, per CpG site in G1
-# meanBeta_G1 <- PM_G1 %>% group_by(Family, G1_trt, CpGSite) %>%
+# # 1. Calculate mean beta value per brotherPairID, per treatment, per CpG site in G1
+# meanBeta_G1 <- PM_G1 %>% group_by(brotherPairID, G1_trt, CpGSite) %>%
 #   dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
 # 
-# # 2. Calculate mean beta value per family, per G1_trt & G2_trt group, per sex, per CpG site in G2
-# meanBeta_G2 <- PM_G2 %>% group_by(Family, Sex, G1_trt, G2_trt, CpGSite) %>%
+# # 2. Calculate mean beta value per brotherPairID, per G1_trt & G2_trt group, per sex, per CpG site in G2
+# meanBeta_G2 <- PM_G2 %>% group_by(brotherPairID, Sex, G1_trt, G2_trt, CpGSite) %>%
 #   dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
 # 
 # names(meanBeta_G1)[names(meanBeta_G1)%in% "Mean"] <- "MeanBetaG1"
@@ -188,22 +195,22 @@ plot(pred, dot.size=5)+
 # 
 # ### TBC
 # ## hypo
-# modFull <- lmer(MeanBetaG2 ~ MeanBetaG1 : (G1_trt:G2_trt) + (1|CpGSite) + (1|Sex) + (1|Family), 
+# modFull <- lmer(MeanBetaG2 ~ MeanBetaG1 : (G1_trt:G2_trt) + (1|CpGSite) + (1|Sex) + (1|brotherPairID), 
 #                 data = meanBetaG1G2[meanBetaG1G2$hypohyper %in% "hypo",], REML = F)
 # 
 # 
-# modnoInter <- lmer(BetaValue_G2 ~ BetaValue_G1 : (Treatment_G1+Treatment_G2) + (1|CpGSite) + (1|Sex_G2) + (1|Family), 
+# modnoInter <- lmer(BetaValue_G2 ~ BetaValue_G1 : (Treatment_G1+Treatment_G2) + (1|CpGSite) + (1|Sex_G2) + (1|brotherPairID), 
 #                    data = PM_G1G2[PM_G1G2$hypohyper %in% "hypo",], REML = F)
-# modNoG1 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G2 + (1|CpGSite) + (1|Sex_G2) + (1|Family), 
+# modNoG1 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G2 + (1|CpGSite) + (1|Sex_G2) + (1|brotherPairID), 
 #                 data = PM_G1G2[PM_G1G2$hypohyper %in% "hypo",], REML = F)
-# modNoG2 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G1 + (1|CpGSite) + (1|Sex_G2) + (1|Family), 
+# modNoG2 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G1 + (1|CpGSite) + (1|Sex_G2) + (1|brotherPairID), 
 #                 data = PM_G1G2[PM_G1G2$hypohyper %in% "hypo",], REML = F)
 # 
 # lrtest(modFull, modnoInter) # no significant interactions p=0.06475 .
 # lrtest(modFull, modNoG1) # effect of G1 p=1.339e-11 ***
 # lrtest(modFull, modNoG2) # effect of G2 p=0.0005488 ***
 # 
-# modHypo <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment + (1|CpGSite) + (1|Sex_G2) + (1|Family), 
+# modHypo <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment + (1|CpGSite) + (1|Sex_G2) + (1|brotherPairID), 
 #                 data = PM_G1G2[PM_G1G2$hypohyper %in% "hypo",])
 # predPosBeta <- ggpredict(modHypo, terms = c("BetaValue_G1", "Treatment"))
 # 
@@ -215,20 +222,20 @@ plot(pred, dot.size=5)+
 #   ggtitle("Predicted values of beta G2 in function of beta G1\nfor parental DMS HYPOmethylated in infected parents")
 # 
 # ## hyper
-# modFull <- lmer(BetaValue_G2 ~ BetaValue_G1 : (Treatment_G1:Treatment_G2) + (1|CpGSite) + (1|Sex_G2) + (1|Family), 
+# modFull <- lmer(BetaValue_G2 ~ BetaValue_G1 : (Treatment_G1:Treatment_G2) + (1|CpGSite) + (1|Sex_G2) + (1|brotherPairID), 
 #                 data = PM_G1G2[PM_G1G2$hypohyper %in% "hyper",], REML = F)
-# modnoInter <- lmer(BetaValue_G2 ~ BetaValue_G1 : (Treatment_G1+Treatment_G2) + (1|CpGSite) + (1|Sex_G2) + (1|Family), 
+# modnoInter <- lmer(BetaValue_G2 ~ BetaValue_G1 : (Treatment_G1+Treatment_G2) + (1|CpGSite) + (1|Sex_G2) + (1|brotherPairID), 
 #                    data = PM_G1G2[PM_G1G2$hypohyper %in% "hyper",], REML = F)
-# modNoG1 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G2 + (1|CpGSite) + (1|Sex_G2) + (1|Family), 
+# modNoG1 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G2 + (1|CpGSite) + (1|Sex_G2) + (1|brotherPairID), 
 #                 data = PM_G1G2[PM_G1G2$hypohyper %in% "hyper",], REML = F)
-# modNoG2 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G1 + (1|CpGSite) + (1|Sex_G2) + (1|Family), 
+# modNoG2 <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment_G1 + (1|CpGSite) + (1|Sex_G2) + (1|brotherPairID), 
 #                 data = PM_G1G2[PM_G1G2$hypohyper %in% "hyper",], REML = F)
 # 
 # lrtest(modFull, modnoInter) # no significant interactions
 # lrtest(modFull, modNoG1) # effect of G1 p< 2.2e-16 ***
 # lrtest(modFull, modNoG2) # effect of G2 p=0.002816 **
 # 
-# modHyper <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment + (1|CpGSite) + (1|Sex_G2) + (1|Family), 
+# modHyper <- lmer(BetaValue_G2 ~ BetaValue_G1 : Treatment + (1|CpGSite) + (1|Sex_G2) + (1|brotherPairID), 
 #                  data = PM_G1G2[PM_G1G2$hypohyper %in% "hyper",])
 # predPosBeta <- ggpredict(modHyper, terms = c("BetaValue_G1", "Treatment"))
 # 
@@ -306,7 +313,7 @@ table(fullMetadata_OFFS$SampleID == rownames(data.dist))
 # We use a PERMANOVA to test the hypothesis that paternal treatment, 
 # offspring treatment, sex and their interactions significantly influencing global methylation
 perm <- how(nperm = 1000) # 1000 permutations
-setBlocks(perm) <- with(fullMetadata_OFFS, Family) # define the permutation structure considering family
+setBlocks(perm) <- with(fullMetadata_OFFS, brotherPairID) # define the permutation structure considering brotherPairID
 
 ## Full model
 adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permutations = perm)
@@ -377,7 +384,7 @@ myNMDSplot <- ggplot(NMDS_dt, aes(x=MDS1, y=MDS2)) +
   scale_fill_manual(values = colOffs)+
   geom_point(aes(fill=trtG1G2, shape=trtG1G2), col = "black", size = 3, alpha =.5) +
   scale_shape_manual(values = c(21,22,23,24)) +
-  # geom_label(aes(label=rownames(NMDS$points), col = fullMetadata_OFFS$Family))+
+  # geom_label(aes(label=rownames(NMDS$points), col = fullMetadata_OFFS$brotherPairID))+
   theme_bw() +
   theme(legend.position = "none") +
   annotation_custom(g, xmin=-0.25, xmax=-0.1, ymin=0.05, ymax=0.15) +
@@ -703,13 +710,13 @@ head(getAssociationWithTSS(diffAnn_PAR))
 # g <- rasterGrob(img, interpolate=TRUE)
 # 
 # ## Hypo
-# mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|CpGSite) + (1|Sex) + (1|Family), 
+# mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|CpGSite) + (1|Sex) + (1|brotherPairID), 
 #             data = dfHypo, REML = F)
-# mod0 <- lmer(BetaValue ~ meth.diff.parentals + (1|CpGSite) + (1|Sex) + (1|Family), 
+# mod0 <- lmer(BetaValue ~ meth.diff.parentals + (1|CpGSite) + (1|Sex) + (1|brotherPairID), 
 #              data = dfHypo, REML = F)
 # lrtest(mod, mod0) # trt significant chisq=549.14  p < 2.2e-16 ***
 # 
-# mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|CpGSite) + (1|Sex) + (1|Family), 
+# mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|CpGSite) + (1|Sex) + (1|brotherPairID), 
 #             data = dfHypo, REML = T)
 # predPosBeta <- ggpredict(mod, terms = c("meth.diff.parentals", "Treatment"))
 # plotHypo <- plot(predPosBeta)+
@@ -721,13 +728,13 @@ head(getAssociationWithTSS(diffAnn_PAR))
 #   ggtitle("Predicted methylation percentage in offspring at parental hypomethylated DMS")
 # 
 # ## Hyper
-# mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|CpGSite) + (1|Sex) + (1|Family), 
+# mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|CpGSite) + (1|Sex) + (1|brotherPairID), 
 #             data = dfHyper, REML = F)
-# mod0 <- lmer(BetaValue ~ meth.diff.parentals + (1|CpGSite) + (1|Sex) + (1|Family), 
+# mod0 <- lmer(BetaValue ~ meth.diff.parentals + (1|CpGSite) + (1|Sex) + (1|brotherPairID), 
 #              data = dfHyper, REML = F)
 # lrtest(mod, mod0) # trt significant chisq=662.12, p < 2.2e-16 ***
 # 
-# mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|CpGSite) + (1|Sex) + (1|Family), 
+# mod <- lmer(BetaValue ~ meth.diff.parentals:Treatment + (1|CpGSite) + (1|Sex) + (1|brotherPairID), 
 #             data = dfHyper, REML = T)
 # predPosBeta <- ggpredict(mod, terms = c("meth.diff.parentals", "Treatment"))
 # plotHyper <- plot(predPosBeta)+

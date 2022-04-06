@@ -23,6 +23,8 @@ fullMetadata$PAT[fullMetadata$trtG1G2 %in% c("Control", "NE_control", "NE_expose
 
 ## Add brother pairs
 fullMetadata$brotherPairID <- sapply(str_split(fullMetadata$clutch.ID, "_"), "[", 2 )
+## avoid confusion with numeric
+fullMetadata$brotherPairID <- paste0("BP",fullMetadata$brotherPairID)
 
 ########################
 ## Parents only metadata
