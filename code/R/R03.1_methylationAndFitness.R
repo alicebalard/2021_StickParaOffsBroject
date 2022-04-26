@@ -17,9 +17,9 @@ machine="mythinkpad"
 source("R02.2_loadMethyldata.R")
 
 ## Data getting loaded:
-uniteCovALL_woSexAndUnknowChr #-> CpG positions shared by all fish
-uniteCov6_G1_woSexAndUnknowChrOVERLAP #-> CpG positions shared by half the parents in each trt group, overlapping with the parental ones
-uniteCov14_G2_woSexAndUnknowChrOVERLAP#-> CpG positions shared by half the offspring in each trt group, overlapping with the offspring ones
+uniteCovALL_woSexAndUnknowChr #-> 55530 CpG positions shared by all fish
+uniteCov6_G1_woSexAndUnknowChrOVERLAP #-> 1001880 CpG positions shared by half the parents in each trt group, overlapping with the parental ones
+uniteCov14_G2_woSexAndUnknowChrOVERLAP#-> 1001880 CpG positions shared by half the offspring in each trt group, overlapping with the offspring ones
 
 #####################################################################
 ## Compare fitness traits between the different offsprings groups ###
@@ -176,7 +176,6 @@ fullMetadata_PAR_half <- mycalcRMS(uniteCov6_G1_woSexAndUnknowChrOVERLAP, fullMe
 
 fullMetadata_OFFS_half  <- mycalcRMS(uniteCov14_G2_woSexAndUnknowChrOVERLAP, fullMetadata_OFFS)
 
-############
 ## Question: in our 5 datasets,
 ## Is there a correlation between nbr of methylated sites and coverage? 
 cor.test(fullMetadata_PAR_half$Nbr_coveredCpG,
@@ -208,7 +207,7 @@ ggplot(fullMetadata_PAR_half, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_covere
 cor.test(fullMetadata_OFFS_half$Nbr_coveredCpG,
          fullMetadata_OFFS_half$Nbr_methCpG, method = "spearman")
 ## S = 20254, p-value < 2.2e-16 rho = 0.91
-ggplot(plotdf, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
+ggplot(fullMetadata_OFFS_half, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
   geom_smooth(method = "lm", col="black")+
   geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
   scale_x_continuous("Number of cytosines covered") +

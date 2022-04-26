@@ -278,7 +278,7 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
   return(list(NMDS = NMDS, mystressplot=mystressplot, NMDSplot = figure))
 }
 
-## II. Functions used in tbc
+## II. Functions used in R04.2 explore differential methylations
 
 ## Calculate beta values (methylation proportion per CpG site) for the 1001880 positions covered in half G1 and half G2
 getPMdataset <- function(uniteCov, MD, gener){
@@ -288,7 +288,7 @@ getPMdataset <- function(uniteCov, MD, gener){
   rownames(PM) <- paste(uniteCov$chr, uniteCov$start, uniteCov$end)
   
   ## Select only the positions corresponding in DMS in G1 comparison control/infected
-  length(DMS_info_G1$DMS)# 5074 DMS
+  length(DMS_info_G1$DMS)
   PM <- PM[rownames(PM) %in% DMS_info_G1$DMS, ]
   nrow(PM) # all good 
   
@@ -301,8 +301,8 @@ getPMdataset <- function(uniteCov, MD, gener){
   names(PM) <- c("Var1",  "ID",  "BetaValue", "Chr", "Pos")
   PM$rankpos <- 1:nrow(PM)
   
-  ## Add treatment, Sex and brotherPairID
-  dfTrt = data.frame(ID = MD$SampleID, Treatment = MD$trtG1G2, Sex = MD$Sex, brotherPairID= MD$brotherPairID)
+  ## Add treatment, Sex, brotherPairID and clutchID
+  dfTrt = data.frame(ID = MD$SampleID, Treatment = MD$trtG1G2, Sex = MD$Sex, brotherPairID= MD$brotherPairID, clutch.ID = MD$clutch.ID)
   PM = merge(PM, dfTrt)
   
   if (gener=="parents"){
