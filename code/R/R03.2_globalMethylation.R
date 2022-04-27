@@ -46,6 +46,21 @@ table(fullMetadata_OFFS$brotherPairID)
 # make distance matrix with B-C distances
 data.dist = makeDatadistFUN(uniteCovALL_G2_woSexAndUnknowChr)
 
+## Adonis test: importance of each predictor
+adonis2(data.dist ~ PAT * outcome * Sex * brotherPairID, data = fullMetadata_OFFS)
+#                                 Df SumOfSqs      R2      F Pr(>F)    
+# PAT                             1 0.002782 0.01470 1.8292  0.001 ***
+# outcome                         1 0.001909 0.01009 1.2552  0.024 *  
+# Sex                             1 0.002418 0.01277 1.5895  0.001 ***
+# brotherPairID                   7 0.028018 0.14805 2.6316  0.001 ***
+# PAT:brotherPairID               7 0.014344 0.07580 1.3473  0.001 ***
+
+## paternal treatment: explains 1.5% of the variation
+## family of the father: 15%
+## interaction (individual effect): 7.6%
+## sex: 1.3%
+## treatment of the offspring: 1%
+
 # We use a PERMANOVA to test the hypothesis that paternal treatment, 
 # offspring treatment, sex and their interactions significantly influencing global methylation
 perm <- how(nperm = 1000) # 1000 permutations
