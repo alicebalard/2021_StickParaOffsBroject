@@ -18,3 +18,6 @@
 ############################## Identify Genes associated with positions 
 
 ############################## + GO terms --> TBC
+
+BiocManager::install("GOstats")
+library("GOstats")

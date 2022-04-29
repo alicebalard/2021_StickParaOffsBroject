@@ -24,7 +24,9 @@ list.of.packages <- c(
     "qualpalr",# extra palettes
     "RColorBrewer", # for colors in Venn diagrams
     "reshape2",
+    "splitstackshape", # to spread the V9 column of gff into columns by key
     "tidyverse",  # tidyverse will pull in ggplot2, readr, other useful libraries
+    "VCA",
     "vegan", ## for Adonis
     "VennDiagram")
 
