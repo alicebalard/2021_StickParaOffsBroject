@@ -4,7 +4,10 @@
 
 #################### Data load & preparation ####################
 source("librariesLoading.R")
-## load custom functions
+
+BiocManager::install("GenomicFeatures", force = TRUE)
+
+# load custom functions
 source("customRfunctions.R")
 ## Load samples metadata
 source("R02.1_loadMetadata.R")
@@ -24,11 +27,11 @@ names(GYgynogff) = c("chrom","length")
 ## NB Promoters are defined by options at genomation::readTranscriptFeatures function. 
 ## The default option is to take -1000,+1000bp around the TSS and you can change that. 
 ## -> following Heckwolf 2020 and Sagonas 2020, we consider 1500bp upstream and 500 bp downstream
-gene.obj=readTranscriptFeatures("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.bed12",
-                                remove.unusual = FALSE, up.flank = 1500, down.flank = 500)
+annotBed12=readTranscriptFeatures("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.bed12",
+                                  remove.unusual = FALSE, up.flank = 1500, down.flank = 500)
 
 ## Load curated gff file
-gff <- rtracklayer::import("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff")
+annotGff3 <- rtracklayer::import("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff")
 
 ###########################################
 ## Source the previously calculated DMS/DMR
@@ -82,13 +85,13 @@ nrow(DMR15pc_G1_infectedG2_half) # 19
 ######################
 ## Features Annotation (use package genomation v1.24.0)
 ## Parents comparison:
-diffAnn_PAR = annotateWithGeneParts(as(DMS15pc_G1_half,"GRanges"),gene.obj)
+diffAnn_PAR = annotateWithGeneParts(as(DMS15pc_G1_half,"GRanges"),annotBed12)
 diffAnn_PAR
 ## Offspring from control parents comparison:
-diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMS15pc_G2_controlG1_half,"GRanges"),gene.obj)
+diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMS15pc_G2_controlG1_half,"GRanges"),annotBed12)
 diffAnn_G2_controlG1
 ## Offspring from infected parents comparison:
-diffAnn_G2_infectedG1 = annotateWithGeneParts(as(DMS15pc_G2_infectedG1_half,"GRanges"),gene.obj)
+diffAnn_G2_infectedG1 = annotateWithGeneParts(as(DMS15pc_G2_infectedG1_half,"GRanges"),annotBed12)
 diffAnn_G2_infectedG1
 
 ###########################
@@ -156,7 +159,7 @@ varPlot(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_h
                       col=c("white", "blue"), lwd=c(2,2)), 
         BG=list(var="G2_trt", col=paste0("gray", c(80, 90))),
         YLabel=list(cex = .8, text="Mean beta value at parDMS \n hypomethylated upon infection"))
-        
+
 myfitVCA_hypo <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hypo) 
 print(myfitVCA_hypo, digits=4)
 # estimate 95% confidence intervals, request CI for
@@ -345,18 +348,18 @@ intersect(paste(DMS15pc_G1_half$chr, DMS15pc_G1_half$start),
 ###############################################################
 makeManP <- function(comp1, comp2){
   A <- methylKit::select(DMS1, which(paste(DMS1$chr, DMS1$start) %in% coreDMS))
-  B <- as.data.frame(annotateWithGeneParts(as(A,"GRanges"),gene.obj)@members)
+  B <- as.data.frame(annotateWithGeneParts(as(A,"GRanges"),annotBed12)@members)
   A2 <- methylKit::select(DMS2, 
                           which(paste(DMS2$chr, DMS2$start) %in% coreDMS))
-  B2 <- as.data.frame(annotateWithGeneParts(as(A2,"GRanges"),gene.obj)@members)
+  B2 <- as.data.frame(annotateWithGeneParts(as(A2,"GRanges"),annotBed12)@members)
   
   ggarrange(
     makeManhattanPlots(DMSfile = DMS1, 
-                       annotFile = as.data.frame(annotateWithGeneParts(as(DMS1,"GRanges"),gene.obj)@members),
+                       annotFile = as.data.frame(annotateWithGeneParts(as(DMS1,"GRanges"),annotBed12)@members),
                        GYgynogff = GYgynogff, mycols = c("red", "grey", "black", "green"), 
                        mytitle = paste0("Manhattan plot of ", comp1, " DMS")),
     makeManhattanPlots(DMSfile = DMS2, 
-                       annotFile = as.data.frame(annotateWithGeneParts(as(DMS2,"GRanges"),gene.obj)@members),
+                       annotFile = as.data.frame(annotateWithGeneParts(as(DMS2,"GRanges"),annotBed12)@members),
                        GYgynogff = GYgynogff, mycols = c("red", "grey", "black", "green"), 
                        mytitle = paste0("Manhattan plot of ", comp2, " DMS")),
     makeManhattanPlots(DMSfile = A, annotFile = B, GYgynogff = GYgynogff, 
@@ -366,8 +369,8 @@ makeManP <- function(comp1, comp2){
     labels = c("A", "B", "C", "D"), ncol = 1, nrow = 4, common.legend = T)
 }
 
-DMS1 = DMS15pc_G2_controlG1_half
-DMS2 = DMS15pc_G2_infectedG1_half
+DMS1 = DMS15pc_G2_controlG1_half # from: getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1CONTROL, myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+DMS2 = DMS15pc_G2_infectedG1_half # from: getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1INFECTED, myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
 coreDMS <- intersect(paste(DMS1$chr, DMS1$start), paste(DMS2$chr, DMS2$start))
 
 ## Make Manhattan plot:
@@ -375,24 +378,33 @@ makeManP(comp1 = "CC-CI", comp2 = "IC-II")
 
 ## Annotation of the core DMS:
 coreDMSmethylDiff <- methylKit::select(DMS1, which(paste(DMS1$chr, DMS1$start) %in% coreDMS))
-## Heckwolf 2020: To be associated to a gene, the pop-DMS had to be either inside the gene or, 
-## if intergenic, not further than 10 kb away from the TSS. 
-annot_core <- annotateWithGeneParts(as(coreDMSmethylDiff,"GRanges"),gene.obj)
-rows2rm <- which((annot_core@dist.to.TSS$dist.to.feature>10000 |
-                    annot_core@dist.to.TSS$dist.to.feature< -10000) &
-                   rowSums(annot_core@members) %in% 0)
-coreDMSmethylDiff <- coreDMSmethylDiff[-rows2rm,] # 23 DMS associated with genes
-annot_core <- annotateWithGeneParts(as(coreDMSmethylDiff,"GRanges"),gene.obj)
 
-TSSAssociation_DiffMeth15p = getAssociationWithTSS(annot_core)
-# # #Calculate the distance to the TSS using Kernel density
-# KD_DiffMeth15p=density(TSSAssociation_DiffMeth15p$dist.to.feature)
-# #Plot Kernel density
-# plot(KD_DiffMeth15p, main="Distance to associated TSS (global GeneIDs)")
+### Functions to get the annotation of a methylkit object (methylDiff or methylBase)
+getAnnotationFun <- function(METHOBJ){
+  A = annotateWithGeneParts(target = as(METHOBJ,"GRanges"), feature = annotBed12)
+  # Heckwolf 2020: To be associated to a gene, the pop-DMS had to be either inside the gene or,
+  # if intergenic, not further than 10 kb away from the TSS.
+  rows2rm = which((A@dist.to.TSS$dist.to.feature>10000 |
+                     A@dist.to.TSS$dist.to.feature< -10000) &
+                    rowSums(A@members) %in% 0)
+  METHOBJ2 = METHOBJ[-rows2rm,]
+  ## Re annotate the subsetted object
+  B = annotateWithGeneParts(as(METHOBJ2,"GRanges"),annotBed12)
+  ## Get genes associated
+  C = getAssociationWithTSS(B)
+  ## Get annotations for these genes
+  subAnnot <- data.frame(subset(annotGff3, Name %in% C$feature.name))
+  return(subAnnot$Note)
+}
 
-subGff <- data.frame(subset(gff, Name %in% TSSAssociation_DiffMeth15p$feature.name))
+## Differentially methylated sites:
+subGOterms = getAnnotationFun(METHOBJ = coreDMSmethylDiff)
 
-subGff[subGff$seqnames %in% "Gy_chrIV",]
+## Background annotations:
+universeGOterms = getAnnotationFun(METHOBJ = uniteCov14_G2_woSexAndUnknowChrOVERLAP)
+
+length(universeGOterms)# 16024
+
 
 # as.vector(lapply(strsplit(as.character(TSSAssociation_DiffMeth15p$feature.name), "\\."), "[", 1))
 
@@ -647,18 +659,18 @@ rm(allVenn, hypoVenn, hyperVenn)
 par(mfrow=c(1,3))
 par(mar = c(.1,0.1,5,0.1)) # Set the margin on all sides to 2
 ## Parents comparison:
-diffAnn_PAR = annotateWithGeneParts(as(DMS15pc_G1_half,"GRanges"),gene.obj)
+diffAnn_PAR = annotateWithGeneParts(as(DMS15pc_G1_half,"GRanges"),annotBed12)
 diffAnn_PAR
 plotTargetAnnotation(diffAnn_PAR,precedence=TRUE, main="DMS G1", 
                      cex.legend = 1, border="white")
 
 ## Offspring from control parents comparison:
-diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMS15pc_G2_controlG1_half,"GRanges"),gene.obj)
+diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMS15pc_G2_controlG1_half,"GRanges"),annotBed12)
 diffAnn_G2_controlG1
 plotTargetAnnotation(diffAnn_G2_controlG1,precedence=TRUE, main="DMS G2-G1c", 
                      cex.legend = 1, border="white")
 ## Offspring from infected parents comparison:
-diffAnn_G2_infectedG1 = annotateWithGeneParts(as(DMS15pc_G2_infectedG1_half,"GRanges"),gene.obj)
+diffAnn_G2_infectedG1 = annotateWithGeneParts(as(DMS15pc_G2_infectedG1_half,"GRanges"),annotBed12)
 diffAnn_G2_infectedG1
 plotTargetAnnotation(diffAnn_G2_infectedG1,precedence=TRUE, main="DMS G2-G1i", 
                      cex.legend = 1, border="white")
@@ -672,33 +684,33 @@ runHyperHypoAnnot <- function(){
   ####### HYPO
   ## Parents comparison:
   A = annotateWithGeneParts(
-    as(DMS15pc_G1_half[DMS_info_G1$direction %in% "hypo",],"GRanges"),gene.obj)
+    as(DMS15pc_G1_half[DMS_info_G1$direction %in% "hypo",],"GRanges"),annotBed12)
   plotTargetAnnotation(A,precedence=TRUE, main="DMS G1\nhypo", 
                        cex.legend = .4, border="white")
   ## Offspring from control parents comparison:
   B = annotateWithGeneParts(
-    as(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hypo",],"GRanges"),gene.obj)
+    as(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hypo",],"GRanges"),annotBed12)
   plotTargetAnnotation(B,precedence=TRUE, main="DMS G2-G1c\nhypo", 
                        cex.legend = .4, border="white")
   ## Offspring from infected parents comparison:
   C = annotateWithGeneParts(
-    as(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hypo",],"GRanges"),gene.obj)
+    as(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hypo",],"GRanges"),annotBed12)
   plotTargetAnnotation(C,precedence=TRUE, main="DMS G2-G1i\nhypo", 
                        cex.legend = .4, border="white")
   ####### HYPER
   ## Parents comparison:
   D = annotateWithGeneParts(
-    as(DMS15pc_G1_half[DMS_info_G1$direction %in% "hyper",],"GRanges"),gene.obj)
+    as(DMS15pc_G1_half[DMS_info_G1$direction %in% "hyper",],"GRanges"),annotBed12)
   plotTargetAnnotation(D,precedence=TRUE, main="DMS G1\nhyper", 
                        cex.legend = .4, border="white")
   ## Offspring from control parents comparison:
   E = annotateWithGeneParts(
-    as(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hyper",],"GRanges"),gene.obj)
+    as(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hyper",],"GRanges"),annotBed12)
   plotTargetAnnotation(E,precedence=TRUE, main="DMS G2-G1c\nhyper", 
                        cex.legend = .4, border="white")
   ## Offspring from infected parents comparison:
   f = annotateWithGeneParts(
-    as(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hyper",],"GRanges"),gene.obj)
+    as(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hyper",],"GRanges"),annotBed12)
   plotTargetAnnotation(f,precedence=TRUE, main="DMS G2-G1i\nhyper", 
                        cex.legend = .4, border="white")
   par(mfrow=c(1,1))

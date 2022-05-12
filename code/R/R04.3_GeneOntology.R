@@ -19,5 +19,5 @@
 
 ############################## + GO terms --> TBC
 
-BiocManager::install("GOstats")
+# BiocManager::install("GOstats")
 library("GOstats")
