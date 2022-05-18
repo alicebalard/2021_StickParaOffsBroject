@@ -1,6 +1,6 @@
 ## A. Balard
 ## May 2022
-## Slidding window analysis: detecting peaks of methylation 
+## Sliding window analysis: detecting peaks of methylation 
 ###########################################################
 machine="mythinkpad" # define the machine we work on
 loadALL = FALSE # only load CpG shared by half fish per trt group
@@ -34,7 +34,7 @@ unique(sapply(strsplit(row.names(ordered_perc_uniteObj),"\\."), `[`, 1))
 SWresults <- apply(ordered_perc_uniteObj, 2, 
                    function(x) unlist(slide(x, mean, .after = 100, .step = 20, .complete = TRUE)))
 
-nrow(SWresults)# 2772 slidding windows
+nrow(SWresults)# 2772 sliding windows
 
 # Define annotation colors
 mycolors <- c("black", "red", colOffs)
@@ -76,7 +76,7 @@ tilesG1 = reorganize(methylObj = tiles,
                      sample.ids = tiles@sample.ids[
                        tiles@sample.ids %in% fullMetadata$SampleID[fullMetadata$Generat %in% "P"]])
 
-DMRG1 = getDiffMeth(tilesG1, fullMetadata[fullMetadata$Generat %in% "P",], mccores=3, mydif = 5)
+DMRG1 = getDiffMeth(tilesG1, fullMetadata[fullMetadata$Generat %in% "P",], mccores=3, mydif = 10)
   
 # Select these tiles for G1 & G2
 tiles_atDMRG1 = methylKit::select(tiles, 
@@ -91,19 +91,49 @@ perc_uniteObj_ave_parDMS = calcAveMeth(perc_uniteObj2)
 
 # Reorder by chromosome
 ordered_perc_uniteObj2_ave <- apply(
-  perc_uniteObj2_ave, 2, reorderByChrom)
+  perc_uniteObj_ave_parDMS, 2, reorderByChrom)
 
 # print heatmap
 pheatmap(t(ordered_perc_uniteObj2_ave), cluster_cols=F)
 
+#########################
+## ParDMR in G1 and G2 ##
+#########################
 
-ordered_perc_uniteObj2_ave
+dfG1G2DMR = melt(perc_uniteObj2)
+names(dfG1G2DMR) = c("DMR", "SampleID", "value")
+dfG1G2DMR <- merge(dfG1G2DMR, fullMetadata[c("SampleID", "trtG1G2", "brotherPairID", "Generat", "PAT")])
 
+dfG1G2DMR = dfG1G2DMR %>% group_by(brotherPairID, PAT, trtG1G2, Generat, DMR) %>%
+  dplyr::summarise(mean =mean(value)) %>% data.frame()
 
+dfG1G2DMR_G1 = dfG1G2DMR[dfG1G2DMR$Generat %in% "P",]
+dfG1G2DMR_G2 = dfG1G2DMR[dfG1G2DMR$Generat %in% "O",]
 
+names(dfG1G2DMR_G1)[names(dfG1G2DMR_G1) %in% "mean"]="meanG1"
+names(dfG1G2DMR_G1)[names(dfG1G2DMR_G1) %in% "trtG1G2"]="trtG1G2_G1"
 
-  
-  ## bonus
+names(dfG1G2DMR_G2)[names(dfG1G2DMR_G2) %in% "mean"]="meanG2"
+names(dfG1G2DMR_G2)[names(dfG1G2DMR_G2) %in% "trtG1G2"]="trtG1G2_G2"
+
+dfDMR = merge(dfG1G2DMR_G1[-4], dfG1G2DMR_G2[-4])
+
+ggplot(dfDMR, aes(x=meanG1, y=meanG2, col=trtG1G2_G2))+
+  geom_point()+
+  scale_color_manual(values=colOffs)+
+  geom_abline(slope = 1)
+
+ggplot(dfDMR, aes(x=meanG1, y=meanG2))+
+  # geom_line(aes(group = brotherPairID, linetype = brotherPairID), col="grey", alpha = .5)+
+  geom_point(aes(col=DMR), size = 3, alpha=.8)+
+  scale_color_manual(values = viridis(7))+
+  geom_abline(slope = 1)+
+  facet_wrap(.~trtG1G2_G2)
+
+library("viridis")           # Charger
+dfDMR$DMR
+
+## bonus
   # if individuals are considered instead of grouping per treatment:
   # # Prepare metadata to compare the observed structure with an expected one: add colors for trt on the side of heatmap
   # metadata = data.frame(Treatment = fullMetadata$trtG1G2[match(colnames(perc_uniteObj), fullMetadata$SampleID)],

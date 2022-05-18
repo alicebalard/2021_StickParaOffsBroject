@@ -12,9 +12,6 @@ source("R02.3_DATALOAD.R")
 ## CpG covered in half trt group, parental DMS:
 nrow(uniteCov6_G1_woSexAndUnknowChrOVERLAP) # methylBase object with 1001880 rows
 
-## Calculate DMS/DMR
-
-
 #############
 # Select only G1 fish from BP which have offspring
 metadata_G1 <- fullMetadata_PAR[
@@ -90,7 +87,7 @@ for (i in 1:8){
   
   # change number for trt to visualise
   results4PCA[[i]]$parDMS1BP_G2_hypo@sample.ids = results4PCA[[i]]$dfhypoG2parDMS$Tr
-  
+  ## Plot for all BP
   PCASamples(results4PCA[[i]]$parDMS1BP_G2_hypo)
   Sys.sleep(10)
 }
@@ -114,7 +111,7 @@ aveMethStats <- function(BPnum, hypoOrhyper){
   ## Prediction plot
   p1 = plot_model(modfull, type = "pred", terms = c("patTrt", "outcome"))+
     theme_cleveland()+
-    ggtitle(label = "Predicted average methylation", 
+    ggtitle(label = "Predicted average methylation",
             subtitle = paste0("parental DMS ", hypoOrhyper, "methylated\nupon infection (", vecBP[BPnum], ")"))+
     xlab("Paternal treatment")+
     labs(col="Offspring trt: ")+
@@ -124,21 +121,21 @@ aveMethStats <- function(BPnum, hypoOrhyper){
   
   ## Extract slope between CC-CT and TC-TT in each BP
   pred=data.frame(ggpredict(modfull,terms = c("patTrt", "outcome")))
-  CC_CTslope = pred$predicted[pred$x %in% "controlP" & pred$group %in% "infected"] - 
-    pred$predicted[pred$x %in% "controlP" & pred$group %in% "control"]
-  TC_TTslope = pred$predicted[pred$x %in% "infectedP" & pred$group %in% "infected"] - 
-    pred$predicted[pred$x %in% "infectedP" & pred$group %in% "control"]
+  CC_CTslope = pred[pred$x %in% "controlP" & pred$group %in% "infected", "predicted"] -
+    pred[pred$x %in% "controlP" & pred$group %in% "control", "predicted"]
+  TC_TTslope = pred[pred$x %in% "infectedP" & pred$group %in% "infected", "predicted"] -
+    pred[pred$x %in% "infectedP" & pred$group %in% "control", "predicted"]
   
   ## average in parent group
-  avePred=data.frame(ggeffect(modfull,terms = c("patTrt")))
+  avePred=data.frame(ggeffects::ggpredict(modfull,terms = c("patTrt")))
   CparMean=avePred$predicted[avePred$x %in% "controlP"]
   TparMean=avePred$predicted[avePred$x %in% "infectedP"]
-  
-  mysummary=data.frame(BP = unique(df$brotherPairID), 
+
+  mysummary=data.frame(BP = unique(df$brotherPairID),
                        isInterSignif=isInterSignif, hypoOrhyper=hypoOrhyper,
                        CC_CTslope=CC_CTslope, TC_TTslope=TC_TTslope,
                        CparMean = CparMean,TparMean=TparMean)
-  
+
   return(list(p1=p1, mysummary=mysummary))
 }
 
@@ -192,6 +189,3 @@ ggplot(hyperdf[hyperdf$variable %in% c("CparMean", "TparMean"),],
   theme_cleveland()+
   scale_color_manual(values = c("black", "red"))+
   geom_line(aes(group=BP,col=isInterSignif))
-
-
-
