@@ -2,18 +2,9 @@
 ## A. Balard
 ## February 2022
 
-#################### Data load & preparation ####################
-source("librariesLoading.R")
-## load custom functions
-source("customRfunctions.R")
-## Load samples metadata
-source("R02.1_loadMetadata.R")
-## define in which machine we're working (apocrita or mythinkpad)
-machine="apocrita"
-#machine="mythinkpad"
-## Load methylation data
-loadALL = FALSE # only load CpG shared by half fish per trt group + ALL
-source("R02.2_loadMethyldata.R")
+machine="apocrita" # define the machine we work on
+loadALL = FALSE # only load CpG shared by half fish per trt group
+source("R02.3_DATALOAD.R")
 
 #######################################################
 ### PART 2: Differential Methylation Sites/Regions ####
@@ -137,18 +128,6 @@ nrow(tiles_G1bothTrt_G2infected_half) # methylBase object with 20348 rows
 
 ##############################################################################
 ## Calculate DMS/DMR accounting for covariates: brotherPairID and sex (new 04/04/22!)
-getDiffMeth <- function(myuniteCov, myMetadata){
-  if (length(table(myMetadata$Sex)) == 1){
-    cov = data.frame(brotherPairID = myMetadata$brotherPairID)
-  } else if (length(table(myMetadata$Sex)) == 2){
-    cov = data.frame(brotherPairID = myMetadata$brotherPairID, Sex = myMetadata$Sex)
-  } 
-  myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = 10)#10 on Apocrita
-  ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
-  ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
-  myDMS_15pc = getMethylDiff(myDiffMeth, difference=15, qvalue=0.01)
-  return(myDMS_15pc)
-}
 
 ###### Comparison 1: BASELINE -> Parents (control vs infected) 
 ###### CpG covered in HALF fish per group

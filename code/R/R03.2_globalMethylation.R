@@ -2,18 +2,9 @@
 ## A. Balard
 ## November 2021
 
-#################### Data load & preparation ####################
-source("librariesLoading.R")
-## load custom functions
-source("customRfunctions.R")
-## Load samples metadata
-source("R02.1_loadMetadata.R")
-## define in which machine we're working (apocrita or mythinkpad)
-#machine="apocrita"
-machine="mythinkpad"
-## Load methylation data
+machine="mythinkpad" # define the machine we work on
 loadALL = TRUE # load all uniteCov objects
-source("R02.2_loadMethyldata.R")
+source("R02.3_DATALOAD.R")
 
 #############################################################
 ### PART 1: Methylation profiles, CpG present in all fish ###

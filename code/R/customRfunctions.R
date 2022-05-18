@@ -117,6 +117,8 @@ makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50",
     ggtitle(mytitle)
 }
 
+
+
 ######################
 ## Adonis functions ##
 ######################
@@ -330,4 +332,56 @@ getPMdataset <- function(uniteCov, MD, gener){
   PM$hypohyper <- factor(PM$hypohyper, levels = c("hypo", "hyper"))
   
   return(PM)
+}
+
+########################################
+## Differential methylation functions ##
+########################################
+getDiffMeth <- function(myuniteCov, myMetadata, mccores=10, mydif = 15){
+  if (length(table(myMetadata$Sex)) == 1){
+    cov = data.frame(brotherPairID = myMetadata$brotherPairID)
+  } else if (length(table(myMetadata$Sex)) == 2){
+    cov = data.frame(brotherPairID = myMetadata$brotherPairID, Sex = myMetadata$Sex)
+  } 
+  myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = mccores)#10 on Apocrita
+  ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
+  ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
+  myDMS_15pc = getMethylDiff(myDiffMeth, difference=mydif, qvalue=0.01)
+  return(myDMS_15pc)
+}
+
+getDiffMethSimple <- function(myuniteCov, myMetadata){
+  myDiffMeth=calculateDiffMeth(myuniteCov, mc.cores = 3)#10 on Apocrita
+  ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
+  ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
+  myDMS_15pc = getMethylDiff(myDiffMeth, difference=15, qvalue=0.01)
+  return(myDMS_15pc)
+}
+
+# order positions by chromosomes & position
+reorderByChrom <- function(x){
+  df = data.frame(fullpos=names(x), beta=x, row.names = NULL)
+  df$chr = sapply(strsplit(df$fullpos,"\\."), `[`, 1)
+  df$pos = sapply(strsplit(df$fullpos,"\\."), `[`, 2)
+  df = df %>%
+    mutate(chrom_nr=chr %>% deroman(), # deroman is custom, defined in customRfunctions.R
+           chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
+    arrange(chrom_order) 
+  orderedVec = df$beta
+  names(orderedVec) = df$fullpos
+  return(orderedVec)
+}
+
+# calculate average methylation per treatment group at each position
+calcAveMeth <- function(perc_uniteObj){
+  rawmetadata = fullMetadata[match(colnames(perc_uniteObj), fullMetadata$SampleID), ]
+  
+  for (i in 1:length(levels(rawmetadata$trtG1G2))){
+    whichCols = which(colnames(perc_uniteObj) %in% rawmetadata$SampleID[
+      rawmetadata$trtG1G2 %in% levels(rawmetadata$trtG1G2)[i]])
+    perc_uniteObj = perc_uniteObj %>% data.frame() %>%
+      dplyr::mutate(X = rowMeans(dplyr::select(., whichCols), na.rm = T))
+    names(perc_uniteObj)[names(perc_uniteObj) %in% "X"] = paste0("ave", levels(rawmetadata$trtG1G2)[i])
+  }
+  perc_uniteObj = perc_uniteObj[grep("ave", names(perc_uniteObj))]
 }

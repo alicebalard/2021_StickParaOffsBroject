@@ -2,85 +2,11 @@
 ## A. Balard
 ## February 2022
 
-#################### Data load & preparation ####################
-source("librariesLoading.R")
-
-BiocManager::install("GenomicFeatures", force = TRUE)
-
-# load custom functions
-source("customRfunctions.R")
-## Load samples metadata
-source("R02.1_loadMetadata.R")
-## define in which machine we're working (apocrita or mythinkpad)
-##machine="apocrita"
-machine="mythinkpad"
-## Load methylation data
-loadALL = FALSE # only load CpG shared by half fish per trt group + ALL
-source("R02.2_loadMethyldata.R")
-#########################
-## Load file containing length of each gynogen chromosomes
-## grep "contig" gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff | awk '{print $1, $5}' > data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt
-GYgynogff = read.table("../../data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt")
-names(GYgynogff) = c("chrom","length")
-#########################
-## Load genome annotation
-## NB Promoters are defined by options at genomation::readTranscriptFeatures function. 
-## The default option is to take -1000,+1000bp around the TSS and you can change that. 
-## -> following Heckwolf 2020 and Sagonas 2020, we consider 1500bp upstream and 500 bp downstream
-annotBed12=readTranscriptFeatures("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.bed12",
-                                  remove.unusual = FALSE, up.flank = 1500, down.flank = 500)
-
-## Load curated gff file
-annotGff3 <- rtracklayer::import("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff")
-
-###########################################
-## Source the previously calculated DMS/DMR
-## Parents (brotherPairID as covariates)
-### DM from CpG positions shared by half the fish per trt
-DMS15pc_G1_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_half.RDS"); nrow(DMS15pc_G1_half) # 3648
-DMR15pc_G1_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_half.RDS"); nrow(DMR15pc_G1_half) # 23
-### DM from CpG positions shared by all the fish
-# DMS15pc_G1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G1_ALL.RDS"); nrow(DMS15pc_G1_ALL) # 125
-# DMR15pc_G1_ALL returned 0 DMR
-
-## Offspring (brotherPairID & Sex as covariates)
-## Control G1 - G2(trt vs control)
-### DM from CpG positions shared by half the fish per trt
-DMS15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_half.RDS")
-nrow(DMS15pc_G2_controlG1_half) # 1197
-DMR15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_controlG1_half.RDS")
-nrow(DMR15pc_G2_controlG1_half) # 6
-### DM from CpG positions shared by all the fish
-# DMS15pc_G2_controlG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_ALL.RDS")
-# nrow(DMS15pc_G2_controlG1_ALL) # 38
-# DMR15pc_G2_controlG1_ALL returned 0 DMR
-
-## Infected G1 - G2(trt vs control)
-### DM from CpG positions shared by half the fish per trt
-DMS15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_half.RDS")
-nrow(DMS15pc_G2_infectedG1_half) # 690
-DMR15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_half.RDS")
-nrow(DMR15pc_G2_infectedG1_half) # 8
-### DM from CpG positions shared by all the fish
-# DMS15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_ALL.RDS")
-# nrow(DMS15pc_G2_infectedG1_ALL) # 22
-# DMR15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_ALL.RDS")
-# nrow(DMR15pc_G2_infectedG1_ALL) # 1
-
-## Both trt G1 - Control G2
-### DM from CpG positions shared by half the fish per trt
-DMS15pc_G1_controlG2_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_controlG2_half.RDS")
-nrow(DMS15pc_G1_controlG2_half) # 1569
-DMR15pc_G1_controlG2_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_controlG2_half.RDS")
-nrow(DMR15pc_G1_controlG2_half) # 14
-
-## Both trt G1 - Infected G2
-### DM from CpG positions shared by half the fish per trt
-DMS15pc_G1_infectedG2_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_infectedG2_half.RDS")
-nrow(DMS15pc_G1_infectedG2_half) # 2050
-DMR15pc_G1_infectedG2_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_infectedG2_half.RDS")
-nrow(DMR15pc_G1_infectedG2_half) # 19
-###########################################
+machine="mythinkpad" # define the machine we work on
+loadALL = FALSE # only load CpG shared by half fish per trt group
+loadannot = TRUE # load genome annotations
+sourceDMS = TRUE # load results of differential methylation analysis
+source("R02.3_DATALOAD.R")
 
 ######################
 ## Features Annotation (use package genomation v1.24.0)
@@ -161,11 +87,101 @@ varPlot(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_h
         YLabel=list(cex = .8, text="Mean beta value at parDMS \n hypomethylated upon infection"))
 
 myfitVCA_hypo <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hypo) 
-print(myfitVCA_hypo, digits=4)
+
+### Real values
+trtEffect <- sum(myfitVCA_hypo$aov.tab[2:4, 5])
+genEffect <- sum(myfitVCA_hypo$aov.tab[5:8, 5])
+error <- sum(myfitVCA_hypo$aov.tab[9, 5])
+realValHypoVCA <- data.frame(trtEffect=trtEffect, genEffect=genEffect,error=error)
+
+### Randomisation
+myrandomVCA <- function(df=PM_G2_mean_hypo){
+  randomDF = df
+  randomDF$G1_trt = sample(PM_G2_mean_hypo$G1_trt, replace = F)
+  randomDF$G2_trt = sample(PM_G2_mean_hypo$G2_trt, replace = F)
+  randomDF$brotherPairID = sample(PM_G2_mean_hypo$brotherPairID, replace = F)
+  myfitVCA <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = randomDF) 
+  trtEffect <- sum(myfitVCA$aov.tab[2:4, 5])
+  genEffect <- sum(myfitVCA$aov.tab[5:8, 5])
+  error <- sum(myfitVCA$aov.tab[9, 5])
+  return(data.frame(trtEffect=trtEffect, genEffect=genEffect,error=error))
+}
+
+randomHypoVCA = do.call(rbind, lapply(1:1000, function(x) {
+  df=myrandomVCA(PM_G2_mean_hypo)
+  df$rep=x
+  return(df)}))
+
+randomHypoVCA = melt(randomHypoVCA, id.vars = "rep")
+# saveRDS(randomHypoVCA, file = "Rdata/randomHypoVCA.RDS")
+randomHypoVCA <- readRDS(file = "Rdata/randomHypoVCA.RDS")
+df2=reshape2::melt(realValHypoVCA)
+
+sumDF <- randomHypoVCA %>% 
+  group_by(variable) %>%
+  dplyr::summarize(value = mean(value)) %>% data.frame()
+
+ggplot(randomHypoVCA, aes(x=variable, y=value))+
+  geom_boxplot()+
+  geom_jitter(width=.1, alpha=.2)+
+  geom_point(data = df2, col = "red", size = 6)+
+  geom_text(data=sumDF, aes(label=round(value)), col="white")+
+  geom_text(data = df2, aes(label=round(value)), col="white")+
+  theme_cleveland()+
+  ggtitle("VCA with bootstrap N=1000 at hypo-parDMS", subtitle = "red: observed values")
+
 # estimate 95% confidence intervals, request CI for
 # all variance components via 'VarVC=TRUE'
 VCAinference(myfitVCA_hypo, VarVC=TRUE)
 
+## Hyper
+PM_G2_mean_hyper <- PM_G2[PM_G2$hypohyper %in% "hyper", ] %>% 
+  group_by(brotherPairID, G1_trt, G2_trt, ID) %>% 
+  dplyr::summarize(MeanBetaValue = mean(BetaValue, na.rm=TRUE)) %>% data.frame()
+
+varPlot(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hyper, 
+        MeanLine=list(var=c("G1_trt", "G2_trt"), 
+                      col=c("white", "blue"), lwd=c(2,2)), 
+        BG=list(var="G2_trt", col=paste0("gray", c(80, 90))),
+        YLabel=list(cex = .8, text="Mean beta value at parDMS \n hypermethylated upon infection"))
+
+myfitVCA_hyper <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hyper) 
+
+### Real values
+trtEffect <- sum(myfitVCA_hyper$aov.tab[2:4, 5])
+genEffect <- sum(myfitVCA_hyper$aov.tab[5:8, 5])
+error <- sum(myfitVCA_hyper$aov.tab[9, 5])
+realValHyperVCA <- data.frame(trtEffect=trtEffect, genEffect=genEffect,error=error)
+
+### Randomisation
+randomHyperVCA = do.call(rbind, lapply(1:1000, function(x) {
+  df=myrandomVCA(PM_G2_mean_hyper)
+  df$rep=x
+  return(df)}))
+
+randomHyperVCA = melt(randomHyperVCA, id.vars = "rep")
+# saveRDS(randomHyperVCA, file = "Rdata/randomHyperVCA.RDS")
+randomHyperVCA <- readRDS(file = "Rdata/randomHyperVCA.RDS")
+df2=reshape2::melt(realValHyperVCA)
+
+sumDF <- randomHyperVCA %>% 
+  group_by(variable) %>%
+  dplyr::summarize(value = mean(value)) %>% data.frame()
+
+ggplot(randomHyperVCA, aes(x=variable, y=value))+
+  geom_boxplot()+
+  geom_jitter(width=.1, alpha=.2)+
+  geom_point(data = df2, col = "red", size = 6)+
+  geom_text(data=sumDF, aes(label=round(value)), col="white")+
+  geom_text(data = df2, aes(label=round(value)), col="white")+
+  theme_cleveland()+
+  ggtitle("VCA with bootstrap N=1000 at hyper-parDMS", subtitle = "red: observed values")
+
+# estimate 95% confidence intervals, request CI for
+# all variance components via 'VarVC=TRUE'
+VCAinference(myfitVCA_hypo, VarVC=TRUE)
+
+################
 ## Hyper
 PM_G2_mean_hyper <- PM_G2[PM_G2$hypohyper %in% "hyper", ] %>% 
   group_by(brotherPairID, G1_trt, G2_trt, ID) %>% 

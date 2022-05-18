@@ -19,11 +19,14 @@ list.of.packages <- c(
     "magrittr",      # provides the %>% operator
     "methylKit",
     "nlme", ## for mixed models
+    "pheatmap", # for heatmaps
     "plyr", # for join (keep row order",
     "png",
     "qualpalr",# extra palettes
     "RColorBrewer", # for colors in Venn diagrams
     "reshape2",
+    "sjPlot", # plot interaction effects
+    "slider", # for slidding windows
     "splitstackshape", # to spread the V9 column of gff into columns by key
     "tidyverse",  # tidyverse will pull in ggplot2, readr, other useful libraries
     "VCA",

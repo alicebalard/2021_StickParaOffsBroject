@@ -2,12 +2,10 @@
 ## A. Balard
 ## February 2022
 
-#################### Data load & preparation ####################
-source("librariesLoading.R")
-## load custom functions
-source("customRfunctions.R")
-## Load samples metadata
-source("R02.1_loadMetadata.R")
+machine="mythinkpad" # define the machine we work on
+loadALL = FALSE # only load CpG shared by half fish per trt group
+loadannot = TRUE # load genome annotations
+source("R02.3_DATALOAD.R")
 
 #### NB: add BCI (was calculated only in R03.1)
 ## Kaufmann et al. 2014: Body condition of the G2 fish, an estimate of fish health and a predictor
@@ -16,12 +14,6 @@ source("R02.1_loadMetadata.R")
 fullMetadata_OFFS$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|Family), data=fullMetadata_OFFS))
 ## and for parents (no sex difference, only males):
 fullMetadata_PAR$BCI <- residuals(lmer(Wnettofin ~ Slfin + (1|Family), data=fullMetadata_PAR))
-
-## define in which machine we're working (apocrita or mythinkpad)
-##machine="apocrita"
-machine="mythinkpad"
-## Load methylation data
-source("R02.2_loadMethyldata.R")
 
 ###########################################
 ## Source the previously calculated DMS/DMR
