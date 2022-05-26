@@ -11,8 +11,9 @@
 
 module load blast+
 module load anaconda3/2020.02
-conda activate agat
 module load maker/2.31.9-mpi
+
+#conda activate agat
 
 DIR=/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/06GynoGen_functionalAnnotation
 GFF1=$DIR/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff
@@ -37,7 +38,10 @@ cd $DIR
 # blastp -query $DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa -db $UNIPROTDB -num_threads 8 -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out $DIR/output_onlyuniprot.blastp
 
 ## Integrate functional annotations into structural annotations. 
-# maker_functional_gff $UNIPROTDB $DIR/output_onlyuniprot.blastp $GFF1 > $DIR/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_CURATED.gff
+maker_functional_gff $UNIPROTDB $DIR/output_onlyuniprot.blastp Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.gff > Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff
+
+## Remove double "Note"
+sed -i 's/;Note=Protein of unknown function;Note/;Note/g' Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff
 
 ## Convert gff to bed12 for further analyses
-agat_convert_sp_gff2bed.pl -gff $DIR/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_CURATED.gff -o $DIR/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_CURATED.bed12
+agat_convert_sp_gff2bed.pl --gff Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff -o Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.bed12
