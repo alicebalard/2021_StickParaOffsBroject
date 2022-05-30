@@ -6,6 +6,10 @@ machine="mythinkpad" # define the machine we work on
 loadALL = FALSE # only load CpG shared by half fish per trt group
 source("R02.3_DATALOAD.R")
 
+##########################
+## I. Top-down approach ##
+##########################
+
 ######### 
 ## Calculate parental DMS (parDMS) for each brother pair
 
@@ -70,26 +74,33 @@ getG2atParDMSperBP <- function(BP){
   dfhypoG2parDMS = dfhypoG2parDMS[order(as.numeric(gsub("S", "", dfhypoG2parDMS$ID))),]
   dfhyperG2parDMS = dfhyperG2parDMS[order(as.numeric(gsub("S", "", dfhyperG2parDMS$ID))),]
   
-  return(list(parDMS1BP_G2_hypo=parDMS1BP_G2_hypo, parDMS1BP_G2_hyper=parDMS1BP_G2_hyper,
+  return(list(DMS15pc_1BP_G1 = DMS15pc_1BP,
+              parDMS1BP_G2_hypo=parDMS1BP_G2_hypo, parDMS1BP_G2_hyper=parDMS1BP_G2_hyper,
               dfhypoG2parDMS=dfhypoG2parDMS, dfhyperG2parDMS=dfhyperG2parDMS))
 } 
 
 ## Here all the dataset for each BP are stored (metadata for univariate stats/methylKit object for multivariate)
-results <- lapply(vecBP, getG2atParDMSperBP)
+run=FALSE
+if (run==TRUE){
+  results <- lapply(vecBP, getG2atParDMSperBP)
+}
 
 ######### 
 ## 1. Multivariate analysis: clustering of samples by trt
-results4PCA <- results # we modify the object
-for (i in 1:8){
-  results4PCA[[i]]$parDMS1BP_G2_hypo@treatment = 
-    merge(data.frame(old = results4PCA[[i]]$parDMS1BP_G2_hypo@treatment),
-          data.frame(old=c(2,3,5,6), new=1:4))$new
-  
-  # change number for trt to visualise
-  results4PCA[[i]]$parDMS1BP_G2_hypo@sample.ids = results4PCA[[i]]$dfhypoG2parDMS$Tr
-  ## Plot for all BP
-  PCASamples(results4PCA[[i]]$parDMS1BP_G2_hypo)
-  Sys.sleep(10)
+run=FALSE
+if (run==TRUE){
+  results4PCA <- results # we modify the object
+  for (i in 1:8){
+    results4PCA[[i]]$parDMS1BP_G2_hypo@treatment = 
+      merge(data.frame(old = results4PCA[[i]]$parDMS1BP_G2_hypo@treatment),
+            data.frame(old=c(2,3,5,6), new=1:4))$new
+    
+    # change number for trt to visualise
+    results4PCA[[i]]$parDMS1BP_G2_hypo@sample.ids = results4PCA[[i]]$dfhypoG2parDMS$Tr
+    ## Plot for all BP
+    PCASamples(results4PCA[[i]]$parDMS1BP_G2_hypo)
+    Sys.sleep(10)
+  }
 }
 
 ######### 
@@ -130,62 +141,215 @@ aveMethStats <- function(BPnum, hypoOrhyper){
   avePred=data.frame(ggeffects::ggpredict(modfull,terms = c("patTrt")))
   CparMean=avePred$predicted[avePred$x %in% "controlP"]
   TparMean=avePred$predicted[avePred$x %in% "infectedP"]
-
+  
   mysummary=data.frame(BP = unique(df$brotherPairID),
                        isInterSignif=isInterSignif, hypoOrhyper=hypoOrhyper,
                        CC_CTslope=CC_CTslope, TC_TTslope=TC_TTslope,
                        CparMean = CparMean,TparMean=TparMean)
-
+  
   return(list(p1=p1, mysummary=mysummary))
 }
 
-## Plot for all BP
-plist <- list() # empty plot list
-for (i in 1:length(vecBP)){
-  plist[[i]] <- aveMethStats(BPnum = i, "hypo")$p1
+run=FALSE
+if (run==TRUE){
+  ## Plot for all BP
+  plist <- list() # empty plot list
+  for (i in 1:length(vecBP)){
+    plist[[i]] <- aveMethStats(BPnum = i, "hypo")$p1
+  } 
+  do.call(grid.arrange, c(plist, ncol = 4))
+  
+  plist <- list() # empty plot list
+  for (i in 1:length(vecBP)){
+    plist[[i]] <- aveMethStats(BPnum = i, "hyper")$p1
+  } 
+  do.call(grid.arrange, c(plist, ncol = 4))
+  
+  ## Get dataframe of summarised values for all BP
+  hypodf=do.call(rbind, lapply(1:length(vecBP), 
+                               function(x) aveMethStats(BPnum = x, hypoOrhyper = "hypo")$mysummary))
+  hypodf=melt(hypodf, id.vars = c("BP", "isInterSignif", "hypoOrhyper"))
+  
+  hyperdf=do.call(rbind, lapply(1:length(vecBP), 
+                                function(x) aveMethStats(BPnum = x, hypoOrhyper = "hyper")$mysummary))
+  hyperdf=melt(hyperdf, id.vars = c("BP", "isInterSignif", "hypoOrhyper"))
+  
+  ## plot summarised values
+  ## reaction norm = pure transgenerational effect
+  p1 = ggplot(hypodf[hypodf$variable %in% c("CC_CTslope", "TC_TTslope"),], 
+              aes(x=variable, y=value))+
+    geom_point(aes(col=isInterSignif), size = 3)+
+    theme_cleveland()+
+    scale_color_manual(values = c("black", "red"))+
+    geom_line(aes(group=BP,col=isInterSignif))+
+    geom_label_repel(data = hypodf[hypodf$variable %in% "TC_TTslope",], 
+                     aes(x=variable, y=value, label=BP), xlim  = 2.1, segment.color="grey")
+  p2 = ggplot(hyperdf[hyperdf$variable %in% c("CC_CTslope", "TC_TTslope"),], 
+              aes(x=variable, y=value))+
+    geom_point(aes(col=isInterSignif), size = 3)+
+    theme_cleveland()+
+    scale_color_manual(values = c("black", "red"))+
+    geom_line(aes(group=BP,col=isInterSignif))+
+    geom_label_repel(data = hyperdf[hyperdf$variable %in% "TC_TTslope",], 
+                     aes(x=variable, y=value, label=BP), xlim  = 2.1, segment.color="grey")
+  ggarrange(p1, p2, labels = c("hypo-parDMS", "hyper-parDMS"), ncol = 2)
+  
+  ## marginal prediction of parental infection = transgenerational effect + genetic brothers
+  p1 = ggplot(hypodf[hypodf$variable %in% c("CparMean", "TparMean"),], 
+              aes(x=variable, y=value))+
+    geom_point(aes(col=isInterSignif), size = 3)+
+    theme_cleveland()+
+    scale_color_manual(values = c("black", "red"))+
+    geom_line(aes(group=BP,col=isInterSignif))+
+    geom_label_repel(data = hypodf[hypodf$variable %in% "TparMean",], 
+                     aes(x=variable, y=value, label=BP), xlim  = 2.1, segment.color="grey")
+  p2 = ggplot(hyperdf[hyperdf$variable %in% c("CparMean", "TparMean"),],
+              aes(x=variable, y=value))+
+    geom_point(aes(col=isInterSignif), size = 3)+
+    theme_cleveland()+
+    scale_color_manual(values = c("black", "red"))+
+    geom_line(aes(group=BP,col=isInterSignif))+
+    geom_label_repel(data = hyperdf[hyperdf$variable %in% "TparMean",], 
+                     aes(x=variable, y=value, label=BP), xlim  = 2.1, segment.color="grey")
+  ggarrange(p1, p2, labels = c("hypo-parDMS", "hyper-parDMS"), ncol = 2)
+  
+  ## Binomial test of our hypothesis: if the average methylation is HIGH in G2 from control G1,
+  ## then the interaction G1trt:G2trt is not significant
+  binom.test(x = 8, n = 8, p = 0.5, conf.level = 0.95) # p-value = 0.007812
+  
+  binom.test(x = 6, n = 8, p = 0.5, conf.level = 0.95) # p-value = 0.007812
 } 
-do.call(grid.arrange, c(plist, ncol = 4))
 
-plist <- list() # empty plot list
+##############################################################
+#### Compare per BP diffmeth in C-T, CC-CT and TC-TT groups ##
+run=FALSE
+if (run==TRUE){
+  getDFpercentHyper <- function(i){
+    res = results[[i]]
+    
+    ## Hypo
+    PM=percMethylation(res$parDMS1BP_G2_hypo)
+    ## Calculate average methylation for CC, CT, TC, TT
+    trts = levels(fullMetadata_OFFS$trtG1G2)
+    df=data.frame(
+      A = rowMeans(PM[,colnames(PM) %in% fullMetadata_OFFS$SampleID[
+        fullMetadata_OFFS$trtG1G2 %in% trts[1]]]),
+      B = rowMeans(PM[,colnames(PM) %in% fullMetadata_OFFS$SampleID[
+        fullMetadata_OFFS$trtG1G2 %in% trts[2]]]),
+      C = rowMeans(PM[,colnames(PM) %in% fullMetadata_OFFS$SampleID[
+        fullMetadata_OFFS$trtG1G2 %in% trts[3]]]),
+      D = rowMeans(PM[,colnames(PM) %in% fullMetadata_OFFS$SampleID[
+        fullMetadata_OFFS$trtG1G2 %in% trts[4]]]))
+    names(df) = paste0("ave_", trts)
+    ## Calculate difference Exposed minus Control in both parental group
+    df = data.frame(DiffMeth_CT_NEG1 = df$ave_NE_exposed - df$ave_NE_control,
+                    DiffMeth_CT_EG1 = df$ave_E_exposed - df$ave_E_control,
+                    chr = res$parDMS1BP_G2_hypo$chr, start = res$parDMS1BP_G2_hypo$start, 
+                    end = res$parDMS1BP_G2_hypo$end)
+    ## Merge with parDMS values
+    dfhypo = merge(methylKit::getData(res$DMS15pc_1BP_G1), df)
+    
+    ## Hyper
+    PM=percMethylation(res$parDMS1BP_G2_hyper)
+    ## Calculate average methylation for CC, CT, TC, TT
+    trts = levels(fullMetadata_OFFS$trtG1G2)
+    df=data.frame(
+      A = rowMeans(PM[,colnames(PM) %in% fullMetadata_OFFS$SampleID[
+        fullMetadata_OFFS$trtG1G2 %in% trts[1]]]),
+      B = rowMeans(PM[,colnames(PM) %in% fullMetadata_OFFS$SampleID[
+        fullMetadata_OFFS$trtG1G2 %in% trts[2]]]),
+      C = rowMeans(PM[,colnames(PM) %in% fullMetadata_OFFS$SampleID[
+        fullMetadata_OFFS$trtG1G2 %in% trts[3]]]),
+      D = rowMeans(PM[,colnames(PM) %in% fullMetadata_OFFS$SampleID[
+        fullMetadata_OFFS$trtG1G2 %in% trts[4]]]))
+    names(df) = paste0("ave_", trts)
+    ## Calculate difference Exposed minus Control in both parental group
+    df = data.frame(DiffMeth_CT_NEG1 = df$ave_NE_exposed - df$ave_NE_control,
+                    DiffMeth_CT_EG1 = df$ave_E_exposed - df$ave_E_control,
+                    chr = res$parDMS1BP_G2_hyper$chr, start = res$parDMS1BP_G2_hyper$start, 
+                    end = res$parDMS1BP_G2_hyper$end)
+    ## Merge with parDMS values
+    dfhyper = merge(methylKit::getData(res$DMS15pc_1BP_G1), df)
+    
+    dfhypohyper = rbind(dfhypo, dfhyper) # NB: positions NOT ordered
+    
+    result = data.frame(BP=unique(res$dfhypoG2parDMS$brotherPairID),
+                        percentHyper_G1 = sum(dfhypohyper$meth.diff > 0) / nrow(dfhypohyper),
+                        percentHyper_G2_NEG1 = sum(dfhypohyper$DiffMeth_CT_NEG1 > 0) / nrow(dfhypohyper),
+                        percentHyper_G2_EG1 = sum(dfhypohyper$DiffMeth_CT_EG1 > 0) / nrow(dfhypohyper))
+    
+    return(result)
+  }
+  
+  ## Loop over that for all BP:
+  dfperchyper = data.frame(t(sapply(1:length(vecBP), getDFpercentHyper)))
+  dfperchyper$BP = unlist(dfperchyper$BP)
+  dfperchyper$percentHyper_G1=unlist(dfperchyper$percentHyper_G1)
+  dfperchyper$percentHyper_G2_NEG1=unlist(dfperchyper$percentHyper_G2_NEG1)
+  dfperchyper$percentHyper_G2_EG1=unlist(dfperchyper$percentHyper_G2_EG1)
+  
+  ggplot(dfperchyper)+
+    geom_abline(slope = 1) +
+    geom_label(aes(x=percentHyper_G2_NEG1, y=percentHyper_G1,label=BP), col = "black")+
+    geom_label(aes(x=percentHyper_G2_EG1, y=percentHyper_G1,label=BP), col = "red")+
+    xlab("Percentage of parDMS in G2 where methylation Exposed > methylation Control")+
+    ylab("Percentage of parDMS in G1 where methylation Exposed > methylation Control")+
+    xlim(0.25,0.75)+ylim(0.25,0.75)
+}
+
+############################
+## II. Bottom-Up approach ##
+############################
+
+#######################################
+## Attribute plot of DMS in every BP ##
+#######################################
+
+nrow(uniteCov14_G2_woSexAndUnknowChrOVERLAP) # methylBase object with 1001880 rows
+
+## Calculate DMS between G2 from G1C & G2 from G1T, by brother pair
+# getDiffMeth(uniteCov14_G2_woSexAndUnknowChrOVERLAP, fullMetadata_PAR)
+
+getDMSperBP <- function(BP){
+  metadataBP = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP, ]
+  myuniteCovBP = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                            treatment = metadataBP$trtG1G2_NUM,
+                            sample.ids = metadataBP$ID)
+  # remove bases where NO fish in this BP has a coverage
+  myuniteCovBP = methylKit::select(myuniteCovBP, which(!is.na(rowSums(percMethylation(myuniteCovBP)))))
+  # trt in c(5,6): control parent / trt in c(2,3): exposed parent
+  myuniteCovBP@treatment = ifelse(myuniteCovBP@treatment %in% c(5,6), 0, 1) # 0 = control parent; 1 = treatment parent
+  
+  ## reduce for testing
+  myuniteCovBP = methylKit::select(myuniteCovBP, 1:100)
+  
+  # Calculate differential methylation
+  myDiffMethBP = calculateDiffMeth(myuniteCovBP, mc.cores = 3)
+  # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
+  myDMS_15pc_BP = getMethylDiff(myDiffMethBP, difference=15, qvalue=0.01)
+  myPos = paste(myDMS_15pc_BP$chr, myDMS_15pc_BP$end)
+  return(myPos)
+}
+
+## Loop over all BP
+DMSlist <- list() # empty plot list
 for (i in 1:length(vecBP)){
-  plist[[i]] <- aveMethStats(BPnum = i, "hyper")$p1
+  DMSlist[[i]] <- getDMSperBP(BP = vecBP[[i]])
 } 
-do.call(grid.arrange, c(plist, ncol = 4))
 
-## Get dataframe of summarised values for all BP
-hypodf=do.call(rbind, lapply(1:length(vecBP), 
-                             function(x) aveMethStats(BPnum = x, hypoOrhyper = "hypo")$mysummary))
-hypodf=melt(hypodf, id.vars = c("BP", "isInterSignif", "hypoOrhyper"))
+names(DMSlist) <- vecBP
 
-hyperdf=do.call(rbind, lapply(1:length(vecBP), 
-                              function(x) aveMethStats(BPnum = x, hypoOrhyper = "hyper")$mysummary))
-hyperdf=melt(hyperdf, id.vars = c("BP", "isInterSignif", "hypoOrhyper"))
-
-## plot summarised values
-## reaction norm = pure transgenerational effect
-ggplot(hypodf[hypodf$variable %in% c("CC_CTslope", "TC_TTslope"),], 
-       aes(x=variable, y=value))+
-  geom_point(aes(col=isInterSignif), size = 3)+
-  theme_cleveland()+
-  scale_color_manual(values = c("black", "red"))+
-  geom_line(aes(group=BP,col=isInterSignif))
-ggplot(hyperdf[hyperdf$variable %in% c("CC_CTslope", "TC_TTslope"),], 
-       aes(x=variable, y=value))+
-  geom_point(aes(col=isInterSignif), size = 3)+
-  theme_cleveland()+
-  scale_color_manual(values = c("black", "red"))+
-  geom_line(aes(group=BP,col=isInterSignif))
-
-## marginal prediction of parental infection = transgenerational effect + genetic brothers
-ggplot(hypodf[hypodf$variable %in% c("CparMean", "TparMean"),], 
-       aes(x=variable, y=value))+
-  geom_point(aes(col=isInterSignif), size = 3)+
-  theme_cleveland()+
-  scale_color_manual(values = c("black", "red"))+
-  geom_line(aes(group=BP,col=isInterSignif))
-ggplot(hyperdf[hyperdf$variable %in% c("CparMean", "TparMean"),], 
-       aes(x=variable, y=value))+
-  geom_point(aes(col=isInterSignif), size = 3)+
-  theme_cleveland()+
-  scale_color_manual(values = c("black", "red"))+
-  geom_line(aes(group=BP,col=isInterSignif))
+# 
+# 
+# 
+# # list(BP1=c(all DMS names), BP2=c())
+# 
+# library(UpSetR)
+# movies <- read.csv(system.file("extdata", "movies.csv", package = "UpSetR"), 
+#                    header = T, sep = ";")
+# 
+# # example of list input (list of named vectors)
+# listInput <- list(one = c(1, 2, 3, 5, 7, 8, 11, 12, 13), two = c(1, 2, 4, 5, 
+#                                                                  10), three = c(1, 5, 6, 7, 8, 9, 10, 12, 13))
+# 
+# upset(fromList(listInput), order.by = "freq")
