@@ -10,6 +10,7 @@ list.of.packages <- c(
     "ggeffects", # to plot random effects predictions
     "ggplot2",
     "ggpubr", ## to merge ggplot2 plots
+    "ggrepel",
     "goeveg", # find the best number of dimensions for NMDS
     "ggsignif", ## for significance bars on ggplot
     "grid",
