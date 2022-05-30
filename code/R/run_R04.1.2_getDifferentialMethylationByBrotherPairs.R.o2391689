@@ -1,0 +1,386 @@
+Loading R/4.0.2
+  Loading requirement: java/1.8.0_171-oracle
+Loading required package: cowplot
+Loading required package: dendextend
+
+---------------------
+Welcome to dendextend version 1.15.2
+Type citation('dendextend') for how to cite the package.
+
+Type browseVignettes(package = 'dendextend') for the package vignette.
+The github page is: https://github.com/talgalili/dendextend/
+
+Suggestions and bug-reports can be submitted at: https://github.com/talgalili/dendextend/issues
+You may ask questions at stackoverflow, use the r and dendextend tags: 
+	 https://stackoverflow.com/questions/tagged/dendextend
+
+	To suppress this message use:  suppressPackageStartupMessages(library(dendextend))
+---------------------
+
+
+Attaching package: ‘dendextend’
+
+The following object is masked from ‘package:stats’:
+
+    cutree
+
+Loading required package: devtools
+Loading required package: usethis
+Loading required package: dplyr
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+Loading required package: emmeans
+
+Attaching package: ‘emmeans’
+
+The following object is masked from ‘package:devtools’:
+
+    test
+
+Loading required package: genomation
+Loading required package: grid
+Loading required package: ggeffects
+
+Attaching package: ‘ggeffects’
+
+The following object is masked from ‘package:cowplot’:
+
+    get_title
+
+Loading required package: ggplot2
+Loading required package: ggpubr
+
+Attaching package: ‘ggpubr’
+
+The following object is masked from ‘package:dendextend’:
+
+    rotate
+
+The following object is masked from ‘package:cowplot’:
+
+    get_legend
+
+Loading required package: ggrepel
+Loading required package: goeveg
+Registered S3 method overwritten by 'vegan':
+  method     from      
+  rev.hclust dendextend
+Welcome to the GoeVeg Package
+Loading required package: ggsignif
+Loading required package: gridExtra
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+Loading required package: lme4
+Loading required package: Matrix
+Loading required package: lmtest
+Loading required package: zoo
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+Loading required package: magrittr
+Loading required package: methylKit
+Loading required package: GenomicRanges
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following object is masked from ‘package:gridExtra’:
+
+    combine
+
+The following objects are masked from ‘package:dplyr’:
+
+    combine, intersect, setdiff, union
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
+    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following object is masked from ‘package:Matrix’:
+
+    expand
+
+The following objects are masked from ‘package:dplyr’:
+
+    first, rename
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+
+Attaching package: ‘IRanges’
+
+The following objects are masked from ‘package:dplyr’:
+
+    collapse, desc, slice
+
+Loading required package: GenomeInfoDb
+
+Attaching package: ‘methylKit’
+
+The following object is masked from ‘package:lme4’:
+
+    getData
+
+The following objects are masked from ‘package:genomation’:
+
+    getFeatsWithTargetsStats, getFlanks, getMembers,
+    getTargetAnnotationStats, plotTargetAnnotation
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+Loading required package: nlme
+
+Attaching package: ‘nlme’
+
+The following object is masked from ‘package:methylKit’:
+
+    getData
+
+The following object is masked from ‘package:IRanges’:
+
+    collapse
+
+The following object is masked from ‘package:lme4’:
+
+    lmList
+
+The following object is masked from ‘package:dplyr’:
+
+    collapse
+
+Loading required package: pheatmap
+Loading required package: plyr
+------------------------------------------------------------------------------
+You have loaded plyr after dplyr - this is likely to cause problems.
+If you need functions from both plyr and dplyr, please load plyr first, then dplyr:
+library(plyr); library(dplyr)
+------------------------------------------------------------------------------
+
+Attaching package: ‘plyr’
+
+The following object is masked from ‘package:IRanges’:
+
+    desc
+
+The following object is masked from ‘package:S4Vectors’:
+
+    rename
+
+The following object is masked from ‘package:ggpubr’:
+
+    mutate
+
+The following objects are masked from ‘package:dplyr’:
+
+    arrange, count, desc, failwith, id, mutate, rename, summarise,
+    summarize
+
+Loading required package: png
+Loading required package: qualpalr
+Loading required package: RColorBrewer
+Loading required package: reshape2
+Loading required package: sjPlot
+Learn more about sjPlot with 'browseVignettes("sjPlot")'.
+
+Attaching package: ‘sjPlot’
+
+The following objects are masked from ‘package:cowplot’:
+
+    plot_grid, save_plot
+
+Loading required package: slider
+Loading required package: splitstackshape
+Loading required package: tidyverse
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ tibble  3.1.6     ✔ purrr   0.3.4
+✔ tidyr   1.2.0     ✔ stringr 1.4.0
+✔ readr   2.1.2     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ plyr::arrange()          masks dplyr::arrange()
+✖ nlme::collapse()         masks IRanges::collapse(), dplyr::collapse()
+✖ BiocGenerics::combine()  masks gridExtra::combine(), dplyr::combine()
+✖ purrr::compact()         masks plyr::compact()
+✖ plyr::count()            masks dplyr::count()
+✖ plyr::desc()             masks IRanges::desc(), dplyr::desc()
+✖ tidyr::expand()          masks S4Vectors::expand(), Matrix::expand()
+✖ tidyr::extract()         masks magrittr::extract()
+✖ plyr::failwith()         masks dplyr::failwith()
+✖ dplyr::filter()          masks stats::filter()
+✖ S4Vectors::first()       masks dplyr::first()
+✖ plyr::id()               masks dplyr::id()
+✖ dplyr::lag()             masks stats::lag()
+✖ plyr::mutate()           masks ggpubr::mutate(), dplyr::mutate()
+✖ tidyr::pack()            masks Matrix::pack()
+✖ BiocGenerics::Position() masks ggplot2::Position(), base::Position()
+✖ purrr::reduce()          masks GenomicRanges::reduce(), IRanges::reduce()
+✖ plyr::rename()           masks S4Vectors::rename(), dplyr::rename()
+✖ methylKit::select()      masks dplyr::select()
+✖ purrr::set_names()       masks magrittr::set_names()
+✖ IRanges::slice()         masks dplyr::slice()
+✖ plyr::summarise()        masks dplyr::summarise()
+✖ plyr::summarize()        masks dplyr::summarize()
+✖ tidyr::unite()           masks methylKit::unite()
+✖ tidyr::unpack()          masks Matrix::unpack()
+Loading required package: VCA
+
+Attaching package: ‘VCA’
+
+The following objects are masked from ‘package:nlme’:
+
+    fixef, isBalanced, ranef
+
+The following objects are masked from ‘package:lme4’:
+
+    fixef, getL, ranef
+
+The following object is masked from ‘package:emmeans’:
+
+    lsmeans
+
+Loading required package: vegan
+Loading required package: permute
+
+Attaching package: ‘permute’
+
+The following object is masked from ‘package:devtools’:
+
+    check
+
+The following object is masked from ‘package:dendextend’:
+
+    shuffle
+
+Loading required package: lattice
+This is vegan 2.5-7
+Loading required package: VennDiagram
+Loading required package: futile.logger
+
+Attaching package: ‘VennDiagram’
+
+The following object is masked from ‘package:ggpubr’:
+
+    rotate
+
+The following object is masked from ‘package:dendextend’:
+
+    rotate
+
+Loading required package: cluster
+Loading required package: WGCNA
+Loading required package: dynamicTreeCut
+Loading required package: fastcluster
+
+Attaching package: ‘fastcluster’
+
+The following object is masked from ‘package:stats’:
+
+    hclust
+
+
+
+Attaching package: ‘WGCNA’
+
+The following object is masked from ‘package:IRanges’:
+
+    cor
+
+The following object is masked from ‘package:S4Vectors’:
+
+    cor
+
+The following object is masked from ‘package:stats’:
+
+    cor
+
+Loading required package: GenomicFeatures
+Loading required package: AnnotationDbi
+Loading required package: Biobase
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+
+Attaching package: ‘AnnotationDbi’
+
+The following object is masked from ‘package:methylKit’:
+
+    select
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+Warning message:
+package ‘gridExtra’ was built under R version 4.0.4 
+[1] 1001880
+[1] 1001880
+two groups detected:
+ will calculate methylation difference as the difference of
+treatment (group: 1) - control (group: 0)
+two groups detected:
+ will calculate methylation difference as the difference of
+treatment (group: 1) - control (group: 0)
+two groups detected:
+ will calculate methylation difference as the difference of
+treatment (group: 1) - control (group: 0)
+two groups detected:
+ will calculate methylation difference as the difference of
+treatment (group: 1) - control (group: 0)
+two groups detected:
+ will calculate methylation difference as the difference of
+treatment (group: 1) - control (group: 0)
+two groups detected:
+ will calculate methylation difference as the difference of
+treatment (group: 1) - control (group: 0)
+two groups detected:
+ will calculate methylation difference as the difference of
+treatment (group: 1) - control (group: 0)
+two groups detected:
+ will calculate methylation difference as the difference of
+treatment (group: 1) - control (group: 0)

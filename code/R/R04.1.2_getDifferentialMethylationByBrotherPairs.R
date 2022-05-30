@@ -2,8 +2,10 @@
 ## A. Balard
 ## February 2022
 
-machine="mythinkpad" # define the machine we work on
+machine="apocrita" # define the machine we work on
 loadALL = FALSE # only load CpG shared by half fish per trt group
+loadannot = FALSE
+sourceDMS = FALSE
 source("R02.3_DATALOAD.R")
 
 ##########################
@@ -319,12 +321,8 @@ getDMSperBP <- function(BP){
   myuniteCovBP = methylKit::select(myuniteCovBP, which(!is.na(rowSums(percMethylation(myuniteCovBP)))))
   # trt in c(5,6): control parent / trt in c(2,3): exposed parent
   myuniteCovBP@treatment = ifelse(myuniteCovBP@treatment %in% c(5,6), 0, 1) # 0 = control parent; 1 = treatment parent
-  
-  ## reduce for testing
-  myuniteCovBP = methylKit::select(myuniteCovBP, 1:100)
-  
   # Calculate differential methylation
-  myDiffMethBP = calculateDiffMeth(myuniteCovBP, mc.cores = 3)
+  myDiffMethBP = calculateDiffMeth(myuniteCovBP, mc.cores = 10)
   # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
   myDMS_15pc_BP = getMethylDiff(myDiffMethBP, difference=15, qvalue=0.01)
   myPos = paste(myDMS_15pc_BP$chr, myDMS_15pc_BP$end)
@@ -338,6 +336,8 @@ for (i in 1:length(vecBP)){
 } 
 
 names(DMSlist) <- vecBP
+
+saveRDS(DMSlist, "./Rdata/DMS_BP_G2_CparvsTpar.RDS")
 
 # 
 # 
