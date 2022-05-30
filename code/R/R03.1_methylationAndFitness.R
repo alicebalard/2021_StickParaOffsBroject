@@ -2,19 +2,9 @@
 ## A. Balard
 ## November 2021
 
-## load libraries
-source("librariesLoading.R")
-## load custom functions
-source("customRfunctions.R")
-## Load samples metadata
-source("R02.1_loadMetadata.R")
-
-## Load previously united methylkit data
-## define in which machine we're working (apocrita or mythinkpad)
+machine="mythinkpad" # define the machine we work on
 loadALL = FALSE # only load CpG shared by half fish per trt group
-##machine="apocrita"
-machine="mythinkpad"
-source("R02.2_loadMethyldata.R")
+source("R02.3_DATALOAD.R")
 
 ## Data getting loaded:
 uniteCovALL_woSexAndUnknowChr #-> 55530 CpG positions shared by all fish

@@ -49,3 +49,6 @@ table(fullMetadata_OFFS$patTrt, fullMetadata_OFFS$trtG1G2)
 fullMetadata = fullMetadata[order(as.numeric(gsub("S", "", fullMetadata$SampleID))),]
 fullMetadata_PAR = fullMetadata_PAR[order(as.numeric(gsub("S", "", fullMetadata_PAR$SampleID))),]
 fullMetadata_OFFS = fullMetadata_OFFS[order(as.numeric(gsub("S", "", fullMetadata_OFFS$SampleID))),]
+
+## Output cleaned data for Eri:
+# write.csv(x = fullMetadata, file = "../../gitignore/fullMetadata4Eri.csv", quote = F, row.names = F)
