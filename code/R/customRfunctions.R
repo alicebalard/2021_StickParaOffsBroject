@@ -338,10 +338,12 @@ getPMdataset <- function(uniteCov, MD, gener){
 ## Differential methylation functions ##
 ########################################
 getDiffMeth <- function(myuniteCov, myMetadata, mccores=10, mydif = 15){
-  if (length(table(myMetadata$Sex)) == 1){
+  if (length(table(myMetadata$Sex)) == 1 & length(table(myMetadata$brotherPairID)) > 1){
     cov = data.frame(brotherPairID = myMetadata$brotherPairID)
-  } else if (length(table(myMetadata$Sex)) == 2){
+  } else if (length(table(myMetadata$Sex)) == 2 & length(table(myMetadata$brotherPairID)) > 1){
     cov = data.frame(brotherPairID = myMetadata$brotherPairID, Sex = myMetadata$Sex)
+  } else if (length(table(myMetadata$Sex)) == 2){ # this is for within brother pairs
+    cov = data.frame(Sex = myMetadata$Sex)
   } 
   myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = mccores)#10 on Apocrita
   ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
@@ -384,4 +386,33 @@ calcAveMeth <- function(perc_uniteObj){
     names(perc_uniteObj)[names(perc_uniteObj) %in% "X"] = paste0("ave", levels(rawmetadata$trtG1G2)[i])
   }
   perc_uniteObj = perc_uniteObj[grep("ave", names(perc_uniteObj))]
+}
+
+################
+## Annotation ## 
+################
+
+### Function to get the annotation of a methylkit object (methylDiff or methylBase)
+getAnnotationFun <- function(METHOBJ){
+  A = annotateWithGeneParts(target = as(METHOBJ,"GRanges"), feature = annotBed12)
+  # Heckwolf 2020: To be associated to a gene, the pop-DMS had to be either inside the gene or,
+  # if intergenic, not further than 10 kb away from the TSS.
+  rows2rm = which((A@dist.to.TSS$dist.to.feature>10000 |
+                     A@dist.to.TSS$dist.to.feature< -10000) &
+                    rowSums(A@members) %in% 0)
+  if (is_empty(rows2rm)){
+    METHOBJ2 = METHOBJ
+  } else {
+    METHOBJ2 = METHOBJ[-rows2rm,]
+  }
+  ## Re annotate the subsetted object
+  B = annotateWithGeneParts(as(METHOBJ2,"GRanges"),annotBed12)
+  ## Get genes associated
+  C = getAssociationWithTSS(B)
+  ## How many CpG per gene?
+  nCpG = table(C$feature.name)
+  ## Get annotations for these genes
+  subAnnot <- data.frame(subset(annotGff3, Name %in% C$feature.name))
+  subAnnot$nCpG = nCpG
+  return(subAnnot)
 }

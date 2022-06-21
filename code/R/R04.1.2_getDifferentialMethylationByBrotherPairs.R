@@ -4,7 +4,7 @@
 
 machine="apocrita" # define the machine we work on
 loadALL = FALSE # only load CpG shared by half fish per trt group
-loadannot = FALSE
+loadannot = TRUE
 sourceDMS = FALSE
 source("R02.3_DATALOAD.R")
 
@@ -312,44 +312,207 @@ nrow(uniteCov14_G2_woSexAndUnknowChrOVERLAP) # methylBase object with 1001880 ro
 ## Calculate DMS between G2 from G1C & G2 from G1T, by brother pair
 # getDiffMeth(uniteCov14_G2_woSexAndUnknowChrOVERLAP, fullMetadata_PAR)
 
+uniteCov14_G2_woSexAndUnknowChrOVERLAP
+
+table(fullMetadata_OFFS$trtG1G2, fullMetadata_OFFS$trtG1G2_NUM)
+
+###################################################################################################
+# Calculate DMS CC-TC and TC-TT in all brother pairs (same treatment, different PARENTAL treatment)
+
 getDMSperBP <- function(BP){
-  metadataBP = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP, ]
-  myuniteCovBP = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
-                            treatment = metadataBP$trtG1G2_NUM,
-                            sample.ids = metadataBP$ID)
+  ## Unite object for one Brother Pair:
+  metadataBP_control = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
+                                           fullMetadata_OFFS$trtG1G2 %in% c("NE_control", "E_control"), ]
+  metadataBP_treatment = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
+                                             fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"), ]
+  
+  ## Make 2 separate uniteCov, for each offspring trt:
+  myuniteCovBP_control = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                    treatment = metadataBP_control$trtG1G2_NUM, sample.ids = metadataBP_control$ID)
+  myuniteCovBP_treatment = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                      treatment = metadataBP_treatment$trtG1G2_NUM, sample.ids = metadataBP_treatment$ID)
+  
   # remove bases where NO fish in this BP has a coverage
-  myuniteCovBP = methylKit::select(myuniteCovBP, which(!is.na(rowSums(percMethylation(myuniteCovBP)))))
-  # trt in c(5,6): control parent / trt in c(2,3): exposed parent
-  myuniteCovBP@treatment = ifelse(myuniteCovBP@treatment %in% c(5,6), 0, 1) # 0 = control parent; 1 = treatment parent
+  myuniteCovBP_control = methylKit::select(myuniteCovBP_control, which(!is.na(rowSums(percMethylation(myuniteCovBP_control)))))
+  myuniteCovBP_treatment = methylKit::select(myuniteCovBP_treatment, which(!is.na(rowSums(percMethylation(myuniteCovBP_treatment)))))
+  
   # Calculate differential methylation
   myDiffMethBP = calculateDiffMeth(myuniteCovBP, mc.cores = 10)
-  # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
+  
   myDMS_15pc_BP = getMethylDiff(myDiffMethBP, difference=15, qvalue=0.01)
-  myPos = paste(myDMS_15pc_BP$chr, myDMS_15pc_BP$end)
-  return(myPos)
+  
+  # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%, sex as covariate
+  DMS_15pc_BP_control = getDiffMeth(myuniteCov = myuniteCovBP_control, myMetadata = metadataBP_control, mccores = 10, mydif = 15)
+  DMS_15pc_BP_treatment = getDiffMeth(myuniteCov = myuniteCovBP_treatment, myMetadata = metadataBP_treatment, mccores = 10, mydif = 15)
+  
+  return(list(DMS_15pc_BP_control = DMS_15pc_BP_control, DMS_15pc_BP_treatment = DMS_15pc_BP_treatment))
 }
 
-## Loop over all BP
-DMSlist <- list() # empty plot list
-for (i in 1:length(vecBP)){
-  DMSlist[[i]] <- getDMSperBP(BP = vecBP[[i]])
-} 
+# myPos = paste(myDMS_15pc_BP$chr, myDMS_15pc_BP$end)
 
-names(DMSlist) <- vecBP
 
-saveRDS(DMSlist, "./Rdata/DMS_BP_G2_CparvsTpar.RDS")
+run=TRUE
+if (run==TRUE){
+  ## Loop over all BP
+  DMSlist <- list() # empty plot list
+  for (i in 1:length(vecBP)){
+    DMSlist[[i]] <- getDMSperBP(BP = vecBP[[i]])
+  } 
+  names(DMSlist) <- vecBP
+  saveRDS(DMSlist, "./Rdata/DMS_BP_G2_list.RDS")
+}
 
+# DMS_BP_G2_CparvsTpar <- readRDS("Rdata/DMS_BP_G2_CparvsTpar.RDS")
 # 
-# 
-# 
-# # list(BP1=c(all DMS names), BP2=c())
+# ## Add fam to bp
+# names(DMS_BP_G2_CparvsTpar) <- paste0(join(data.frame(BP = names(DMS_BP_G2_CparvsTpar)),
+#                                            unique(data.frame(BP = fullMetadata_OFFS$brotherPairID, fam = fullMetadata_OFFS$Family)))[[2]],
+#                                       "_", names(DMS_BP_G2_CparvsTpar))
 # 
 # library(UpSetR)
-# movies <- read.csv(system.file("extdata", "movies.csv", package = "UpSetR"), 
-#                    header = T, sep = ";")
 # 
-# # example of list input (list of named vectors)
-# listInput <- list(one = c(1, 2, 3, 5, 7, 8, 11, 12, 13), two = c(1, 2, 4, 5, 
-#                                                                  10), three = c(1, 5, 6, 7, 8, 9, 10, 12, 13))
+# ## Find DMS present in at least 4 BP (half):
+# x <- unlist(DMS_BP_G2_CparvsTpar)
+# f <- table(x)
+# tokeep <- names(f)[f >= 4] 
+# DMS_BP_G2_CparvsTpar_INTER4 <- lapply(DMS_BP_G2_CparvsTpar, function(x){x[x %in% tokeep]})
 # 
-# upset(fromList(listInput), order.by = "freq")
+# ## Reorder by family:
+# DMS_BP_G2_CparvsTpar_INTER4 <- DMS_BP_G2_CparvsTpar_INTER4[
+#   names(DMS_BP_G2_CparvsTpar_INTER4)[order(names(DMS_BP_G2_CparvsTpar_INTER4))]]
+# 
+# # The majority of differences are within BP or family 
+# UpSetR::upset(fromList(DMS_BP_G2_CparvsTpar_INTER4), order.by = "freq", nsets = 8, keep.order = T, 
+#               sets = names(DMS_BP_G2_CparvsTpar_INTER4), shade.color = "grey")
+# 
+# ###################
+# # Get annotation of the DMS present in at least 4 BP
+# DMSvec <- unique(unlist(DMS_BP_G2_CparvsTpar_INTER4)) # N = 836
+# 
+# # Annotate that:
+# # Change the vector into a methobject:
+# df <- data.frame(chr=sapply(strsplit(DMSvec, " "), `[`, 1),
+#                  start=sapply(strsplit(DMSvec, " "), `[`, 2), 
+#                  end=sapply(strsplit(DMSvec, " "), `[`, 2))
+# # get annotation
+# anot <- getAnnotationFun(makeGRangesFromDataFrame(df))
+# #356 genes
+# 
+# ggplot(anot, aes(x=start, y = nCpG)) + geom_point(alpha=.4) +
+#   facet_grid(.~seqnames) + 
+#   # geom_label(data = anot[anot$nCpG > 10,], aes(label = Note)) +
+#   theme(axis.text.x=element_blank()) +
+#   xlab("Genes with DMS present in at least 4 brother pairs")
+# 
+# ## let's find out about the top 3, on chr3, chr14 and chr21
+# anot[anot$nCpG >11,]
+# # Gy_chrXIV   27332   34913  7582 gasAcul20078-RA 
+# # Similar to Ptpn11: Tyrosine-protein phosphatase non-receptor type 11 (Rattus norvegicus OX=10116)
+# 
+# # Gy_chrXXI 2580241 2584755  4515 gasAcul22312-RA 
+# # Similar to Aoc1: Amiloride-sensitive amine oxidase [copper-containing] (Rattus norvegicus OX=10116)
+# # Catalyzes the degradation of compounds such as putrescine, histamine, spermine, and spermidine, 
+# # substances involved in allergic and immune responses, cell proliferation, tissue differentiation, tumor formation, and possibly apoptosis.
+# 
+# # Gy_chrIII 1700100 1716803 16704 gasAcul16782-RA 
+# # Similar to KIF1A: Kinesin-like protein KIF1A (Homo sapiens OX=9606)
+# # Motor for anterograde axonal transport of synaptic vesicle precursors. Also required for neuronal 
+# # dense core vesicles (DCVs) transport to the dendritic spines and axons. The interaction calcium-dependent 
+# # with CALM1 increases vesicle motility and interaction with the scaffolding proteins PPFIA2 and TANC2 recruits DCVs to synaptic sites.
+# 
+# ###################
+# ## Some GO:
+# 
+# ## Gene universe: all genes which are present in the dataset
+# 
+# ## Gene sub-universe: all genes in DMS
+# # in the GOterm universe we only want genes for which (1) CpGs were covered, and (2) which have a GOterm attributed:
+# gene_universe <- data.frame(
+#   subsetByOverlaps(GRanges(annotGff3), GRanges(uniteCov14_G2_woSexAndUnknowChrOVERLAP))) %>% # subselect covered CpGs
+#   filter(lengths(Ontology_term)!=0) %>% # rm non existing GO terms
+#   filter(type %in% "gene")  %>% # keep all the 7416 genes with GO terms
+#   dplyr::select(c("Name", "Ontology_term")) %>% 
+#   mutate(go_linkage_type = "IEA") %>% #NB: IEA but not necessarily true, it's from Interproscan after Maker. Sticklebacks (biomart) have 82701 IEA and 63 ISS.
+#   relocate("Ontology_term","go_linkage_type","Name") %>% 
+#   unnest(Ontology_term) %>% # one GO per line (was a list before in this column)
+#   data.frame()
+# 
+# # Create gene set collection
+# goFrame <- GOFrame(gene_universe, organism="Gasterosteus aculeatus")
+# goAllFrame <- GOAllFrame(goFrame)
+# gsc_universe <- GeneSetCollection(goAllFrame, setType = GOCollection())
+# 
+# ## Create subuniverse: DMS between G2 from G1C & G2 from G1T, by brother pair, present in AT LEAST 4 BP/8
+# sub_universe <- gene_universe %>%
+#   subset(gene_universe$Name %in% unlist(anot$Parent))
+# 
+# ###### IMPORTANT NOTE from Mel: why conditional hypergeometric test?
+# #The GO ontology is set up as a directed acyclic graph, where a parent term is comprised of all its child terms. If you do a standard
+# #hypergeometric, you might e.g., find 'positive regulation of kinase activity' to be significant.
+# #If you then test 'positive regulation of catalytic activity', which is a parent term, then it might be significant as well, but only because of
+# #the terms coming from positive regulation of kinase activity.
+# 
+# #The conditional hypergeometric takes this into account, and only uses
+# #those terms that were not already significant when testing a higher
+# #order (parent) term.
+# #####################
+# 
+# ## Run conditional hypergeometric test:
+# runTestHypGeom <- function(sub_universe, onto){
+#   ## Constructing a GOHyperGParams objects or KEGGHyperGParams objects from a GeneSetCollection
+#   params_sequenced <- GSEAGOHyperGParams(name="GO_set",
+#                                          geneSetCollection = gsc_universe,
+#                                          geneIds = as.vector(unique(sub_universe[["Name"]])), # gene ids for the selected gene set
+#                                          universeGeneIds = unique(gene_universe$Name),
+#                                          ontology = onto, # A string specifying the GO ontology to use. Must be one of "BP", "CC", or "MF". (used with GO only)
+#                                          pvalueCutoff = 0.05,
+#                                          conditional = TRUE, # see note above
+#                                          testDirection = "over") # over represented GO terms
+#   
+#   ## Run hypergeometric test:
+#   return(hyperGTest(params_sequenced))
+# }
+# 
+# ## Molecular functions
+# GO_MF <- runTestHypGeom(sub_universe = sub_universe, onto = "MF")
+# # Gene to GO MF Conditional test for over-representation 
+# # 188 GO MF ids tested (17 have p < 0.05)
+# # Selected gene set size: 151 
+# # Gene universe size: 6397 
+# GO_MF %>% summary() %>% head()
+# 
+# GO_CC <- runTestHypGeom(sub_universe = sub_universe, onto = "CC")
+# # 67 GO CC ids tested (1 have p < 0.05)
+# # Selected gene set size: 51 
+# # Gene universe size: 2077 
+# 
+# GO_BP <- runTestHypGeom(sub_universe = sub_universe, onto = "BP")
+# # 290 GO BP ids tested (10 have p < 0.05)
+# # Selected gene set size: 98 
+# # Gene universe size: 3577 
+# 
+# ## To save:
+# # htmlReport(GO_MF_0633, file="../Routput/GO/GO_MF_0633.html")
+# # write.table(as.data.frame(summary(GO_MF_0633)),"../Routput/GO/GO_MF_0633.txt", sep="\t", row.names = F)
+# 
+# ## Merge the df MP and BP
+# A = GO_MF %>% summary %>% mutate(GOID = GOMFID, Type = "MF")
+# B = GO_BP %>% summary %>% mutate(GOID = GOBPID, Type = "BP")
+# C = GO_CC %>% summary %>% mutate(GOID = GOCCID, Type = "CC")
+# 
+# dfGO = rbind(A[-1], B[-1], C[-1])
+# 
+# plotGO = dfGO %>% ggplot(aes(x=Count/Size, y = Term)) +
+#   geom_point(aes(color = Pvalue, size = Count)) +
+#   scale_color_gradient(name="P value", low = "red", high = "blue") +
+#   scale_size_continuous(name = "Gene number", range = c(1, 10), breaks = c(1,5,15,25))+
+#   theme_bw() +
+#   facet_grid(Type~.,scales="free",space = "free")
+# 
+# # pdf(xxx, width = 15, height = 20)
+# plotGO
+# # dev.off()
+# dfGO
+# 
+# 
+# ## Manhattan plot of the 836!

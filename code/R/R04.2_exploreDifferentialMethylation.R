@@ -395,24 +395,6 @@ makeManP(comp1 = "CC-CI", comp2 = "IC-II")
 ## Annotation of the core DMS:
 coreDMSmethylDiff <- methylKit::select(DMS1, which(paste(DMS1$chr, DMS1$start) %in% coreDMS))
 
-### Functions to get the annotation of a methylkit object (methylDiff or methylBase)
-getAnnotationFun <- function(METHOBJ){
-  A = annotateWithGeneParts(target = as(METHOBJ,"GRanges"), feature = annotBed12)
-  # Heckwolf 2020: To be associated to a gene, the pop-DMS had to be either inside the gene or,
-  # if intergenic, not further than 10 kb away from the TSS.
-  rows2rm = which((A@dist.to.TSS$dist.to.feature>10000 |
-                     A@dist.to.TSS$dist.to.feature< -10000) &
-                    rowSums(A@members) %in% 0)
-  METHOBJ2 = METHOBJ[-rows2rm,]
-  ## Re annotate the subsetted object
-  B = annotateWithGeneParts(as(METHOBJ2,"GRanges"),annotBed12)
-  ## Get genes associated
-  C = getAssociationWithTSS(B)
-  ## Get annotations for these genes
-  subAnnot <- data.frame(subset(annotGff3, Name %in% C$feature.name))
-  return(subAnnot$Note)
-}
-
 ## Differentially methylated sites:
 subGOterms = getAnnotationFun(METHOBJ = coreDMSmethylDiff)
 

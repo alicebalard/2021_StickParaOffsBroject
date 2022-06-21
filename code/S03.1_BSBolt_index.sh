@@ -8,6 +8,12 @@
 #$ -e /data/scratch/btx915/BSBolt/run_BSBolt_index.stderr
 #$ -V
 
+# BSBolt was installed as follows:
+#module load python
+#virtualenv my_bsbolt
+#source ~/bin/myBSBolt/bin/activate
+#pip3 install bsbolt
+
 # BSBolt is activated in a virtual environment
 module load bwa/0.7.17
 module load python

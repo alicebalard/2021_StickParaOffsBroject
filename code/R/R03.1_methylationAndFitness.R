@@ -33,20 +33,15 @@ fullMetadata_PAR$BCI <- residuals(lmer(Wnettofin ~ Slfin + (1|brotherPairID), da
 # paternal G1 treatment and G2 infection intensity as fixed effects. Maternal 
 # half-sibship identity was set as a random effect
 
+############################################
 ## Effect of paternal exposure on tolerance:
-modTol <- lme(BCI ~ patTrt + patTrt:No.Worms,random=~1|brotherPairID,data=fullMetadata_OFFS)
-anova(modTol)
+modTol <- lmer(BCI ~ patTrt + patTrt:No.Worms + (1|brotherPairID), data=fullMetadata_OFFS)
 
-## Or modTol <- lme(BCI ~ patTrt*No.Worms,random=~1|Family,data=fullMetadata_offs)
+stepcAIC(modTol)
 
-# myBCdf <- fullMetadata_OFFS %>% group_by(patTrt, No.Worms) %>% 
-#   summarise(BCI = mean(BCI)) %>% data.frame()
-# ggplot(fullMetadata_OFFS, aes(x=No.Worms, y = BCI, group = patTrt, col = patTrt))+
-#   geom_point() + geom_line(data=myBCdf)+
-#   geom_point(data=myBCdf, aes(fill = patTrt), col = "black", size = 3, pch = 21)+
-#   scale_color_manual(values = c("gray", "red"))+
-#   scale_fill_manual(values = c("gray", "red"))+
-#   theme_bw()
+pred <- ggpredict(modTol, terms = c("No.Worms", "patTrt"))
+plot(pred, add.data = TRUE)
+## The slope of BCI on nbrworms varies upon parental treatment = parental treatment varies with tolerance
 
 ## Effect of treatment groups of offspring on body condition:
 ## Kaufmann et al. 2014:
@@ -290,12 +285,62 @@ ggplot(fullMetadata_OFFS_half, aes(trtG1G2, res_Nbr_methCpG_Nbr_coveredCpG,
   scale_fill_manual(values = colOffs) +
   theme_bw() + theme(legend.position = "none")
 
+########################################################################
+## Are mean residuals meth sites different following tolerance slope? ##
+########################################################################
+fullMetadata_OFFS_half$res_Nbr_methCpG_Nbr_coveredCpG_div1000 <- (fullMetadata_OFFS_half$res_Nbr_methCpG_Nbr_coveredCpG)/1000
+
+mod_Tol.Meth <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*No.Worms + (1|brotherPairID)+ (1|Sex), 
+                     data=fullMetadata_OFFS_half, REML = F)
+mod_Tol.Meth_Noint <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000+No.Worms + (1|brotherPairID) + (1|Sex),
+                           data=fullMetadata_OFFS_half, REML = F)
+lrtest(mod_Tol.Meth, mod_Tol.Meth_Noint)
+## The slope of BCI on nbrworms varies upon parental treatment = methylation does NOT vary with tolerance
+
+## And just among infected?
+mod_Tol.Meth.inf <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*No.Worms + (1|brotherPairID)+ (1|Sex), 
+                     data=fullMetadata_OFFS_half[fullMetadata_OFFS_half$outcome %in% "infected",], REML = F)
+mod_Tol.Meth_Noint.inf <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000+No.Worms + (1|brotherPairID) + (1|Sex),
+                           data=fullMetadata_OFFS_half[fullMetadata_OFFS_half$outcome %in% "infected",], REML = F)
+lrtest(mod_Tol.Meth.inf, mod_Tol.Meth_Noint.inf)
+# also NOT in infected ofspring
+
+pred <- ggpredict(mod_Tol.Meth, terms = c("No.Worms", "res_Nbr_methCpG_Nbr_coveredCpG_div1000"))
+plot(pred, add.data = TRUE)
+
+############################################################
+## Are mean residuals meth sites different following BCI? ##
+############################################################
+mod_BCI.Meth <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000 + (1|brotherPairID)+ (1|Sex), 
+                     data=fullMetadata_OFFS_half, REML = F)
+mod_BCI.Meth.NULL <- lmer(BCI ~ 1 + (1|brotherPairID)+ (1|Sex), 
+                     data=fullMetadata_OFFS_half, REML = F)
+lrtest(mod_BCI.Meth, mod_BCI.Meth.NULL)
+# NOT in all ofspring
+
+## And just among infected?
+mod_BCI.Meth_inf <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000 + (1|brotherPairID)+ (1|Sex), 
+                     data=fullMetadata_OFFS_half[fullMetadata_OFFS_half$outcome %in% "infected",], REML = F)
+mod_BCI.Meth_inf.NULL <- lmer(BCI ~ 1 + (1|brotherPairID)+ (1|Sex), 
+                          data=fullMetadata_OFFS_half[fullMetadata_OFFS_half$outcome %in% "infected",], REML = F)
+lrtest(mod_BCI.Meth_inf, mod_BCI.Meth_inf.NULL)
+# also NOT in infected ofspring
+
+
+
+
+
+pred <- ggpredict(mod_Tol.Meth, terms = c("No.Worms", "res_Nbr_methCpG_Nbr_coveredCpG_div1000"))
+plot(pred, add.data = TRUE)
+## The slope of BCI on nbrworms varies upon parental treatment = methylation does NOT vary with tolerance
+
+
+
 #####################################################################
 ## Are mean residuals meth sites different in NE_E and E_E groups? ##
 #####################################################################
 
 ## By group, tolerance slope as a function of methylation residuals:
-
 modFULL <- lmer(BCI ~ No.Worms : trtG1G2 + (1|brotherPairID) + (1|Sex), 
                 data = fullMetadata_OFFS_half[fullMetadata_OFFS_half$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
 
