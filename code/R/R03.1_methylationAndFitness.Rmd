@@ -12,7 +12,7 @@ output:
 ```{r setup}
 library(knitr)
 knitr::opts_chunk$set(cache = TRUE, warning = FALSE, 
-                      message = FALSE, cache.lazy = FALSE)
+                      message = FALSE, cache.lazy = FALSE, cache.path = "../../gitignore/RmdCache/")
 ```
 
 ```{r load}
