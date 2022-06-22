@@ -2,7 +2,6 @@
 
 list.of.packages <- c(
   "ape", #for reag.gff
-  "Category", # for hypergeometric GO test
   "cowplot",
   "dendextend", # The package dendextend contains many functions for changing the appearance of a dendrogram and for comparing dendrograms.
   "devtools",
@@ -15,11 +14,9 @@ list.of.packages <- c(
   "ggpubr", ## to merge ggplot2 plots
   "ggrepel",
   "goeveg", # find the best number of dimensions for NMDS
-  "GOstats", # for GO analysis
   "ggsignif", ## for significance bars on ggplot
   "grid",
   "gridExtra",
-  "GSEABase", # for GO term GeneSetCollection
   "lme4", ## for mixed models
   "lmtest", # for lrtests
   "magrittr",      # provides the %>% operator
@@ -55,8 +52,12 @@ if (!"pairwiseAdonis" %in% installed.packages()[, "Package"]) {
 library(pairwiseAdonis)
 
 ## Biocmanager packages 
-list.bioc <- c("WGCNA",
-               "GenomicFeatures") ## for annotation
+list.bioc <- c("Category", # for hypergeometric GO test
+               "WGCNA", # for networks
+               "GenomicFeatures",## for annotation
+               "GOstats", # for GO analysis
+               "GSEABase"  # for GO term GeneSetCollection
+) 
 ipak2 <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))

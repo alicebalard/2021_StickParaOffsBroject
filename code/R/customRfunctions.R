@@ -338,18 +338,22 @@ getPMdataset <- function(uniteCov, MD, gener){
 ## Differential methylation functions ##
 ########################################
 getDiffMeth <- function(myuniteCov, myMetadata, mccores=10, mydif = 15){
-  if (length(table(myMetadata$Sex)) == 1 & length(table(myMetadata$brotherPairID)) > 1){
-    cov = data.frame(brotherPairID = myMetadata$brotherPairID)
-  } else if (length(table(myMetadata$Sex)) == 2 & length(table(myMetadata$brotherPairID)) > 1){
-    cov = data.frame(brotherPairID = myMetadata$brotherPairID, Sex = myMetadata$Sex)
-  } else if (length(table(myMetadata$Sex)) == 2){ # this is for within brother pairs
-    cov = data.frame(Sex = myMetadata$Sex)
-  } 
-  myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = mccores)#10 on Apocrita
-  ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
-  ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
-  myDMS_15pc = getMethylDiff(myDiffMeth, difference=mydif, qvalue=0.01)
-  return(myDMS_15pc)
+    if (length(table(myMetadata$Sex)) == 1 & length(table(myMetadata$brotherPairID)) == 1){ # 1 sex, 1 BP -> no covariate
+        myDiffMeth=calculateDiffMeth(myuniteCov, mc.cores = mccores)#10 on Apocrita
+    } else { # if more than 1 sex or 1 BP, we add a covariate
+        if (length(table(myMetadata$Sex)) == 1 & length(table(myMetadata$brotherPairID)) > 1){
+            cov = data.frame(brotherPairID = myMetadata$brotherPairID)
+        } else if (length(table(myMetadata$Sex)) == 2 & length(table(myMetadata$brotherPairID)) > 1){
+            cov = data.frame(brotherPairID = myMetadata$brotherPairID, Sex = myMetadata$Sex)
+        } else if (length(table(myMetadata$Sex)) == 2){ # this is for within brother pairs
+            cov = data.frame(Sex = myMetadata$Sex)
+        } 
+        myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = mccores)#10 on Apocrita
+    }
+    ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
+    ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
+    myDMS_15pc = getMethylDiff(myDiffMeth, difference=mydif, qvalue=0.01)
+    return(myDMS_15pc)
 }
 
 getDiffMethSimple <- function(myuniteCov, myMetadata){
