@@ -44,14 +44,13 @@
 
 ├── customRfunctions.R
 ├── librariesLoading.R
-├── R00_calculateStats.R
+├── R00_calculateStats.R # creat fullmetadata135 and compare BSBolt with Bismark mapping
 ├── R01.1_prepBSBOLTForMethylkit.R
 ├── R01.2_prepObjectMethylkit.R
 ├── R02.1_loadMetadata.R
 ├── R02.2_loadMethyldata.R
-├── R02.3_DATALOAD.R
-├── #R03.1_methylationAndFitness.R#
-├── R03.1_methylationAndFitness.R
+├── R02.3_DATALOAD.R # main loading script, call R02.1 and R02.2
+├── R03.1_methylationAndFitness.Rmd # Explore link between global methylation and body condition index
 ├── R03.2_globalMethylation.R
 ├── R04.1.2_getDifferentialMethylationByBrotherPairs.R
 ├── R04.1_getDifferentialMethylation.R

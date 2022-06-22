@@ -19,6 +19,7 @@ list.of.packages <- c(
   "gridExtra",
   "lme4", ## for mixed models
   "lmtest", # for lrtests
+  "lmerTest", # for stepwise analysis of lmer
   "magrittr",      # provides the %>% operator
   "methylKit",
   "nlme", ## for mixed models
