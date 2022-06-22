@@ -309,13 +309,6 @@ if (run==TRUE){
 
 nrow(uniteCov14_G2_woSexAndUnknowChrOVERLAP) # methylBase object with 1001880 rows
 
-## Calculate DMS between G2 from G1C & G2 from G1T, by brother pair
-# getDiffMeth(uniteCov14_G2_woSexAndUnknowChrOVERLAP, fullMetadata_PAR)
-
-uniteCov14_G2_woSexAndUnknowChrOVERLAP
-
-table(fullMetadata_OFFS$trtG1G2, fullMetadata_OFFS$trtG1G2_NUM)
-
 ###################################################################################################
 # Calculate DMS CC-TC and TC-TT in all brother pairs (same treatment, different PARENTAL treatment)
 
@@ -336,11 +329,7 @@ getDMSperBP <- function(BP){
   myuniteCovBP_control = methylKit::select(myuniteCovBP_control, which(!is.na(rowSums(percMethylation(myuniteCovBP_control)))))
   myuniteCovBP_treatment = methylKit::select(myuniteCovBP_treatment, which(!is.na(rowSums(percMethylation(myuniteCovBP_treatment)))))
   
-  # Calculate differential methylation
-  myDiffMethBP = calculateDiffMeth(myuniteCovBP, mc.cores = 10)
-  
-  myDMS_15pc_BP = getMethylDiff(myDiffMethBP, difference=15, qvalue=0.01)
-  
+  # Calculate differential methylation:
   # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%, sex as covariate
   DMS_15pc_BP_control = getDiffMeth(myuniteCov = myuniteCovBP_control, myMetadata = metadataBP_control, mccores = 10, mydif = 15)
   DMS_15pc_BP_treatment = getDiffMeth(myuniteCov = myuniteCovBP_treatment, myMetadata = metadataBP_treatment, mccores = 10, mydif = 15)
@@ -349,7 +338,6 @@ getDMSperBP <- function(BP){
 }
 
 # myPos = paste(myDMS_15pc_BP$chr, myDMS_15pc_BP$end)
-
 
 run=TRUE
 if (run==TRUE){
