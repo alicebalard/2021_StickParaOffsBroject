@@ -34,6 +34,7 @@ list.of.packages <- c(
   "splitstackshape", # to spread the V9 column of gff into columns by key
   "cAIC4",
   "tidyverse",  # tidyverse will pull in ggplot2, readr, other useful libraries
+  "UpSetR", # for upset plots
   "VCA",
   "vegan", ## for Adonis
   "VennDiagram")

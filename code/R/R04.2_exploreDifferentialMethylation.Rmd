@@ -1,0 +1,1001 @@
+---
+title: "Explore differential methylation"
+author: "Alice Balard"
+date: '2022-06-23'
+output: 
+  html_document:
+    number_sections: true
+    toc: true
+    theme: united
+---
+
+```{r setup}
+library(knitr)
+knitr::opts_chunk$set(cache = TRUE, warning = FALSE, 
+                      message = FALSE, cache.lazy = FALSE, cache.path = "../../gitignore/RmdCache/", # keep heavy data in gitignore cache
+                      fig.path = "Rfigures/Rmd/")
+# NB: rm html when change previous scripts
+# cache.extra = tools::md5sum('my-precious.csv'). The former means if the modification time of the file has been changed, we need to invalidate the cache. The latter means if the content of the file has been modified, we update the cache.
+
+```
+
+```{r load}
+machine="mythinkpad" # define the machine we work on
+loadALL = FALSE # only load CpG shared by half fish per trt group
+loadannot = TRUE # load genome annotations
+sourceDMS = TRUE # Load the calculated DMS
+source("R02.3_DATALOAD.R")
+```
+
+# Bottom up analysis: Differential Methylation in offspring
+
+## Differential methylation in all G2 (brother pair and sex as covariate)
+
+### TREATMENT EFFECT: Differential methylation between control and infected, within each parental treatment
+
+```{r}
+## Features Annotation (use package genomation v1.24.0)
+## NB Promoters are defined by options at genomation::readTranscriptFeatures function. 
+## The default option is to take -1000,+1000bp around the TSS and you can change that. 
+## -> following Heckwolf 2020 and Sagonas 2020, we consider 1500bp upstream and 500 bp downstream
+
+## Parents comparison:
+diffAnn_PAR = annotateWithGeneParts(as(DMS15pc_G1_half,"GRanges"),annotBed12)
+## Offspring from control parents comparison:
+diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMS15pc_G2_controlG1_half,"GRanges"),annotBed12)
+## Offspring from infected parents comparison:
+diffAnn_G2_infectedG1 = annotateWithGeneParts(as(DMS15pc_G2_infectedG1_half,"GRanges"),annotBed12)
+```
+
+
+```{r, fig.height = 6, fig.width = 10}
+par(mfrow=c(1,3))
+par(mar = c(.1,0.1,5,0.1)) # Set the margin on all sides to 2
+## Parents comparison:
+diffAnn_PAR = annotateWithGeneParts(as(DMS15pc_G1_half,"GRanges"),annotBed12)
+diffAnn_PAR
+genomation::plotTargetAnnotation(diffAnn_PAR,precedence=TRUE, main="DMS G1", cex.legend = 1, border="white")
+
+## Offspring from control parents comparison:
+diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMS15pc_G2_controlG1_half,"GRanges"),annotBed12)
+diffAnn_G2_controlG1
+genomation::plotTargetAnnotation(diffAnn_G2_controlG1,precedence=TRUE, main="DMS G2-G1c", cex.legend = 1, border="white")
+## Offspring from infected parents comparison:
+diffAnn_G2_infectedG1 = annotateWithGeneParts(as(DMS15pc_G2_infectedG1_half,"GRanges"),annotBed12)
+diffAnn_G2_infectedG1
+genomation::plotTargetAnnotation(diffAnn_G2_infectedG1,precedence=TRUE, main="DMS G2-G1i", cex.legend = 1, border="white")
+par(mfrow=c(1,1))
+```
+
+
+```{r}
+## Run the function to get DMS info
+DMS_info_G1 <- myDMSinfo(DMS15pc_G1_half, uniteCov6_G1_woSexAndUnknowChrOVERLAP)
+DMS_info_G2_G1c_final <- myDMSinfo(DMS15pc_G2_controlG1_half, uniteCov14_G2_woSexAndUnknowChrOVERLAP)
+DMS_info_G2_G1i_final <- myDMSinfo(DMS15pc_G2_infectedG1_half,uniteCov14_G2_woSexAndUnknowChrOVERLAP)
+```
+
+NB Kostas' results: "We found a total of 1,973 CpG sites out of 1,172,887 CpGs (0.17%) across the genome that showed at least 15% differential fractional methylation (differentially methylated site [DMS]; q < 0.01) between infected and uninfected fish"
+
+Here: we obtain out a total of `r nrow(uniteCov14_G2_woSexAndUnknowChrOVERLAP)` CpG sites: `r length(DMS_info_G1$DMS)` (`r round(DMS_info_G1$percentDMS, 2)`%) showed at least 15% differential fractional methylation (differentially methylated site [DMS]; q < 0.01) between infected and uninfected fish in the parental group; `r length(DMS_info_G2_G1c_final$DMS)` (`r round(DMS_info_G2_G1c_final$percentDMS, 2)`%) in the offspring from **control parents** comparison; `r length(DMS_info_G2_G1i_final$DMS)` (`r round(DMS_info_G2_G1i_final$percentDMS, 2)`%) in the offspring from **infected parents** comparison.
+
+#### Intersections of DMS: Venn diagrams
+
+```{r}
+## Chi2 test: are the number of DMS from G2-G1C and G2-G1I overlapping with DMSpar statistically different?
+
+A=length(intersect(DMS_info_G1$DMS,DMS_info_G2_G1c_final$DMS))
+B=length(DMS_info_G2_G1c_final$DMS)
+C=length(intersect(DMS_info_G1$DMS,DMS_info_G2_G1i_final$DMS))
+D=length(DMS_info_G2_G1i_final$DMS)
+
+Observed=matrix(c(A, B-A, C, D-C),nrow=2)
+Observed
+
+chisq.test(Observed)
+## --> not statistically different
+```
+
+``````{r, fig.width = 5, fig.height = 6}
+## output Venn diagrams
+allVenn <- myVennFUN(A = DMS_info_G1$DMS, B = DMS_info_G2_G1c_final$DMS, C = DMS_info_G2_G1i_final$DMS,
+                     catnames = c("DMS G1" , "DMS G2-c", "DMS G2-i"))
+hypoVenn <- myVennFUN(A = DMS_info_G1$DMS[DMS_info_G1$direction %in% "hypo"],
+                      B = DMS_info_G2_G1c_final$DMS[DMS_info_G2_G1c_final$direction %in% "hypo"],
+                      C = DMS_info_G2_G1i_final$DMS[DMS_info_G2_G1i_final$direction %in% "hypo"],
+                      catnames = c("DMS G1\nhypo" , "DMS G2-c\nhypo", "DMS G2-i\nhypo"))
+hyperVenn <- myVennFUN(A = DMS_info_G1$DMS[DMS_info_G1$direction %in% "hyper"],
+                       B = DMS_info_G2_G1c_final$DMS[DMS_info_G2_G1c_final$direction %in% "hyper"],
+                       C = DMS_info_G2_G1i_final$DMS[DMS_info_G2_G1i_final$direction %in% "hyper"],
+                       catnames = c("DMS G1\nhyper" , "DMS G2-c\nhyper", "DMS G2-i\nhyper"))
+
+# Output the diagrams
+# png(file="Rfigures/VennDMSinhalffish_intersectingCpGs_hyper_hypo.png", width = 5.5, height = 4.5, units = 'in', res = 300)
+pushViewport(plotViewport(layout=grid.layout(2, 3)))
+pushViewport(plotViewport(layout.pos.col=2, layout.pos.row=1))
+grid.draw(allVenn)
+popViewport()
+pushViewport(plotViewport(layout.pos.col=1, layout.pos.row=2))
+grid.draw(hypoVenn)
+popViewport()
+pushViewport(plotViewport(layout.pos.col=3, layout.pos.row=2))
+grid.draw(hyperVenn)
+# dev.off()
+
+rm(allVenn, hypoVenn, hyperVenn)
+```
+
+##### Venn with annotated features
+
+```{r}
+runHyperHypoAnnot <- function(){
+  par(mfrow=c(2,3))
+  par(mar = c(.1,0.1,5,0.1)) # Set the margin on all sides to 2
+  ####### HYPO
+  ## Parents comparison:
+  A = annotateWithGeneParts(
+    as(DMS15pc_G1_half[DMS_info_G1$direction %in% "hypo",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(A,precedence=TRUE, main="DMS G1\nhypo", 
+                       cex.legend = .4, border="white")
+  ## Offspring from control parents comparison:
+  B = annotateWithGeneParts(
+    as(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hypo",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(B,precedence=TRUE, main="DMS G2-G1c\nhypo", 
+                       cex.legend = .4, border="white")
+  ## Offspring from infected parents comparison:
+  C = annotateWithGeneParts(
+    as(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hypo",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(C,precedence=TRUE, main="DMS G2-G1i\nhypo", 
+                       cex.legend = .4, border="white")
+  ####### HYPER
+  ## Parents comparison:
+  D = annotateWithGeneParts(
+    as(DMS15pc_G1_half[DMS_info_G1$direction %in% "hyper",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(D,precedence=TRUE, main="DMS G1\nhyper", 
+                       cex.legend = .4, border="white")
+  ## Offspring from control parents comparison:
+  E = annotateWithGeneParts(
+    as(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hyper",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(E,precedence=TRUE, main="DMS G2-G1c\nhyper", 
+                       cex.legend = .4, border="white")
+  ## Offspring from infected parents comparison:
+  f = annotateWithGeneParts(
+    as(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hyper",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(f,precedence=TRUE, main="DMS G2-G1i\nhyper", 
+                       cex.legend = .4, border="white")
+  par(mfrow=c(1,1))
+  return(list(G1hypo=A, G2G1chypo=B, G2G1ihypo=C, G1hyper=D, G2G1chyper=E, G2G1ihyper=f))
+}
+
+myannot=runHyperHypoAnnot()
+
+############################################################
+## Venn diagram of overlapping features by their annotation:
+table(rowSums(as.data.frame(myannot$G1hypo@members))) # NB: some positions are labelled with several features!
+## as in MBE 2021: "giving precedence to the following order promoters, exons,
+## introns, and intergenic regions when features overlapped"
+
+myAnnotateDMS <- function(DMS, annot){
+  ## sanity check
+  if (nrow(DMS) != nrow(annot)){"STOP error in arguments"}
+  DMS$pos <- paste(DMS$chr, DMS$start, DMS$end)
+  ## NB as in MBE 2021: "giving precedence to the following order promoters, exons,
+  ## introns, and intergenic regions when features overlapped"
+  DMS$feature <- NA
+  ## 1. promoters
+  DMS$feature[which(annot$prom == 1)] = "promoter"
+  ## 2. exons
+  DMS$feature[which(annot$exon == 1 & annot$prom ==0)] = "exon"
+  ## 3. intron
+  DMS$feature[which(annot$intro == 1 & annot$exon == 0 & annot$prom ==0)] = "intron"
+  ## 4. intergenic regions
+  DMS$feature[which(annot$intro == 0 & annot$exon == 0 & annot$prom ==0)] = "intergenic"
+  return(DMS)
+}
+
+DMS15pc_G1_half = myAnnotateDMS(DMS15pc_G1_half, as.data.frame(diffAnn_PAR@members))
+DMS15pc_G1_half_HYPO = myAnnotateDMS(DMS15pc_G1_half[DMS_info_G1$direction %in% "hypo",],
+                                     as.data.frame(myannot$G1hypo@members))
+DMS15pc_G1_half_HYPER = myAnnotateDMS(DMS15pc_G1_half[DMS_info_G1$direction %in% "hyper",],
+                                      as.data.frame(myannot$G1hyper@members))
+
+DMS15pc_G2_controlG1_half = myAnnotateDMS(DMS15pc_G2_controlG1_half, as.data.frame(diffAnn_G2_controlG1@members))
+DMS15pc_G2_controlG1_half_HYPO = myAnnotateDMS(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hypo",],
+                                               as.data.frame(myannot$G2G1chypo@members))
+DMS15pc_G2_controlG1_half_HYPER = myAnnotateDMS(DMS15pc_G2_controlG1_half[DMS_info_G2_G1c_final$direction %in% "hyper",],
+                                                as.data.frame(myannot$G2G1chyper@members))
+
+DMS15pc_G2_infectedG1_half = myAnnotateDMS(DMS15pc_G2_infectedG1_half, as.data.frame(diffAnn_G2_infectedG1@members))
+DMS15pc_G2_infectedG1_half_HYPO = myAnnotateDMS(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hypo",],
+                                                as.data.frame(myannot$G2G1ihypo@members))
+DMS15pc_G2_infectedG1_half_HYPER = myAnnotateDMS(DMS15pc_G2_infectedG1_half[DMS_info_G2_G1i_final$direction %in% "hyper",],
+                                                 as.data.frame(myannot$G2G1ihyper@members))
+
+## Make Venn diagram for each feature
+getFeatureDFHYPO <- function(myfeat){
+  a = DMS15pc_G1_half_HYPO$pos[DMS15pc_G1_half_HYPO$feature %in% myfeat]
+  b = DMS15pc_G2_controlG1_half_HYPO$pos[DMS15pc_G2_controlG1_half_HYPO$feature %in% myfeat]
+  c = DMS15pc_G2_infectedG1_half_HYPO$pos[DMS15pc_G2_infectedG1_half_HYPO$feature %in% myfeat]
+  return(list(a=a,b=b,c=c))
+}
+
+getFeatureDFHYPER <- function(myfeat){
+  a = DMS15pc_G1_half_HYPER$pos[DMS15pc_G1_half_HYPER$feature %in% myfeat]
+  b = DMS15pc_G2_controlG1_half_HYPER$pos[DMS15pc_G2_controlG1_half_HYPER$feature %in% myfeat]
+  c = DMS15pc_G2_infectedG1_half_HYPER$pos[DMS15pc_G2_infectedG1_half_HYPER$feature %in% myfeat]
+  return(list(a=a,b=b,c=c))
+}
+
+getVenn <- function(feat, direction){
+  if (direction == "hypo"){
+    myVennFUN(getFeatureDFHYPO(feat)[["a"]],
+              getFeatureDFHYPO(feat)[["b"]],
+              getFeatureDFHYPO(feat)[["c"]],
+              catnames = c(paste0("DMS G1\nhypo\n", feat), 
+                           paste0("DMS G2-c\nhypo\n", feat),
+                           paste0("DMS G2-i\nhypo\n", feat)))
+  }else if (direction == "hyper"){
+    myVennFUN(getFeatureDFHYPER(feat)[["a"]],
+              getFeatureDFHYPER(feat)[["b"]],
+              getFeatureDFHYPER(feat)[["c"]],
+              catnames = c(paste0("DMS G1\nhyper\n", feat), 
+                           paste0("DMS G2-c\nhyper\n", feat),
+                           paste0("DMS G2-i\nhyper\n", feat)))
+  }
+}
+```
+
+
+```{r, fig.width = 5, fig.height = 6}
+## output Venn diagrams
+# png(file="Rfigures/VennDMSinhalffish_intersectingCpGs_byfeatures_HYPO.png", width = 5, height = 5.5, units = 'in', res = 300)
+#height = 500, width = 500, compression = "lzw")
+pushViewport(plotViewport(layout=grid.layout(2, 2)))
+pushViewport(plotViewport(layout.pos.col=1, layout.pos.row=1))
+grid.draw(getVenn("promoter", "hypo"))
+popViewport()
+pushViewport(plotViewport(layout.pos.col=2, layout.pos.row=1))
+grid.draw(getVenn("exon", "hypo"))
+popViewport()
+pushViewport(plotViewport(layout.pos.col=1, layout.pos.row=2))
+grid.draw(grid.draw(getVenn("intron", "hypo")))
+popViewport()
+pushViewport(plotViewport(layout.pos.col=2, layout.pos.row=2))
+grid.draw(grid.draw(getVenn("intergenic", "hypo"))) 
+dev.off()
+```
+
+```{r, fig.width = 5, fig.height = 6}
+# png(file="Rfigures/VennDMSinhalffish_intersectingCpGs_byfeatures_HYPER.png", width = 5, height = 5.5, units = 'in', res = 300)
+#height = 500, width = 500, compression = "lzw")
+pushViewport(plotViewport(layout=grid.layout(2, 2)))
+pushViewport(plotViewport(layout.pos.col=1, layout.pos.row=1))
+grid.draw(getVenn("promoter", "hyper"))
+popViewport()
+pushViewport(plotViewport(layout.pos.col=2, layout.pos.row=1))
+grid.draw(getVenn("exon", "hyper"))
+popViewport()
+pushViewport(plotViewport(layout.pos.col=1, layout.pos.row=2))
+grid.draw(grid.draw(getVenn("intron", "hyper")))
+popViewport()
+pushViewport(plotViewport(layout.pos.col=2, layout.pos.row=2))
+grid.draw(grid.draw(getVenn("intergenic", "hyper"))) 
+```
+
+#### Manhattan plot of DMS 
+
+```{r, fig.width= 10, fig.height=3}
+## Parents trt-ctrl
+# load annotation
+annot_PAR <- as.data.frame(diffAnn_PAR@members)
+makeManhattanPlots(DMSfile = DMS15pc_G1_half, annotFile = annot_PAR, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G1 DMS")
+
+## G2-G1c trt-ctrl
+# load annotation
+annot_G2_G1c <- as.data.frame(diffAnn_G2_controlG1@members)
+makeManhattanPlots(DMSfile = DMS15pc_G2_controlG1_half, annotFile = annot_G2_G1c, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1c DMS")
+
+## G2-G1i trt-ctrl
+# load annotation
+annot_G2_G1i <- as.data.frame(diffAnn_G2_infectedG1@members)
+makeManhattanPlots(DMSfile = DMS15pc_G2_infectedG1_half, annotFile = annot_G2_G1i, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1i DMS")
+
+## Outliers in Manhattan plot: 15% diff + 2SD
+outliers_G1_final <- which(abs(DMS15pc_G1_half$meth.diff) > 15 + 2*sd(abs(DMS15pc_G1_half$meth.diff)))
+outliers_annot_G1 <- as.data.frame(diffAnn_PAR@members)[outliers_G1_final,]
+makeManhattanPlots(DMSfile = DMS15pc_G1_half[outliers_G1_final, ],
+                   annotFile = outliers_annot_G1, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G1 DMS")
+
+outliers_G2_G1c_final <- which(abs(DMS15pc_G2_controlG1_half$meth.diff) > 15 + 2*sd(abs(DMS15pc_G2_controlG1_half$meth.diff)))
+outliers_annot_G2_G1c <- as.data.frame(diffAnn_G2_controlG1@members)[outliers_G2_G1c_final,]
+makeManhattanPlots(DMSfile = DMS15pc_G2_controlG1_half[outliers_G2_G1c_final, ],
+                   annotFile = outliers_annot_G2_G1c, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1c DMS")
+
+outliers_G2_G1i_final <- which(abs(DMS15pc_G2_infectedG1_half$meth.diff) > 15 + 2*sd(abs(DMS15pc_G2_infectedG1_half$meth.diff)))
+outliers_annot_G2_G1i <- as.data.frame(diffAnn_G2_infectedG1@members)[outliers_G2_G1i_final,]
+makeManhattanPlots(DMSfile = DMS15pc_G2_infectedG1_half[outliers_G2_G1i_final, ],
+                   annotFile = outliers_annot_G2_G1i, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1i DMS")
+```
+
+### PARENTAL EFFECT: Differential methylation between control G2 (G1 infected or not) and between infected G2 (G1 infected of not)
+
+
+
+
+
+## Differential methylation by brother pair (sex as covariate)
+
+1. CT-TT = TREATMENT fish (parent CvsT)
+2. CC-TC = CONTROL fish (parent CvsT)
+3. CC-CT = fish from CONTROL parents (G2 CvsT)
+4. TC-TT = fish from TREATMENT parents (G2 CvsT)
+
+TBC To be continued
+
+```{r}
+nrow(uniteCov14_G2_woSexAndUnknowChrOVERLAP) # methylBase object with 1001880 rows
+
+DMS_BP_G2_list
+
+
+
+
+
+## Add fam to bp
+names(DMS_BP_G2_list) <- paste0(plyr::join(data.frame(BP = names(DMS_BP_G2_list)),
+                                           unique(data.frame(BP = fullMetadata_OFFS$brotherPairID, fam = fullMetadata_OFFS$Family)))[[2]],
+                                      "_", names(DMS_BP_G2_list))
+
+## Extract DMS (by position)
+myPosList = lapply(DMS_BP_G2_list, lapply, function(x){paste(x$chr, x$end)})
+
+## Find DMS present in at least 4 BP out of 8 (half):
+
+## 1. CT-TT = TREATMENT fish (parent CvsT)
+x <- lapply(myPosList, function(x){unlist(x[["DMS_15pc_BP_treatment"]])})
+f <- table(unlist((x))) # each DMS present between 1 and 8 times
+tokeep <- names(f)[f >= 4]
+length(tokeep) # 1257 DMS
+
+## 2. CC-TC = CONTROL fish (parent CvsT)
+
+## 3. CC-CT = fish from CONTROL parents (G2 CvsT)
+
+## 4. TC-TT = fish from TREATMENT parents (G2 CvsT)
+
+
+```
+
+### Keep the DMS present in 4 families minimum
+
+```{r}
+## Keep the DMS present in 4 families minimum
+DMS_BP_G2_list_INTER4 <- lapply(x, function(x){x[x %in% tokeep]})
+
+## Reorder by family:
+DMS_BP_G2_list_INTER4 <- DMS_BP_G2_list_INTER4[
+  names(DMS_BP_G2_list_INTER4)[order(names(DMS_BP_G2_list_INTER4))]]
+```
+
+### Attribute plot of these DMS in every BP
+
+```{r}
+## UpSet plot
+# The majority of differences are within BP or family
+UpSetR::upset(fromList(DMS_BP_G2_list_INTER4), order.by = "freq", nsets = 8, keep.order = T,
+              sets = names(DMS_BP_G2_list_INTER4), shade.color = "grey")
+```
+
+### Get annotation of these DMS present in at least 4 BP
+```{r, fig.height = 5, fig.width = 12}
+DMSvec <- unique(unlist(DMS_BP_G2_list_INTER4)) 
+length(DMSvec) # N = 1257
+
+# Annotate that:
+# Change the vector into a methobject:
+df <- data.frame(chr=sapply(strsplit(DMSvec, " "), `[`, 1),
+                 start=sapply(strsplit(DMSvec, " "), `[`, 2),
+                 end=sapply(strsplit(DMSvec, " "), `[`, 2))
+# get annotation
+anot4BP <- getAnnotationFun(makeGRangesFromDataFrame(df))
+length(anot4BP)
+# 25 genes
+
+# Reorder chromosome
+anot4BP <- anot4BP %>% 
+  mutate(chr = gsub("Gy_chr", "", seqid), chrom_nr = seqid %>% deroman(), chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
+  arrange(chrom_order) 
+
+# Plot
+ggplot(anot4BP, aes(x=start, y = nCpG)) + geom_point(alpha=.4) +
+  facet_grid(.~fct_inorder(chr)) +
+  geom_hline(yintercept = 10)+ 
+  theme(axis.text.x=element_blank()) +
+  xlab("Genes with DMS present in at least 4 brother pairs")
+
+## Genes with at least 10 CpG differentially methylated:
+genes10DMS <- anot4BP[anot4BP$nCpG >= 10,]
+```
+
+
+```{r, echo=FALSE, results='asis'}
+kable(data.frame(chr=genes10DMS$chr, gene=unlist(genes10DMS$Note), row.names = NULL))
+```
+
+- RASGRP3: Ras guanyl-releasing protein 3 (Homo sapiens OX=9606):
+Guanine nucleotide exchange factor (GEF) for Ras and Rap1.
+
+- Adgra1: Adhesion G protein-coupled receptor A1 (Mus musculus OX=10090):
+GO - Molecular function: G protein-coupled receptor activity Source: InterPro. GO - Biological processes: cell surface receptor signaling pathway
+
+- Fhdc1: FH2 domain-containing protein 1 (Mus musculus OX=10090):
+Microtubule-associated formin which regulates both actin and microtubule dynamics. Induces microtubule acetylation and stabilization and actin stress fiber formation (PubMed:18815276).
+Regulates Golgi ribbon formation (PubMed:26564798).
+Required for normal cilia assembly. Early in cilia assembly, may assist in the maturation and positioning of the centrosome/basal body, and once cilia assembly has initiated, may also promote cilia elongation by inhibiting disassembly (PubMed:29742020).
+
+- eif4a3: Eukaryotic initiation factor 4A-III (Danio rerio OX=7955):
+ATP-dependent RNA helicase. Involved in pre-mRNA splicing as component of the spliceosome. Core component of the splicing-dependent multiprotein exon junction complex (EJC) deposited at splice junctions on mRNAs. The EJC is a dynamic structure consisting of core proteins and several peripheral nuclear and cytoplasmic associated factors that join the complex only transiently either during EJC assembly or during subsequent mRNA metabolism. The EJC marks the position of the exon-exon junction in the mature mRNA for the gene expression machinery and the core components remain bound to spliced mRNAs throughout all stages of mRNA metabolism thereby influencing downstream processes including nuclear mRNA export, subcellular mRNA localization, translation efficiency and nonsense-mediated mRNA decay (NMD). Binds spliced mRNA in sequence-independent manner, 20-24 nucleotides upstream of mRNA exon-exon junctions (By similarity).
+
+- MAPK13: Mitogen-activated protein kinase 13 (Bos taurus OX=9913):
+Serine/threonine kinase which acts as an essential component of the MAP kinase signal transduction pathway. MAPK13 is one of the four p38 MAPKs which play an important role in the cascades of cellular responses evoked by extracellular stimuli such as pro-inflammatory cytokines or physical stress leading to direct activation of transcription factors such as ELK1 and ATF2. Accordingly, p38 MAPKs phosphorylate a broad range of proteins and it has been estimated that they may have approximately 200 to 300 substrates each. MAPK13 is one of the less studied p38 MAPK isoforms. Some of the targets are downstream kinases such as MAPKAPK2, which are activated through phosphorylation and further phosphorylate additional targets. Plays a role in the regulation of protein translation by phosphorylating and inactivating EEF2K. Involved in cytoskeletal remodeling through phosphorylation of MAPT and STMN1. Mediates UV irradiation induced up-regulation of the gene expression of CXCL14. Plays an important role in the regulation of epidermal keratinocyte differentiation, apoptosis and skin tumor development. Phosphorylates the transcriptional activator MYB in response to stress which leads to rapid MYB degradation via a proteasome-dependent pathway. MAPK13 also phosphorylates and down-regulates PRKD1 during regulation of insulin secretion in pancreatic beta cells (By similarity).
+
+- Smarca2: Probable global transcription activator SNF2L2 (Mus musculus OX=10090):
+Involved in transcriptional activation and repression of select genes by chromatin remodeling (alteration of DNA-nucleosome topology). Component of SWI/SNF chromatin remodeling complexes that carry out key enzymatic activities, changing chromatin structure by altering DNA-histone contacts within a nucleosome in an ATP-dependent manner. Binds DNA non-specifically (PubMed:22952240, PubMed:26601204). Belongs to the neural progenitors-specific chromatin remodeling complex (npBAF complex) and the neuron-specific chromatin remodeling complex (nBAF complex). During neural development a switch from a stem/progenitor to a postmitotic chromatin remodeling mechanism occurs as neurons exit the cell cycle and become committed to their adult state. The transition from proliferating neural stem/progenitor cells to postmitotic neurons requires a switch in subunit composition of the npBAF and nBAF complexes. As neural progenitors exit mitosis and differentiate into neurons, npBAF complexes which contain ACTL6A/BAF53A and PHF10/BAF45A, are exchanged for homologous alternative ACTL6B/BAF53B and DPF1/BAF45B or DPF3/BAF45C subunits in neuron-specific complexes (nBAF). The npBAF complex is essential for the self-renewal/proliferative capacity of the multipotent neural stem cells. The nBAF complex along with CREST plays a role regulating the activity of genes essential for dendrite growth.
+
+- LRP2: Low-density lipoprotein receptor-related protein 2 (Homo sapiens OX=9606):
+Multiligand endocytic receptor (By similarity). Acts together with CUBN to mediate endocytosis of high-density lipoproteins (By similarity). Mediates receptor-mediated uptake of polybasic drugs such as aprotinin, aminoglycosides and polymyxin B (By similarity). In the kidney, mediates the tubular uptake and clearance of leptin (By similarity). Also mediates transport of leptin across the blood-brain barrier through endocytosis at the choroid plexus epithelium (By similarity). Endocytosis of leptin in neuronal cells is required for hypothalamic leptin signaling and leptin-mediated regulation of feeding and body weight (By similarity). Mediates endocytosis and subsequent lysosomal degradation of CST3 in kidney proximal tubule cells (By similarity). Mediates renal uptake of 25-hydroxyvitamin D3 in complex with the vitamin D3 transporter GC/DBP (By similarity). Mediates renal uptake of metallothionein-bound heavy metals (PubMed:15126248). Together with CUBN, mediates renal reabsorption of myoglobin (By similarity). Mediates renal uptake and subsequent lysosomal degradation of APOM (By similarity). Plays a role in kidney selenium homeostasis by mediating renal endocytosis of selenoprotein SEPP1 (By similarity). Mediates renal uptake of the antiapoptotic protein BIRC5/survivin which may be important for functional integrity of the kidney (PubMed:23825075). Mediates renal uptake of matrix metalloproteinase MMP2 in complex with metalloproteinase inhibitor TIMP1 (By similarity). Mediates endocytosis of Sonic hedgehog protein N-product (ShhN), the active product of SHH (By similarity). Also mediates ShhN transcytosis (By similarity). In the embryonic neuroepithelium, mediates endocytic uptake and degradation of BMP4, is required for correct SHH localization in the ventral neural tube and plays a role in patterning of the ventral telencephalon (By similarity). Required at the onset of neurulation to sequester SHH on the apical surface of neuroepithelial cells of the rostral diencephalon ventral midline and to control PTCH1-dependent uptake and intracellular trafficking of SHH (By similarity). During neurulation, required in neuroepithelial cells for uptake of folate bound to the folate receptor FOLR1 which is necessary for neural tube closure (By similarity). In the adult brain, negatively regulates BMP signaling in the subependymal zone which enables neurogenesis to proceed (By similarity). In astrocytes, mediates endocytosis of ALB which is required for the synthesis of the neurotrophic factor oleic acid (By similarity). Involved in neurite branching (By similarity). During optic nerve development, required for SHH-mediated migration and proliferation of oligodendrocyte precursor cells (By similarity). Mediates endocytic uptake and clearance of SHH in the retinal margin which protects retinal progenitor cells from mitogenic stimuli and keeps them quiescent (By similarity). Plays a role in reproductive organ development by mediating uptake in reproductive tissues of androgen and estrogen bound to the sex hormone binding protein SHBG (By similarity). Mediates endocytosis of angiotensin-2 (By similarity). Also mediates endocytosis of angiotensis 1-7 (By similarity). Binds to the complex composed of beta-amyloid protein 40 and CLU/APOJ and mediates its endocytosis and lysosomal degradation (By similarity). Required for embryonic heart development (By similarity). Required for normal hearing, possibly through interaction with estrogen in the inner ear (By similarity).
+
+- pn5: Opsin-5 (Mus musculus OX=10090):
+G-protein coupled receptor which selectively activates G(i) type G proteins via ultraviolet A (UVA) light-mediated activation in the retina (By similarity). Preferentially binds the chromophore 11-cis retinal and is a bistable protein that displays emission peaks at 380 nm (UVA light) and 470 nm (blue light) (PubMed:22043319). Required for the light-response in the inner plexiform layer, and contributes to the regulation of the light-response in the nerve fiber layer, via phosphorylated DAT/SLC6A3 dopamine uptake (By similarity). Involved in local corneal and retinal circadian rhythm photoentrainment via modulation of the UVA light-induced phase-shift of the retina clock (By similarity). Acts as a circadian photoreceptor in the outer ear, via modulation of circadian clock-gene expression in response to violet light during the light-to-dark transition phase and night phase of the circadian cycle (By similarity). Required in the retina to negatively regulate hyaloid vessel regression during postnatal development via light-dependent OPN5-SLC32A1-DRD2-VEGFR2 signaling (By similarity). Involved in the light-dependent regulation of retina and vitreous compartment dopamine levels (By similarity). 
+
+- acbd5a: Acyl-CoA-binding domain-containing protein 5A (Danio rerio OX=7955):
+Acyl-CoA binding protein which acts as the peroxisome receptor for pexophagy but is dispensable for aggrephagy and nonselective autophagy. Binds medium- and long-chain acyl-CoA esters.
+
+## Gene Ontology analysis:
+
+- Gene universe: all genes which are present in the dataset
+- Gene sub-universe: all genes in DMS in the GOterm universe we only want genes with (1) DMS between G2 exposed to parasites, by brother pair, present in AT LEAST 4 BP/8 for which (2) CpGs were covered, and (3) which have a GOterm attributed
+
+```{r}
+# create gene universe
+gene_universe <- data.frame(
+  subsetByOverlaps(GRanges(annotGff3), GRanges(uniteCov14_G2_woSexAndUnknowChrOVERLAP))) %>% # subselect covered CpGs
+  filter(lengths(Ontology_term)!=0) %>% # rm non existing GO terms
+  filter(type %in% "gene")  %>% # keep all the 7416 genes with GO terms
+  dplyr::select(c("Name", "Ontology_term")) %>%
+  mutate(go_linkage_type = "IEA") %>% #NB: IEA but not necessarily true, it's from Interproscan after Maker. Sticklebacks (biomart) have 82701 IEA and 63 ISS.
+  relocate("Ontology_term","go_linkage_type","Name") %>%
+  unnest(Ontology_term) %>% # one GO per line (was a list before in this column)
+  data.frame()
+
+# Create gene set collection
+goFrame <- GOFrame(gene_universe, organism="Gasterosteus aculeatus")
+goAllFrame <- GOAllFrame(goFrame)
+gsc_universe <- GeneSetCollection(goAllFrame, setType = GOCollection())
+
+## Create subuniverse: 
+sub_universe <- gene_universe %>%
+  subset(gene_universe$Name %in% unlist(anot4BP$Parent))
+```
+
+**IMPORTANT NOTE from Mel: why conditional hypergeometric test?**
+The GO ontology is set up as a directed acyclic graph, where a parent term is comprised of all its child terms. If you do a standard hypergeometric, you might e.g., find 'positive regulation of kinase activity' to be significant. If you then test 'positive regulation of catalytic activity', which is a parent term, then it might be significant as well, but only because of the terms coming from positive regulation of kinase activity.
+
+The conditional hypergeometric takes this into account, and only uses those terms that were not already significant when testing a higher order (parent) term.
+
+```{r}
+## Run conditional hypergeometric test:
+runTestHypGeom <- function(sub_universe, onto){
+  ## Constructing a GOHyperGParams objects or KEGGHyperGParams objects from a GeneSetCollection
+  params_sequenced <- GSEAGOHyperGParams(name="GO_set",
+                                         geneSetCollection = gsc_universe,
+                                         geneIds = as.vector(unique(sub_universe[["Name"]])), # gene ids for the selected gene set
+                                         universeGeneIds = unique(gene_universe$Name),
+                                         ontology = onto, # A string specifying the GO ontology to use. Must be one of "BP", "CC", or "MF". (used with GO only)
+                                         pvalueCutoff = 0.05,
+                                         conditional = TRUE, # see note above
+                                         testDirection = "over") # over represented GO terms
+
+  ## Run hypergeometric test:
+  return(hyperGTest(params_sequenced))
+}
+
+## Molecular functions
+GO_MF <- runTestHypGeom(sub_universe = sub_universe, onto = "MF")
+GO_MF
+GO_MF %>% summary() %>% head()
+
+GO_CC <- runTestHypGeom(sub_universe = sub_universe, onto = "CC")
+GO_CC
+
+GO_BP <- runTestHypGeom(sub_universe = sub_universe, onto = "BP")
+GO_BP
+
+## To save:
+# htmlReport(GO_MF_0633, file="../Routput/GO/GO_MF_0633.html")
+# write.table(as.data.frame(summary(GO_MF_0633)),"../Routput/GO/GO_MF_0633.txt", sep="\t", row.names = F)
+
+## Merge the df MP and BP
+A = GO_MF %>% summary %>% mutate(GOID = GOMFID, Type = "MF")
+B = GO_BP %>% summary %>% mutate(GOID = GOBPID, Type = "BP")
+C = GO_CC %>% summary %>% mutate(GOID = GOCCID, Type = "CC")
+
+dfGO = rbind(A[-1], B[-1], C[-1])
+
+## Arrange by p-value
+dfGO = dfGO %>% plyr::arrange(.by_group =-Pvalue)
+
+dfGO$Term = factor(x = dfGO$Term, levels = dfGO$Term)
+
+plotGO = dfGO %>% ggplot(aes(x=Count/Size, y = Term)) +
+  geom_point(aes(color = Pvalue, size = Count)) +
+  scale_color_gradient(name="P value", low = "red", high = "blue") +
+  scale_size_continuous(name = "Gene number", range = c(1, 10), breaks = c(1,5,15,25))+
+  theme_bw() + ylab("") +
+  facet_grid(fct_inorder(Type)~.,scales="free",space = "free")
+```
+
+```{r, fig.height = 10, fig.width = 8}
+# pdf(xxx, width = 15, height = 20)
+plotGO
+# dev.off()
+```
+
+
+# Top down analysis: Differential Methylation in parents -> how do they look in offspring?
+
+```{r, eval = FALSE}
+##############################################################
+#### I. Focus on CpG positions at parental (Ctrl-Inf) DMS ####
+##############################################################
+
+####################################################################################
+#### Question: how are the beta values in the different groups at the parental DMS?##
+####################################################################################
+##############
+## Prepare dataset
+##############
+PM_G1 <- getPMdataset(uniteCov = uniteCov6_G1_woSexAndUnknowChrOVERLAP, MD = fullMetadata_PAR, gener="parents")
+PM_G2 <- getPMdataset(uniteCov = uniteCov14_G2_woSexAndUnknowChrOVERLAP, MD = fullMetadata_OFFS, gener="offspring")
+
+head(PM_G1)
+head(PM_G2)
+
+table(fullMetadata_OFFS$trtG1G2, fullMetadata_OFFS$clutch.ID)
+
+## What is the relative contribution of methylation to brother pair & paternal treatment?
+## Test of VCA: variance component analysis https://cran.r-project.org/web/packages/VCA/vignettes/VCA_package_vignette.html
+
+## Hypo
+PM_G2_mean_hypo <- PM_G2[PM_G2$hypohyper %in% "hypo", ] %>% 
+  group_by(brotherPairID, G1_trt, G2_trt, ID) %>% 
+  dplyr::summarize(MeanBetaValue = mean(BetaValue, na.rm=TRUE)) %>% data.frame()
+
+varPlot(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hypo, 
+        MeanLine=list(var=c("G1_trt", "G2_trt"), 
+                      col=c("white", "blue"), lwd=c(2,2)), 
+        BG=list(var="G2_trt", col=paste0("gray", c(80, 90))),
+        YLabel=list(cex = .8, text="Mean beta value at parDMS \n hypomethylated upon infection"))
+
+myfitVCA_hypo <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hypo) 
+
+### Real values
+trtEffect <- sum(myfitVCA_hypo$aov.tab[2:4, 5])
+genEffect <- sum(myfitVCA_hypo$aov.tab[5:8, 5])
+error <- sum(myfitVCA_hypo$aov.tab[9, 5])
+realValHypoVCA <- data.frame(trtEffect=trtEffect, genEffect=genEffect,error=error)
+
+### Randomisation
+myrandomVCA <- function(df=PM_G2_mean_hypo){
+  randomDF = df
+  randomDF$G1_trt = sample(PM_G2_mean_hypo$G1_trt, replace = F)
+  randomDF$G2_trt = sample(PM_G2_mean_hypo$G2_trt, replace = F)
+  randomDF$brotherPairID = sample(PM_G2_mean_hypo$brotherPairID, replace = F)
+  myfitVCA <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = randomDF) 
+  trtEffect <- sum(myfitVCA$aov.tab[2:4, 5])
+  genEffect <- sum(myfitVCA$aov.tab[5:8, 5])
+  error <- sum(myfitVCA$aov.tab[9, 5])
+  return(data.frame(trtEffect=trtEffect, genEffect=genEffect,error=error))
+}
+
+randomHypoVCA = do.call(rbind, lapply(1:1000, function(x) {
+  df=myrandomVCA(PM_G2_mean_hypo)
+  df$rep=x
+  return(df)}))
+
+randomHypoVCA = melt(randomHypoVCA, id.vars = "rep")
+# saveRDS(randomHypoVCA, file = "Rdata/randomHypoVCA.RDS")
+randomHypoVCA <- readRDS(file = "Rdata/randomHypoVCA.RDS")
+df2=reshape2::melt(realValHypoVCA)
+
+sumDF <- randomHypoVCA %>% 
+  group_by(variable) %>%
+  dplyr::summarize(value = mean(value)) %>% data.frame()
+
+ggplot(randomHypoVCA, aes(x=variable, y=value))+
+  geom_boxplot()+
+  geom_jitter(width=.1, alpha=.2)+
+  geom_point(data = df2, col = "red", size = 6)+
+  geom_text(data=sumDF, aes(label=round(value)), col="white")+
+  geom_text(data = df2, aes(label=round(value)), col="white")+
+  theme_cleveland()+
+  ggtitle("VCA with bootstrap N=1000 at hypo-parDMS", subtitle = "red: observed values")
+
+# estimate 95% confidence intervals, request CI for
+# all variance components via 'VarVC=TRUE'
+VCAinference(myfitVCA_hypo, VarVC=TRUE)
+
+## Hyper
+PM_G2_mean_hyper <- PM_G2[PM_G2$hypohyper %in% "hyper", ] %>% 
+  group_by(brotherPairID, G1_trt, G2_trt, ID) %>% 
+  dplyr::summarize(MeanBetaValue = mean(BetaValue, na.rm=TRUE)) %>% data.frame()
+
+varPlot(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hyper, 
+        MeanLine=list(var=c("G1_trt", "G2_trt"), 
+                      col=c("white", "blue"), lwd=c(2,2)), 
+        BG=list(var="G2_trt", col=paste0("gray", c(80, 90))),
+        YLabel=list(cex = .8, text="Mean beta value at parDMS \n hypermethylated upon infection"))
+
+myfitVCA_hyper <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hyper) 
+
+### Real values
+trtEffect <- sum(myfitVCA_hyper$aov.tab[2:4, 5])
+genEffect <- sum(myfitVCA_hyper$aov.tab[5:8, 5])
+error <- sum(myfitVCA_hyper$aov.tab[9, 5])
+realValHyperVCA <- data.frame(trtEffect=trtEffect, genEffect=genEffect,error=error)
+
+### Randomisation
+randomHyperVCA = do.call(rbind, lapply(1:1000, function(x) {
+  df=myrandomVCA(PM_G2_mean_hyper)
+  df$rep=x
+  return(df)}))
+
+randomHyperVCA = melt(randomHyperVCA, id.vars = "rep")
+# saveRDS(randomHyperVCA, file = "Rdata/randomHyperVCA.RDS")
+randomHyperVCA <- readRDS(file = "Rdata/randomHyperVCA.RDS")
+df2=reshape2::melt(realValHyperVCA)
+
+sumDF <- randomHyperVCA %>% 
+  group_by(variable) %>%
+  dplyr::summarize(value = mean(value)) %>% data.frame()
+
+ggplot(randomHyperVCA, aes(x=variable, y=value))+
+  geom_boxplot()+
+  geom_jitter(width=.1, alpha=.2)+
+  geom_point(data = df2, col = "red", size = 6)+
+  geom_text(data=sumDF, aes(label=round(value)), col="white")+
+  geom_text(data = df2, aes(label=round(value)), col="white")+
+  theme_cleveland()+
+  ggtitle("VCA with bootstrap N=1000 at hyper-parDMS", subtitle = "red: observed values")
+
+# estimate 95% confidence intervals, request CI for
+# all variance components via 'VarVC=TRUE'
+VCAinference(myfitVCA_hypo, VarVC=TRUE)
+
+################
+## Hyper
+PM_G2_mean_hyper <- PM_G2[PM_G2$hypohyper %in% "hyper", ] %>% 
+  group_by(brotherPairID, G1_trt, G2_trt, ID) %>% 
+  dplyr::summarize(MeanBetaValue = mean(BetaValue, na.rm=TRUE)) %>% data.frame()
+
+varPlot(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hyper, 
+        MeanLine=list(var=c("G1_trt", "G2_trt"), 
+                      col=c("white", "blue"), lwd=c(2,2)), 
+        BG=list(var="G2_trt", col=paste0("gray", c(80, 90))),
+        YLabel=list(cex = .8, text="Mean beta value at parDMS \n hypermethylated upon infection"))
+
+myfitVCA_hyper <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hyper) 
+print(myfitVCA_hyper, digits=4)
+# estimate 95% confidence intervals, request CI for
+# all variance components via 'VarVC=TRUE'
+VCAinference(myfitVCA_hyper, VarVC=TRUE)
+
+##############
+## In parents
+##############
+parmod <- lmer(data = PM_G1, BetaValue ~ meth.diff.parentals : Treatment + (1|CpGSite) + (1|brotherPairID))
+
+## check normality of residuals assumption
+qqnorm(resid(parmod))
+qqline(resid(parmod))
+
+pred <- ggpredict(parmod, terms = c("meth.diff.parentals", "Treatment"))
+plot(pred, add.data = T)+
+  scale_color_manual(values = c("black", "red"))+
+  scale_y_continuous(name = "Beta values")+
+  scale_x_continuous(name = "Methylation difference between infected and control parents in percentage")+
+  ggtitle("Predicted methylation ratio (Beta) values in parents\n as a function of differential methylation between exposed and control groups")+
+  theme_bw()
+
+##############
+## Linear model: does the beta value of offspring at DMS depends on treatment Parent x Offspring?
+##############
+modFull <- lmer(BetaValue ~ (G1_trt * G2_trt):hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID),data = PM_G2, REML = F) # REML =F for model comparison
+mod_noG1trt <- lmer(BetaValue ~ G2_trt:hypohyper + (1|CpGSite)+ (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+mod_noG2trt <-lmer(BetaValue ~ G1_trt:hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+mod_noInteractions <- lmer(BetaValue ~ (G1_trt + G2_trt):hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+mod_noHypoHyper <- lmer(BetaValue ~ (G1_trt * G2_trt) + (1|CpGSite) + (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+
+## check normality of residuals assumption
+qqnorm(resid(modFull))
+qqline(resid(modFull))
+
+## Likelihood ratio tests for all variables:
+lrtest(modFull, mod_noG1trt) # G1 trt is VERY VERY significant (LRT: χ² (4) = 1163.6, p < 0.001)
+lrtest(modFull, mod_noG2trt) # G2 trt is VERY VERY significant (LRT: χ² (4) = 30.02, p < 0.001) NB that changed when brotherpair is used instead of family!
+lrtest(modFull, mod_noInteractions) # interactions are significant (LRT: χ² (2) = 9.21, p < 0.01)
+lrtest(modFull, mod_noHypoHyper) # hypo/hyper VERY VERY significant (LRT: χ² (4) = 1140, p < 0.001)
+
+## Post-hoc tests between treatments
+modFull <- lmer(BetaValue ~ (G1_trt * G2_trt):hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID),data = PM_G2)
+modFull_emmeans <- emmeans(modFull, list(pairwise ~ (G1_trt:G2_trt):hypohyper), adjust = "tukey")
+modFull_emmeans
+
+P1 <- plot(modFull_emmeans, by = "hypohyper", comparisons = TRUE) +
+  # coord_flip()+
+  theme_bw() +
+  ggtitle("Estimated marginal means of methylation ratio (beta)\n of offspring at parental DMS")+
+  theme(legend.position = "none", axis.title.x = element_blank()) +
+  scale_x_continuous("Beta value (methylation ratio)", limits = c(47,69.5))
+
+## NB: Comparison arrows: https://cran.r-project.org/web/packages/emmeans/vignettes/xplanations.html
+## two estimated marginal means (EMMs) differ significantly if, and only if, their respective comparison arrows do not overlap
+## These comparison arrows are decidedly not the same as confidence intervals.
+## Confidence intervals for EMMs are based on the statistical properties of the individual EMMs, whereas comparison arrows
+## are based on the statistical properties of differences of EMMs.
+
+## Add the PARENTAL DMS value
+## Same test on ALL, G1 and G2 fish
+modFullG1 <- lmer(BetaValue ~ G1_trt:hypohyper + (1|CpGSite) + (1|brotherPairID), data = PM_G1)
+
+modFullG1_emmeans <- emmeans(modFullG1, list(pairwise ~ G1_trt:hypohyper), adjust = "tukey")
+modFullG1_emmeans
+
+P2 <- plot(modFullG1_emmeans, by = "hypohyper", comparisons = TRUE) +
+  theme_bw() +
+  ggtitle("Estimated marginal means of methylation ratio (beta)\n of parents at DMS")+
+  theme(legend.position = "none", axis.title.x = element_blank()) +
+  scale_x_continuous("Beta value (methylation ratio)", limits = c(47,69.5))
+
+ggarrange(P2, P1, labels = c("A", "B"), ncol = 1, nrow = 2)
+
+#####################################################################################
+## Are the nbr of residuals methylation AT PARENTAL DMS different in the 4 G2 trt? ##
+## (for hypo vs hypermeth)? ##
+##############################
+
+length(unique(PM_G1$CpGSite))# 3648 positions
+PM_G1 %>% dplyr::count(ID)## NB: not all covered in all samples
+
+length(unique(PM_G2$CpGSite[PM_G2$hypohyper %in% "hypo"]))# 1176 positions hypomethylated upon parental inf
+length(unique(PM_G2$CpGSite[PM_G2$hypohyper %in% "hyper"]))# 2472 positions hypermethylated upon parental inf
+
+myfun <- function(X){
+  ## Calculate nbr of CpG hypo/hypermethylated per individual, and nbr of covered CpG:
+  X <- X %>% group_by(ID, Treatment, brotherPairID, clutch.ID, Sex) %>%
+    dplyr::summarise(ncov = n(),
+                     hypoMeth = sum(BetaValue < 0.3),
+                     hyperMeth = sum(BetaValue > 0.7)) %>% data.frame()
+  # Calculate residuals of nbr of methCpG by nbr of covered CpG
+  X$res_Nbr_methCpG_Nbr_coveredCpG_HYPO = residuals(lm(X$hypoMeth ~ X$ncov))
+  X$res_Nbr_methCpG_Nbr_coveredCpG_HYPER = residuals(lm(X$hyperMeth ~ X$ncov))
+  
+  ## Statistical model: is it different in each offspring trt group?
+  mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPO ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
+               data = X, REML = F)
+  mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPO ~ 1 + (1|brotherPairID/clutch.ID) + (1|Sex),
+               data = X, REML = F)
+  print(lrtest(mod1, mod0))
+  
+  ## Post-hoc test:
+  modhypo <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPO ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
+                  data = X)
+  ## pairwise posthoc test
+  print(emmeans(modhypo, list(pairwise ~ Treatment), adjust = "tukey"))
+  
+  mod3 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPER ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
+               data = X, REML = F)
+  mod4 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPER ~ 1 + (1|brotherPairID/clutch.ID) + (1|Sex),
+               data = X, REML = F)
+  print(lrtest(mod3, mod4))
+  
+  ## Post-hoc test:
+  modhyper <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPER ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
+                   data = X)
+  ## pairwise posthoc test
+  print(emmeans(modhyper, list(pairwise ~ Treatment), adjust = "tukey"))
+  
+  ## Plot
+  phypo <- plot(ggpredict(modhypo, terms = c("Treatment")), add.data = TRUE)+
+    scale_y_continuous("Residuals of number of hypomethylated methylated \ncytosines on number of cytosines covered") +
+    ggtitle("Predicted residuals nbr of hypomethylated CpG")+
+    theme_bw()
+  
+  phyper <- plot(ggpredict(modhyper, terms = c("Treatment")), add.data = TRUE)+
+    scale_y_continuous("Residuals of number of hypermethylated methylated \n cytosines on number of cytosines covered") +
+    ggtitle("Predicted residuals nbr of hypermethylated CpG")+
+    theme_bw()
+  return(list(phypo, phyper))
+}
+
+listplots <- myfun(X = PM_G2[PM_G2$hypohyper %in% "hypo",])
+## NOT significant
+annotate_figure(ggarrange(listplots[[1]], listplots[[2]],ncol = 2, nrow = 1),
+                top = text_grob("Parental DMS hypomethylated upon infection, in offspring"))
+
+listplots <- myfun(X = PM_G2[PM_G2$hypohyper %in% "hyper",])
+## Treatment SIGNIFICANT in both excess hypo/hyper methylation **
+
+# $`pairwise differences of Treatment`
+## HYPO
+# 1                       estimate   SE   df t.ratio p.value
+# NE_control - E_control     23.71 7.28 10.3   3.257  0.0353
+# NE_control - E_exposed     26.88 7.26 10.3   3.701  0.0172
+
+## HYPER
+# 1                       estimate   SE   df t.ratio p.value
+# NE_control - E_control    -24.06 7.36 10.3  -3.269  0.0348
+# NE_control - E_exposed    -27.07 7.34 10.3  -3.687  0.0177
+
+annotate_figure(ggarrange(listplots[[1]], listplots[[2]],ncol = 2, nrow = 1),
+                top = text_grob("Parental DMS hypermethylated upon infection, in offspring"))
+
+## --> The beta values in parentalDMS in offspring follow the parental pattern hypo/hyper methylated upon infection
+
+######################################################################################
+## II. CORE DMS: Which of the parental DMS are also found in offspring comparisons? ##
+######################################################################################
+intersect(paste(DMS15pc_G1_half$chr, DMS15pc_G1_half$start),
+          intersect(paste(DMS15pc_G2_controlG1_half$chr, DMS15pc_G2_controlG1_half$start),
+                    paste(DMS15pc_G2_infectedG1_half$chr, DMS15pc_G2_infectedG1_half$start)))
+## ONLY 4!!! "Gy_chrII 22196179"  "Gy_chrXII 10863858" "Gy_chrXVII 2658079" "Gy_chrXX 5344222" 
+
+###############################################################
+## CORE DMS: Which of the DMS are common to CC-CI and IC-II? ##
+###############################################################
+makeManP <- function(comp1, comp2){
+  A <- methylKit::select(DMS1, which(paste(DMS1$chr, DMS1$start) %in% coreDMS))
+  B <- as.data.frame(annotateWithGeneParts(as(A,"GRanges"),annotBed12)@members)
+  A2 <- methylKit::select(DMS2, 
+                          which(paste(DMS2$chr, DMS2$start) %in% coreDMS))
+  B2 <- as.data.frame(annotateWithGeneParts(as(A2,"GRanges"),annotBed12)@members)
+  
+  ggarrange(
+    makeManhattanPlots(DMSfile = DMS1, 
+                       annotFile = as.data.frame(annotateWithGeneParts(as(DMS1,"GRanges"),annotBed12)@members),
+                       GYgynogff = GYgynogff, mycols = c("red", "grey", "black", "green"), 
+                       mytitle = paste0("Manhattan plot of ", comp1, " DMS")),
+    makeManhattanPlots(DMSfile = DMS2, 
+                       annotFile = as.data.frame(annotateWithGeneParts(as(DMS2,"GRanges"),annotBed12)@members),
+                       GYgynogff = GYgynogff, mycols = c("red", "grey", "black", "green"), 
+                       mytitle = paste0("Manhattan plot of ", comp2, " DMS")),
+    makeManhattanPlots(DMSfile = A, annotFile = B, GYgynogff = GYgynogff, 
+                       mycols = c("red", "grey", "black", "green"), mytitle = paste0("Manhattan plot core DMS in ", comp1)),
+    makeManhattanPlots(DMSfile = A2, annotFile = B2, GYgynogff = GYgynogff, 
+                       mycols = c("red", "grey", "black", "green"), mytitle = paste0("Manhattan plot core DMS in ", comp2)),
+    labels = c("A", "B", "C", "D"), ncol = 1, nrow = 4, common.legend = T)
+}
+
+DMS1 = DMS15pc_G2_controlG1_half # from: getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1CONTROL, myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+DMS2 = DMS15pc_G2_infectedG1_half # from: getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1INFECTED, myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
+coreDMS <- intersect(paste(DMS1$chr, DMS1$start), paste(DMS2$chr, DMS2$start))
+
+## Make Manhattan plot:
+makeManP(comp1 = "CC-CI", comp2 = "IC-II")
+
+## Annotation of the core DMS:
+coreDMSmethylDiff <- methylKit::select(DMS1, which(paste(DMS1$chr, DMS1$start) %in% coreDMS))
+
+## Differentially methylated sites:
+subGOterms = getAnnotationFun(METHOBJ = coreDMSmethylDiff)
+
+## Background annotations:
+universeGOterms = getAnnotationFun(METHOBJ = uniteCov14_G2_woSexAndUnknowChrOVERLAP)
+
+length(universeGOterms)# 16024
+
+
+# as.vector(lapply(strsplit(as.character(TSSAssociation_DiffMeth15p$feature.name), "\\."), "[", 1))
+
+# Using the genes with associated pop-DMS, we applied
+# a conditional hypergeometric Gene Ontology (GO) term enrichment
+# analysis (false discovery rate–corrected P ≤ 0.05) with the Ensembl
+# stickleback annotation dataset “gaculeatus_gene_ensembl,” and all
+# genes that were associated to any sequenced CpG site were used as
+# universe. We identified overrepresented biological processes, molec-
+#   ular functions, and cellular components using the packages GOstats
+# version 2.5 (59) and GSEABase version 1.46 (60) and corrected for
+# multiple testing using the false discovery rate method implemented
+# in goEnrichment version 1.0 (61) in R version 3.6 (52). Figures were
+# produced using ggplot2 version 3.2 (56)
+
+#######################################################################
+## TRANSMITTED DMS: Which of the DMS are found in CCvsIC and CIvsII? ##
+#######################################################################
+makeManP(DMS1 = DMS15pc_G1_controlG2_half, comp1 = "CC-IC",
+         DMS2 = DMS15pc_G1_infectedG2_half, comp2 = "CI-II")
+
+##############
+## Plot mean Beta values of offsprings at parental DMS, per trt, along the chromosomes
+##############
+meanBeta_G2_simple <- PM_G2 %>% group_by(Chr, Pos, Treatment) %>%
+  dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
+names(meanBeta_G2_simple) <- c("Chr", "Pos", "Treatment_G2", "MeanBetaG2")
+
+genome <- GYgynogff %>%
+  mutate(chrom_nr=chrom %>% deroman(), chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
+  arrange(chrom_order) %>%
+  mutate(gstart=lag(length,default=0) %>% cumsum(), gend=gstart+length, 
+         type=LETTERS[2-(chrom_order%%2)],   gmid=(gstart+gend)/2)
+
+mydata = tibble(trt=meanBeta_G2_simple$Treatment_G2,
+                chrom=meanBeta_G2_simple$Chr, pos=meanBeta_G2_simple$Pos, beta=meanBeta_G2_simple$MeanBetaG2)
+mydata$pos <- as.numeric(mydata$pos)
+mydata$pos <- as.numeric(mydata$pos)
+
+table(mydata$chrom)## check that chrXIX and chrUN are well removed!!
+
+# join DMS and genomic position
+data = dplyr::left_join(mydata, genome) %>% dplyr::mutate(gpos=pos+gstart)
+
+# plot:
+ggplot()+
+  geom_rect(data=genome,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=type), alpha=.2)+
+  geom_point(data=data, aes(x=gpos,y=beta, shape=trt, col=trt),fill="white", size = 1)+
+  scale_color_manual(values = colOffs)+
+  scale_shape_manual(values=c(21,21,21,21))+
+  scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none")+
+  scale_x_continuous(breaks=genome$gmid,labels=genome$chrom %>% str_remove(.,"Gy_chr"),
+                     position = "top",expand = c(0,0))+
+  theme_minimal()+
+  theme(panel.grid = element_blank(),
+        axis.line=element_blank(),
+        axis.title = element_blank(),
+        strip.placement = "outside")+
+  facet_grid(trt~.)+
+  ggtitle("Mean methylation proportions at the 3648 parental DMS for each offspring group")
+
+###########################################################################################
+## Not conclusive: test hyp that beta value is different (higher?) in the center of the chromosome, 
+## where there are less recombinations. Test for each chromosome
+meanBeta_G2_extended <- PM_G2 %>% group_by(Chr, Pos, Treatment, Sex, brotherPairID) %>%
+  dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
+names(meanBeta_G2_extended) <- c("Chr", "Pos", "Treatment_G2","Sex", "brotherPairID", "MeanBetaG2")
+
+mydata = tibble(trt=meanBeta_G2_extended$Treatment_G2, sex = meanBeta_G2_extended$Sex, brotherPairID = meanBeta_G2_extended$brotherPairID,
+                chrom=meanBeta_G2_extended$Chr, pos=meanBeta_G2_extended$Pos, beta=meanBeta_G2_extended$MeanBetaG2)
+mydata$pos <- as.numeric(mydata$pos)
+
+# join DMS and genomic position
+data = dplyr::left_join(mydata, genome) %>% dplyr::mutate(gpos=pos+gstart)
+
+## Add distance to center
+data$dist2mid <- abs(data$gmid - data$gpos)
+
+mod <- lmer(beta ~ dist2mid:chrom + (1|trt) + (1|sex) + (1|brotherPairID), data = data, REML = F)
+mod0 <- lmer(beta ~ dist2mid + (1|trt) + (1|sex) + (1|brotherPairID), data = data, REML = F)
+mod00 <- lmer(beta ~ chrom + (1|trt) + (1|sex) + (1|brotherPairID), data = data, REML = F)
+
+lrtest(mod, mod0) # chromosome matters
+lrtest(mod0, mod00) # distance to middle matters
+
+## check normality of residuals assumption
+qqnorm(resid(mod))
+qqline(resid(mod)) # quite skewed
+
+pred <- ggpredict(mod, terms = c("dist2mid","chrom"))
+plot(pred) +
+  scale_color_manual(values = 1:20)
+
+
+```
+
+
+
+

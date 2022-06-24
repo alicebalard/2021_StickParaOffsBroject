@@ -222,3 +222,97 @@ fullMetadata_OFFS$clutch.ID
 # fullMetadata_OFFS$clutch.ID
 # fullMetadata_OFFS$brotherPairID
 # fullMetadata_OFFS$patTrt
+
+
+#########################
+## Clustering analysis ##
+#########################
+# ## Run Adonis to this if clustering is done by treatment
+# x = percMethylation(uniteCov14_G2_woSexAndUnknowChrOVERLAP)
+# 
+# ## Transpose
+# x=t(x)
+# 
+# ## Creates a distance matrix. Method: Bray-Curtis, package vegan
+# data.dist = as.matrix(vegdist(x, "bray", upper = FALSE, na.rm = T))
+# 
+# ## Check that the order is the same than with the metadata
+# table(fullMetadata_OFFS$SampleID == rownames(data.dist))
+# 
+# # We use a PERMANOVA to test the hypothesis that paternal treatment, 
+# # offspring treatment, sex and their interactions significantly influencing global methylation
+# perm <- how(nperm = 1000) # 1000 permutations
+# setBlocks(perm) <- with(fullMetadata_OFFS, brotherPairID) # define the permutation structure considering brotherPairID
+# 
+# ## Full model
+# adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permutations = perm)
+# # adonis2(formula = data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permutations = perm)
+# #                   Df SumOfSqs      R2      F   Pr(>F)    
+# # PAT               1 0.004138 0.01330 1.4748 0.000999 ***
+# # outcome           1 0.002950 0.00948 1.0515 0.075924 .  
+# # Sex               1 0.003755 0.01207 1.3383 0.004995 ** 
+# # PAT:outcome       1 0.002869 0.00922 1.0227 0.050949 .  
+# 
+# ##### NMDS
+# # find the best number of dimensions (goeveg lib)
+# ## Clarke 1993 suggests the following guidelines for acceptable stress values: <0.05 = excellent, <0.10
+# # = good, <0.20 = usable, >0.20 = not acceptable. The plot shows the border of the 0.20 stress value
+# # limit. Solutions with higher stress values should be interpreted with caution and those with stress
+# # above 0.30 are highly suspect
+# dimcheckMDS(
+#   data.dist,
+#   distance = "bray",
+#   k = 7,
+#   trymax = 100,
+#   autotransform = TRUE
+# )
+# abline(h = 0.1, col = "darkgreen")
+# 
+# #Create NMDS based on bray-curtis distances - metaMDS finds the
+# # most stable NMDS solution by randomly starting from different points in your data
+# set.seed(1234)
+# 
+# # generate CpG sums these will be NA is any are missing
+# csum <- colSums(x)
+# # check if any are missing
+# any(is.na(csum))
+# # TRUE
+# # yes, some missing, so which ones?
+# length(which(!is.na(csum)))#78384 complete positions
+# 
+# x = x[,which(!is.na(csum))]
+# 
+# NMDS <- metaMDS(comm = x, distance = "bray", maxit=1000, k = 3)
+# 
+# #check to see stress of NMDS
+# mystressplot <- stressplot(NMDS) 
+# 
+# #extract plotting coordinates
+# MDS1 = NMDS$points[,1] ; MDS2 = NMDS$points[,2] ; MDS3 = NMDS$points[,3]
+# ## OR #extract NMDS scores (x and y coordinates)
+# ## data.scores = as.data.frame(scores(NMDS))
+# 
+# #create new data table (important for later hulls finding)
+# # with plotting coordinates and variables to test (dim 1,2,3)
+# NMDS_dt = data.table::data.table(MDS1 = MDS1, MDS2 = MDS2, MDS3 = MDS3,
+#                                  trtG1G2 = fullMetadata_OFFS$trtG1G2)
+# 
+# # generating convex hulls splitted by myvar in my metadata:
+# hulls <- NMDS_dt[, .SD[chull(MDS1, MDS2)], by = trtG1G2]
+# 
+# ## to insert image (expe design)
+# img <- readPNG("../../data/designExpeSimple.png")
+# g <- rasterGrob(img, interpolate=TRUE)
+# 
+# myNMDSplot <- ggplot(NMDS_dt, aes(x=MDS1, y=MDS2)) +
+#   geom_polygon(data = hulls, aes(fill=trtG1G2), alpha=0.3) +
+#   # scale_color_manual(values = colOffs)+
+#   scale_fill_manual(values = colOffs)+
+#   geom_point(aes(fill=trtG1G2, shape=trtG1G2), col = "black", size = 3, alpha =.5) +
+#   scale_shape_manual(values = c(21,22,23,24)) +
+#   # geom_label(aes(label=rownames(NMDS$points), col = fullMetadata_OFFS$brotherPairID))+
+#   theme_bw() +
+#   # theme(legend.position = "none") +
+#   annotation_custom(g, xmin=-0.25, xmax=-0.1, ymin=0.05, ymax=0.15) +
+#   ggtitle("NMDS analysis of the 78384 CpG sites from parental control/infected DMS,\npresent in all offspring")
+# myNMDSplot

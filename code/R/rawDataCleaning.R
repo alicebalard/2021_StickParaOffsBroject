@@ -1,4 +1,4 @@
-## Cleaning raw data, associate a father to each offsrping clutch
+## Cleaning raw data, associate a father to each offspring clutch
 ## 1st of April 2022
 
 ## Load data

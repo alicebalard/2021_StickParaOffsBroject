@@ -79,4 +79,12 @@ if (sourceDMS == TRUE){
   nrow(DMS15pc_G1_infectedG2_half) # 2050
   DMR15pc_G1_infectedG2_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_infectedG2_half.RDS")
   nrow(DMR15pc_G1_infectedG2_half) # 19
+  
+  #######################
+  ## In Brother pairs: ##
+  #######################
+  ## Get DMS CC-TC and TC-TT in all brother pairs (same treatment, different PARENTAL treatment)
+  
+  # Read in (was calculated on Apocrita, 1h 10 cores)
+  DMS_BP_G2_list <- readRDS("../../data/DiffMeth/BP/DMS_BP_G2_list.RDS")
 }

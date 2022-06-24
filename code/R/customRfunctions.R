@@ -117,8 +117,6 @@ makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50",
     ggtitle(mytitle)
 }
 
-
-
 ######################
 ## Adonis functions ##
 ######################
@@ -280,6 +278,22 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
   return(list(NMDS = NMDS, mystressplot=mystressplot, NMDSplot = figure))
 }
 
+##################
+## Venn diagram ##
+##################
+myVennFUN <- function(A, B, C, catnames, myCols = c("grey","green","red")){
+  futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")#to rm log files
+  Venn <- venn.diagram(
+    x = list(A, B, C), category.names = catnames, filename = NULL,
+    margin = 0, lwd = 2, lty = 'blank', fill = myCols,
+    cex = .4, fontface = "bold",fontfamily = "sans", print.mode=c("raw","percent"),
+    cat.cex = 0.4, cat.fontface = "bold", cat.default.pos = "outer",
+    cat.col = myCols, cat.pos = c(-27, 27, 135), cat.dist = c(0.055, 0.055, 0.055),
+    cat.fontfamily = "sans", rotation = 1
+  )
+  return(Venn)
+}
+
 ## II. Functions used in R04.2 explore differential methylations
 
 ## Calculate beta values (methylation proportion per CpG site) for the 1001880 positions covered in half G1 and half G2
@@ -362,6 +376,60 @@ getDiffMethSimple <- function(myuniteCov, myMetadata){
   ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
   myDMS_15pc = getMethylDiff(myDiffMeth, difference=15, qvalue=0.01)
   return(myDMS_15pc)
+}
+
+## Calculate DMS in all brother pairs
+# 1. CC-TC = CONTROL fish (parent CvsT)
+# 2. CT-TT = TREATMENT fish (parent CvsT)
+# 3. CC-CT = fish from CONTROL parents (G2 CvsT)
+# 4. TC-TT = fish from TREATMENT parents (G2 CvsT)
+
+## Per brother pair:
+getDMSperBP <- function(BP){
+  ## Unite object for one Brother Pair:
+  metadataBP_CC_TC = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
+                                           fullMetadata_OFFS$trtG1G2 %in% c("NE_control", "E_control"), ]
+  metadataBP_CT_TT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
+                                         fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"), ]
+  metadataBP_CC_CT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
+                                         fullMetadata_OFFS$trtG1G2 %in% c("NE_control", "NE_exposed"), ]
+  metadataBP_TC_TT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
+                                         fullMetadata_OFFS$trtG1G2 %in% c("E_control", "E_exposed"), ]
+  
+  ## Make 4 separate uniteCov:
+  myuniteCovBP_CC_TC = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                    treatment = metadataBP_CC_TC$trtG1G2_NUM, sample.ids = metadataBP_CC_TC$ID)
+  myuniteCovBP_CT_TT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                  treatment = metadataBP_CT_TT$trtG1G2_NUM, sample.ids = metadataBP_CT_TT$ID)
+  myuniteCovBP_CC_CT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                  treatment = metadataBP_CC_CT$trtG1G2_NUM, sample.ids = metadataBP_CC_CT$ID)
+  myuniteCovBP_TC_TT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                  treatment = metadataBP_TC_TT$trtG1G2_NUM, sample.ids = metadataBP_TC_TT$ID)
+  
+  # remove bases where NO fish in this BP has a coverage
+  myuniteCovBP_CC_TC = methylKit::select(myuniteCovBP_CC_TC, which(!is.na(rowSums(percMethylation(myuniteCovBP_CC_TC)))))
+  myuniteCovBP_CT_TT = methylKit::select(myuniteCovBP_CT_TT, which(!is.na(rowSums(percMethylation(myuniteCovBP_CT_TT)))))
+  myuniteCovBP_CC_CT = methylKit::select(myuniteCovBP_CC_CT, which(!is.na(rowSums(percMethylation(myuniteCovBP_CC_CT)))))
+  myuniteCovBP_TC_TT = methylKit::select(myuniteCovBP_TC_TT, which(!is.na(rowSums(percMethylation(myuniteCovBP_TC_TT)))))
+  
+  # Calculate differential methylation:
+  # We select the bases that have q-value<0.01 and percent methylation difference larger than 15%, sex as covariate
+  DMS_15pc_BP_CC_TC = getDiffMeth(myuniteCov = myuniteCovBP_CC_TC, myMetadata = metadataBP_CC_TC, mccores = 10, mydif = 15)
+  DMS_15pc_BP_CT_TT = getDiffMeth(myuniteCov = myuniteCovBP_CT_TT, myMetadata = metadataBP_CT_TT, mccores = 10, mydif = 15)
+  DMS_15pc_BP_CC_CT = getDiffMeth(myuniteCov = myuniteCovBP_CC_CT, myMetadata = metadataBP_CC_CT, mccores = 10, mydif = 15)
+  DMS_15pc_BP_TC_TT = getDiffMeth(myuniteCov = myuniteCovBP_TC_TT, myMetadata = metadataBP_TC_TT, mccores = 10, mydif = 15)
+  
+  return(list(DMS_15pc_BP_CC_TC = DMS_15pc_BP_CC_TC, DMS_15pc_BP_CT_TT = DMS_15pc_BP_CT_TT,
+              DMS_15pc_BP_CC_CT = DMS_15pc_BP_CC_CT, DMS_15pc_BP_TC_TT = DMS_15pc_BP_TC_TT))
+}
+
+## Function to get DMS info
+myDMSinfo <- function(DMSobject, fromUniteCov){
+  DMS = paste(DMSobject$chr, DMSobject$start, DMSobject$end)
+  meth.diff = DMSobject$meth.diff
+  direction = ifelse(DMSobject$meth.diff > 0, "hyper", "hypo")
+  percentDMS = length(DMS)/nrow(fromUniteCov)*100
+  return(list(DMS = DMS, meth.diff = meth.diff, direction = direction, percentDMS = percentDMS))
 }
 
 # order positions by chromosomes & position
