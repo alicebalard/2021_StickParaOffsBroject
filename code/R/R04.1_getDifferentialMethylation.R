@@ -108,13 +108,13 @@ if (run == TRUE){
 vecBP <- unique(fullMetadata_OFFS$brotherPairID)
 
 ## Loop over all BP
-DMSlist <- list() # empty plot list
+DMlist <- list() # empty plot list
 for (i in 1:length(vecBP)){
   DMlist[[i]] <- getDMperBP(BP = vecBP[[i]])
 } 
 names(DMlist) <- vecBP
 
-saveRDS(DMSlist, "../../data/DiffMeth/DMperBP_list.RDS")
+saveRDS(DMlist, "../../data/DiffMeth/DMperBP_list.RDS")
 
 
 
