@@ -415,17 +415,18 @@ anot4BP <- anot4BP %>%
 # Plot
 ggplot(anot4BP, aes(x=start, y = nCpG)) + geom_point(alpha=.4) +
   facet_grid(.~fct_inorder(chr)) +
-  geom_hline(yintercept = 10)+ 
+  geom_hline(yintercept = 5)+ 
   theme(axis.text.x=element_blank()) +
-  xlab("Genes with DMS present in at least 4 brother pairs")
+  xlab("Genes with DMS present in at least 4 brother pairs") +
+  ylab("Number of differentially methylated CpG on a gene")
 
-## Genes with at least 10 CpG differentially methylated:
-genes10DMS <- anot4BP[anot4BP$nCpG >= 10,]
+## Genes with at least 5 CpG differentially methylated:
+genes5DMS <- anot4BP[anot4BP$nCpG >= 5,]
 ```
 
 
 ```{r, echo=FALSE, results='asis'}
-kable(data.frame(chr=genes10DMS$chr, gene=unlist(genes10DMS$Note), row.names = NULL))
+kable(data.frame(chr=genes5DMS$chr, gene=unlist(genes5DMS$Note), row.names = NULL))
 ```
 
 - RASGRP3: Ras guanyl-releasing protein 3 (Homo sapiens OX=9606):
