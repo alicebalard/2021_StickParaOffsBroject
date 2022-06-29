@@ -89,40 +89,7 @@ myplot1 <- ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI, fill=trtG1G2))+
 myplot1
 ```
 
-### Calculate tolerance as a reaction norm
-
-```{r}
-modTol1 <- lmer(BCI ~ PAT*outcome*No.Worms + (1|brotherPairID) + (1|Sex), data=fullMetadata_OFFS)
-step(modTol1, reduce.random = F) # Model found: keep ALL
-
-modTol1_noworms <- lmer(BCI ~ PAT*outcome + (1|brotherPairID) + (1|Sex), data=fullMetadata_OFFS)
-modTol1_noPAT <- lmer(BCI ~ outcome*No.Worms + (1|brotherPairID) + (1|Sex), data=fullMetadata_OFFS)
-modTol1_nooffsp <- lmer(BCI ~ PAT*No.Worms + (1|brotherPairID) + (1|Sex), data=fullMetadata_OFFS)
-
-lrtest(modTol1, modTol1_noworms) # chi2 11.375  p= 0.003387 **
-lrtest(modTol1, modTol1_noPAT) # chi2 41.717  p=4.608e-09 ***
-lrtest(modTol1, modTol1_nooffsp) # chi2 24.308  p=5.268e-06 ***
-
-## Let's look at tolerance by paternal treatment:
-modTol <- lmer(BCI ~ PAT*No.Worms + (1|brotherPairID) + (1|Sex), data=fullMetadata_OFFS)
-
-step(modTol, reduce.random = F) # Model found: keep ALL
-
-modTol_noworms <- lmer(BCI ~ PAT + (1|brotherPairID) + (1|Sex), data=fullMetadata_OFFS)
-modTol_noPAT <- lmer(BCI ~ No.Worms + (1|brotherPairID) + (1|Sex), data=fullMetadata_OFFS)
-
-lrtest(modTol, modTol1_noworms) # chi2 12.932  p< 2.2e-16 ***
-lrtest(modTol, modTol1_noPAT) # chi2 17.409  p=3.014e-05 ***
-
-## Slope of tolerance is significantly different between both paternal treatment, with fish from control parents being less tolerant to parasitism
-pred <- ggpredict(modTol, terms = c("No.Worms", "PAT"), )
-myplot2 <- plot(pred, add.data = TRUE) + scale_color_manual(values = colOffs[c(2,4)]) + theme_bw() +
-  ylab("Body Condition Index") + scale_x_continuous("Number of worms", breaks = 0:10) +
-  labs(col=NULL) + ggtitle("Predicted values of Body Condition Index in offspring")
-myplot2
-```
-
-# Link between methylation and fitness (BCI)
+# Link between methylation and fitness (BCI and tolerance)
 
 ## Calculate (1) number of methylated sites and (2) residuals of methylated sites by covered sites (to account for coverage bias)
 ```{r}
@@ -211,15 +178,14 @@ lrtest(modFull, mod_noSex) # sex is significant p = 0.0002124 ***
 lrtest(modFull, mod_noTrt) # trt is not significant any longer 
 lrtest(modFull, mod_noInteractions) # interactions are not significant any longer
 
+modFinal <- lmer(res_Nbr_methCpG_Nbr_coveredCpG ~ Sex + (1|brotherPairID), 
+                data = fullMetadata_OFFS_half, REML = F) # REML =F for model comparison
+
 ## Plot
-ggplot(fullMetadata_OFFS_half, aes(trtG1G2, res_Nbr_methCpG_Nbr_coveredCpG,
-                                   group=interaction(trtG1G2, Sex))) + 
-  facet_grid(~Sex) +
-  geom_violin() +
-  geom_boxplot(aes(fill = trtG1G2), width = 0.2) +
-  geom_jitter(width = .1, size = 1, pch = 21, fill = "white") + 
-  scale_fill_manual(values = colOffs) +
-  theme_bw() + theme(legend.position = "none")
+plot(ggpredict(modFinal, terms = c("Sex")), add.data=T)+ theme_bw() +
+  ylab("Global methylation") + 
+  ggtitle("Predicted values of global methylation in offspring")
+
 ```
 
 ## In our 5 datasets: Is there a correlation between nbr of methylated sites and coverage? YES
@@ -300,19 +266,24 @@ ggplot(fullMetadata_OFFS_half, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_cover
 ```{r}
 fullMetadata_OFFS_half$res_Nbr_methCpG_Nbr_coveredCpG_div1000 <- (fullMetadata_OFFS_half$res_Nbr_methCpG_Nbr_coveredCpG)/1000
 
-mod_Tol.Meth <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*No.Worms + (1|brotherPairID)+ (1|Sex), 
+mod_Tol.Meth <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), 
                      data=fullMetadata_OFFS_half, REML = F)
 
 ## Model selection:
-step(mod_Tol.Meth, reduce.random = F) # Model found: BCI ~ No.Worms + (1 | brotherPairID) + (1 | Sex)
+step(mod_Tol.Meth, reduce.random = F) # Model found: BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
 ## The slope of BCI on nbrworms varies upon treatment but methylation does NOT vary with tolerance
 
-plot(ggpredict(mod_Tol.Meth, terms = c("res_Nbr_methCpG_Nbr_coveredCpG_div1000", "No.Worms")))
-
+plot(ggpredict(mod_Tol.Meth, terms = c("No.Worms", "PAT")), add.data=T)+ theme_bw() +
+  ylab("Body Condition Index") + xlab("Number of worms") +
+  ggtitle("Predicted values of Body Condition Index in offspring")+
+  scale_color_manual(NULL, values = c("black", "red"))
 
 ## And by treatment instead of No.worms?
 mod_Tol.Meth2 <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*PAT*outcome + (1|brotherPairID)+ (1|Sex), 
                      data=fullMetadata_OFFS_half, REML = F)
+
+plot(ggpredict(mod_Tol.Meth2, terms = c("res_Nbr_methCpG_Nbr_coveredCpG_div1000","PAT", "outcome")), add.data=T)+
+  scale_color_manual(values = colOffs)
 
 ## Model selection:
 step(mod_Tol.Meth2, reduce.random = F) # Model found: BCI ~ PAT + outcome + (1 | brotherPairID) + (1 | Sex) + PAT:outcome
