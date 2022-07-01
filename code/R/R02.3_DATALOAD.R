@@ -34,57 +34,10 @@ if (loadannot == TRUE){
 ## That can only be done AFTER these have been calculated of course. Only for later scripts.
 if (sourceDMS == TRUE){
   ## Source the previously calculated DMS/DMR
-  ## Parents (brotherPairID as covariates)
-  ### DM from CpG positions shared by half the fish per trt
-  DMS15pc_G1_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_half.RDS"); nrow(DMS15pc_G1_half) # 3648
-  DMR15pc_G1_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_half.RDS"); nrow(DMR15pc_G1_half) # 23
-  ### DM from CpG positions shared by all the fish
-  # DMS15pc_G1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G1_ALL.RDS"); nrow(DMS15pc_G1_ALL) # 125
-  # DMR15pc_G1_ALL returned 0 DMR
-  
-  ## Offspring (brotherPairID & Sex as covariates)
-  ## Control G1 - G2(trt vs control)
-  ### DM from CpG positions shared by half the fish per trt
-  DMS15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_half.RDS")
-  nrow(DMS15pc_G2_controlG1_half) # 1197
-  DMR15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_controlG1_half.RDS")
-  nrow(DMR15pc_G2_controlG1_half) # 6
-  ### DM from CpG positions shared by all the fish
-  # DMS15pc_G2_controlG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_ALL.RDS")
-  # nrow(DMS15pc_G2_controlG1_ALL) # 38
-  # DMR15pc_G2_controlG1_ALL returned 0 DMR
-  
-  ## Infected G1 - G2(trt vs control)
-  ### DM from CpG positions shared by half the fish per trt
-  DMS15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_half.RDS")
-  nrow(DMS15pc_G2_infectedG1_half) # 690
-  DMR15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_half.RDS")
-  nrow(DMR15pc_G2_infectedG1_half) # 8
-  ### DM from CpG positions shared by all the fish
-  # DMS15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_ALL.RDS")
-  # nrow(DMS15pc_G2_infectedG1_ALL) # 22
-  # DMR15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_ALL.RDS")
-  # nrow(DMR15pc_G2_infectedG1_ALL) # 1
-  
-  ## Both trt G1 - Control G2
-  ### DM from CpG positions shared by half the fish per trt
-  DMS15pc_G1_controlG2_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_controlG2_half.RDS")
-  nrow(DMS15pc_G1_controlG2_half) # 1569
-  DMR15pc_G1_controlG2_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_controlG2_half.RDS")
-  nrow(DMR15pc_G1_controlG2_half) # 14
-  
-  ## Both trt G1 - Infected G2
-  ### DM from CpG positions shared by half the fish per trt
-  DMS15pc_G1_infectedG2_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_infectedG2_half.RDS")
-  nrow(DMS15pc_G1_infectedG2_half) # 2050
-  DMR15pc_G1_infectedG2_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_infectedG2_half.RDS")
-  nrow(DMR15pc_G1_infectedG2_half) # 19
-  
-  #######################
-  ## In Brother pairs: ##
-  #######################
-  ## Get DMS CC-TC and TC-TT in all brother pairs (same treatment, different PARENTAL treatment)
-  
-  # Read in (was calculated on Apocrita, 1h 10 cores)
-  DMS_BP_G2_list <- readRDS("../../data/DiffMeth/BP/DMS_BP_G2_list.RDS")
+  DMSlist <- readRDS("../../data/DiffMeth/DMSlist.RDS")
+  DMRlist <- readRDS("../../data/DiffMeth/DMRlist.RDS")
+  ## By BP
+  DMBPlist <- readRDS("../../data/DiffMeth/DMperBP_list.RDS")
+  DMSBPlist <- lapply(DMBPlist, "[[", 1)
+  DMRBPlist <- lapply(DMBPlist, "[[", 2)
 }

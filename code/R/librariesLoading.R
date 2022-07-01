@@ -2,6 +2,7 @@
 
 list.of.packages <- c(
   "ape", #for reag.gff
+  "ComplexUpset", # for prettier upset plots
   "cowplot",
   "dendextend", # The package dendextend contains many functions for changing the appearance of a dendrogram and for comparing dendrograms.
   "devtools",
@@ -53,6 +54,12 @@ if (!"pairwiseAdonis" %in% installed.packages()[, "Package"]) {
 }
 library(pairwiseAdonis)
 
+## Venn diagram in ggplot
+if (!"ggVennDiagram" %in% installed.packages()[, "Package"]) {
+  devtools::install_github("gaospecial/ggVennDiagram")
+}
+library("ggVennDiagram")
+
 ## Biocmanager packages 
 list.bioc <- c("Category", # for hypergeometric GO test
                "WGCNA", # for networks
@@ -68,9 +75,20 @@ ipak2 <- function(pkg){
 }
 ipak2(list.bioc)
 
+# Install goEnrichment and all dependencies:
+packages <- c("GOstats", "GSEABase")
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  source("http://bioconductor.org/biocLite.R")
+  biocLite(setdiff(packages, rownames(installed.packages())))
+}
+install_github("asishallab/goEnrichment")
+library(goEnrichment)
+
 ## offspring colors for all kind of plots
 colOffs <- c("#ffe67f", "#ff6300","#a8caff","#a800d4")
 
 theme_set(theme_pubr())
+
+
 
 

@@ -81,41 +81,47 @@ nrow(tiles_G2_G1INFECTED_half) # methylBase object with 20348 rows
 run = FALSE
 
 if (run == TRUE){
-    DMS_15pc_G1_C_T = getDiffMeth(uniteCov6_G1_woSexAndUnknowChrOVERLAP, fullMetadata_PAR) # old name: DMS15pc_G1_half
-    DMS_15pc_CC_TC = getDiffMeth(uniteCov14_G1bothTrt_G2control_woSexAndUnknowChr, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,5),]) # old DMS15pc_G1_controlG2_half
-    DMS_15pc_CT_TT = getDiffMeth(uniteCov14_G1bothTrt_G2infected_woSexAndUnknowChr, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(3,6),]) # old DMS15pc_G1_infectedG2_half
-    DMS_15pc_CC_CT = getDiffMeth(uniteCov14_G2_woSexAndUnknowChr_G1CONTROL, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),]) # old name DMS15pc_G2_controlG1_half
-    DMS_15pc_TC_TT = getDiffMeth(uniteCov14_G2_woSexAndUnknowChr_G1INFECTED, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),]) # old DMS15pc_G2_infectedG1_half
-
-    DMR_15pc_G1_C_T = getDiffMeth(tiles_G1_half, fullMetadata_PAR) # old name: DMR15pc_G1_half
-    DMR_15pc_CC_TC = getDiffMeth(tiles_G1bothTrt_G2control_half, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,5),])
-    DMR_15pc_CT_TT = getDiffMeth(tiles_G1bothTrt_G2infected_half, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(3,6),])
-    DMR_15pc_CC_CT = getDiffMeth(tiles_G2_G1CONTROL_half, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
-    DMR_15pc_TC_TT = getDiffMeth(tiles_G2_G1INFECTED_half, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
-
-                                        # Save list of DMS/DMR
-    DMSlist = list(DMS_15pc_G1_C_T, DMS_15pc_CC_TC, DMS_15pc_CT_TT, DMS_15pc_CC_CT, DMS_15pc_TC_TT)
-                                        # saveRDS(DMSlist, "../../data/DiffMeth/DMSlist.RDS")
-
-    DMRlist = list(DMR_15pc_G1_C_T, DMR_15pc_CC_TC, DMR_15pc_CT_TT, DMR_15pc_CC_CT, DMR_15pc_TC_TT)
-                                        # saveRDS(DMRlist, "../../data/DiffMeth/DMRlist.RDS")
+  DMS_15pc_G1_C_T = getDiffMeth(uniteCov6_G1_woSexAndUnknowChrOVERLAP, fullMetadata_PAR) # old name: DMS15pc_G1_half
+  DMS_15pc_CC_TC = getDiffMeth(uniteCov14_G1bothTrt_G2control_woSexAndUnknowChr, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,5),]) # old DMS15pc_G1_controlG2_half
+  DMS_15pc_CT_TT = getDiffMeth(uniteCov14_G1bothTrt_G2infected_woSexAndUnknowChr, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(3,6),]) # old DMS15pc_G1_infectedG2_half
+  DMS_15pc_CC_CT = getDiffMeth(uniteCov14_G2_woSexAndUnknowChr_G1CONTROL, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),]) # old name DMS15pc_G2_controlG1_half
+  DMS_15pc_TC_TT = getDiffMeth(uniteCov14_G2_woSexAndUnknowChr_G1INFECTED, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),]) # old DMS15pc_G2_infectedG1_half
+  
+  DMR_15pc_G1_C_T = getDiffMeth(tiles_G1_half, fullMetadata_PAR) # old name: DMR15pc_G1_half
+  DMR_15pc_CC_TC = getDiffMeth(tiles_G1bothTrt_G2control_half, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,5),])
+  DMR_15pc_CT_TT = getDiffMeth(tiles_G1bothTrt_G2infected_half, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(3,6),])
+  DMR_15pc_CC_CT = getDiffMeth(tiles_G2_G1CONTROL_half, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+  DMR_15pc_TC_TT = getDiffMeth(tiles_G2_G1INFECTED_half, fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
+  
+  # Save list of DMS/DMR
+  DMSlist = list(DMS_15pc_G1_C_T = DMS_15pc_G1_C_T, 
+                 DMS_15pc_CC_TC = DMS_15pc_CC_TC, DMS_15pc_CT_TT = DMS_15pc_CT_TT, 
+                 DMS_15pc_CC_CT = DMS_15pc_CC_CT, DMS_15pc_TC_TT = DMS_15pc_TC_TT)
+  saveRDS(DMSlist, "../../data/DiffMeth/DMSlist.RDS")
+  
+  DMRlist = list(DMR_15pc_G1_C_T = DMR_15pc_G1_C_T, 
+                 DMR_15pc_CC_TC = DMR_15pc_CC_TC, DMR_15pc_CT_TT = DMR_15pc_CT_TT, 
+                 DMR_15pc_CC_CT = DMR_15pc_CC_CT, DMR_15pc_TC_TT = DMR_15pc_TC_TT)
+  saveRDS(DMRlist, "../../data/DiffMeth/DMRlist.RDS")
 }
 
 ######################## 
 ## And by brother pairs:
 
-#### We will apply the following function to all BP:
-vecBP <- unique(fullMetadata_OFFS$brotherPairID)
-
-## Loop over all BP
-DMlist <- list() # empty plot list
-for (i in 1:length(vecBP)){
-  DMlist[[i]] <- getDMperBP(BP = vecBP[[i]])
-} 
-names(DMlist) <- vecBP
-
-saveRDS(DMlist, "../../data/DiffMeth/DMperBP_list.RDS")
-
+run = FALSE
+if (run == TRUE){
+  #### We will apply the following function to all BP:
+  vecBP <- unique(fullMetadata_OFFS$brotherPairID)
+  
+  ## Loop over all BP
+  DMlist <- list() # empty plot list
+  for (i in 1:length(vecBP)){
+    DMlist[[i]] <- getDMperBP(BP = vecBP[[i]])
+  } 
+  names(DMlist) <- vecBP
+  
+  saveRDS(DMlist, "../../data/DiffMeth/DMperBP_list.RDS")
+}
 
 
 

@@ -272,11 +272,16 @@ mod_Tol.Meth <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*No.Worms*PAT +
 ## Model selection:
 step(mod_Tol.Meth, reduce.random = F) # Model found: BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
 ## The slope of BCI on nbrworms varies upon treatment but methylation does NOT vary with tolerance
+mod_Tol.Meth <- lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), 
+                     data=fullMetadata_OFFS_half)
 
 plot(ggpredict(mod_Tol.Meth, terms = c("No.Worms", "PAT")), add.data=T)+ theme_bw() +
   ylab("Body Condition Index") + xlab("Number of worms") +
   ggtitle("Predicted values of Body Condition Index in offspring")+
-  scale_color_manual(NULL, values = c("black", "red"))
+  scale_color_manual(NULL, values = c("black", "red")) +
+  scale_fill_manual(NULL, values = c("black", "red"))  +
+  geom_point(size=0)+ # to have color key in legend as point
+  guides(colour = guide_legend(override.aes = list(size=3,linetype=0, fill = NA)))
 
 ## And by treatment instead of No.worms?
 mod_Tol.Meth2 <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*PAT*outcome + (1|brotherPairID)+ (1|Sex), 

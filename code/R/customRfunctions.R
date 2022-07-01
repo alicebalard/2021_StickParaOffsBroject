@@ -278,22 +278,6 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
   return(list(NMDS = NMDS, mystressplot=mystressplot, NMDSplot = figure))
 }
 
-##################
-## Venn diagram ##
-##################
-myVennFUN <- function(A, B, C, catnames, myCols = c("grey","green","red")){
-  futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")#to rm log files
-  Venn <- venn.diagram(
-    x = list(A, B, C), category.names = catnames, filename = NULL,
-    margin = 0, lwd = 2, lty = 'blank', fill = myCols,
-    cex = .4, fontface = "bold",fontfamily = "sans", print.mode=c("raw","percent"),
-    cat.cex = 0.4, cat.fontface = "bold", cat.default.pos = "outer",
-    cat.col = myCols, cat.pos = c(-27, 27, 135), cat.dist = c(0.055, 0.055, 0.055),
-    cat.fontfamily = "sans", rotation = 1
-  )
-  return(Venn)
-}
-
 ## II. Functions used in R04.2 explore differential methylations
 
 ## Calculate beta values (methylation proportion per CpG site) for the 1001880 positions covered in half G1 and half G2
@@ -346,6 +330,27 @@ getPMdataset <- function(uniteCov, MD, gener){
   PM$hypohyper <- factor(PM$hypohyper, levels = c("hypo", "hyper"))
   
   return(PM)
+}
+
+## Additional function for complexUpset to color by degrees
+query_by_degree = function(data, groups, params_by_degree, ...) {
+  intersections = unique(ComplexUpset::upset_data(data, groups)$plot_intersections_subset)
+  lapply(
+    intersections,
+    FUN=function(x) {
+      members = strsplit(x, '-', fixed=TRUE)[[1]]
+      if (!(length(members) %in% names(params_by_degree))) {
+        stop(
+          paste('Missing specification of params for degree', length(members))
+        )
+      }
+      args = c(
+        list(intersect=members, ...),
+        params_by_degree[[length(members)]]
+      )
+      do.call(ComplexUpset::upset_query, args)
+    }
+  )
 }
 
 ########################################
