@@ -503,3 +503,70 @@ getAnnotationFun <- function(METHOBJ){
   subAnnot$nCpG = nCpG
   return(subAnnot)
 }
+
+## GO function
+makedfGO <- function(i, gene_universe){
+  anot4BP = plotManhattanGenes(i)$anot4BP
+  
+  ## Create subuniverse:
+  sub_universe <- gene_universe %>%
+    subset(gene_universe$Name %in% unlist(anot4BP$Parent))
+  
+  ## Run conditional hypergeometric test:
+  runTestHypGeom <- function(sub_universe, onto){
+    ## Constructing a GOHyperGParams objects or KEGGHyperGParams objects from a GeneSetCollection
+    ## Then run hypergeometric test:
+    GO_NO_fdr <- hyperGTest(GSEAGOHyperGParams(name="GO_set",
+                                               geneSetCollection = gsc_universe,
+                                               geneIds = as.vector(unique(sub_universe[["Name"]])), # gene ids for the selected gene set
+                                               universeGeneIds = unique(gene_universe$Name),
+                                               ontology = onto, # A string for GO to use ("BP", "CC", or "MF")
+                                               pvalueCutoff = 0.05,
+                                               conditional = TRUE, # see note above
+                                               testDirection = "over")) # over represented GO terms
+    
+    # Use GOEnrich as a wrapper around GOStat for extra FDR comparison
+    ## Does not solve all issues, but better than nothing. See: https://support.bioconductor.org/p/5571/
+    GO_fdr <- joinGOEnrichResults(goEnrichTest(gsc=gsc_universe,
+                                               gene.ids = as.vector(unique(sub_universe[["Name"]])),# genes in selected gene set
+                                               univ.gene.ids = unique(gene_universe$Name),
+                                               ontologies = onto, # A string for GO to use ("BP", "CC", or "MF")
+                                               pvalue.cutoff = 0.05,
+                                               cond = TRUE, # see note above
+                                               test.dir = "over"),# over represented GO terms
+                                  p.adjust.method = "fdr")
+    
+    
+    return(list(GO_NO_fdr=GO_NO_fdr, GO_fdr=GO_fdr))
+  }
+  
+  GO_MF <- runTestHypGeom(sub_universe = sub_universe, onto = "MF")
+  GO_CC <- runTestHypGeom(sub_universe = sub_universe, onto = "CC")
+  GO_BP <- runTestHypGeom(sub_universe = sub_universe, onto = "BP")
+  
+  # Get percentage of genes over reppresented in universe
+  dfMFperc = GO_MF$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>% 
+    dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
+  dfCCperc = GO_CC$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>% 
+    dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
+  dfBPperc = GO_BP$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>% 
+    dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
+  
+  # Add this information to FDR corrected table
+  GO_MF_all = merge(GO_MF$GO_fdr, dfMFperc)
+  GO_CC_all = merge(GO_CC$GO_fdr, dfCCperc)
+  GO_BP_all = merge(GO_BP$GO_fdr, dfBPperc)
+  
+  # Merge the df MP and BP
+  dfGO = rbind(GO_MF_all, GO_CC_all, GO_BP_all)
+  
+  dfGO = dfGO %>% mutate(Term = factor(x = GO.term, levels = GO.term),
+                         Comp = factor(x = vecCompa[i], levels = vecCompa[i]))
+  
+  # Relabel GO group names
+  dfGO$GO.category[dfGO$GO.category %in% "CC"]="Cellular components"
+  dfGO$GO.category[dfGO$GO.category %in% "BP"]="Biological processes"
+  dfGO$GO.category[dfGO$GO.category %in% "MF"]="Molecular functions"
+  
+  return(dfGO)
+}

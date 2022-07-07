@@ -4,6 +4,7 @@
 
 machine="mythinkpad" # define the machine we work on
 loadALL = TRUE # load all uniteCov objects
+sourceSubUnite = FALSE
 source("R02.3_DATALOAD.R")
 
 #############################################################

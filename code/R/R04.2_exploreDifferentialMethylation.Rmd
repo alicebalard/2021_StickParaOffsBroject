@@ -8,13 +8,6 @@ output:
     toc: true
     theme: united
 ---
-```{r load, message=FALSE}
-machine="mythinkpad" # define the machine we work on
-loadALL = FALSE # only load CpG shared by half fish per trt group
-loadannot = TRUE # load genome annotations
-sourceDMS = TRUE # Load the calculated DMS
-source("R02.3_DATALOAD.R")
-```
 
 ```{r setup}
 library(knitr)
@@ -23,7 +16,14 @@ knitr::opts_chunk$set(cache = TRUE, warning = FALSE,
                       fig.path = "Rfigures/Rmd/")
 ```
 
-
+```{r load, message=FALSE}
+machine="mythinkpad" # define the machine we work on
+loadALL = FALSE # only load CpG shared by half fish per trt group
+loadannot = TRUE # load genome annotations
+sourceDMS = TRUE # Load the calculated DMS
+sourceSubUnite = FALSE
+source("R02.3_DATALOAD.R")
+```
 
 # Bottom up analysis: Differential Methylation in offspring
 
@@ -386,6 +386,7 @@ for (i in 1:4){
 ### Get annotation of these DMS present in at least 4 BP
 ```{r, fig.height = 5, fig.width = 12}
 plotManhattanGenes <- function(i){
+  print(paste0("The number of DMS in the ", vecCompa[i] ," comparison is:"))
   DMSvec = unique(unlist(get2keep(vecCompa[i])))
   # Annotate the DMS present in at least 4 BP: 
   # Change the vector into a methobject:
@@ -394,10 +395,12 @@ plotManhattanGenes <- function(i){
                    end=sapply(strsplit(DMSvec, " "), `[`, 2)) 
   # get annotation
   anot4BP <- getAnnotationFun(makeGRangesFromDataFrame(df))
-  length(anot4BP) # number of genes
+  print(paste0("The number of genes with DMS in the ", vecCompa[i] ," comparison is:"))
+  print(nrow(anot4BP)) # number of genes
   # Reorder chromosome
   anot4BP <- anot4BP %>% 
-    mutate(chr = gsub("Gy_chr", "", seqid), chrom_nr = seqid %>% deroman(), chrom_order=factor(chrom_nr) %>% as.numeric()) %>% arrange(chrom_order)  %>%
+    mutate(chr = gsub("Gy_chr", "", seqid), chrom_nr = seqid %>% deroman(), chrom_order=factor(chrom_nr) %>% 
+             as.numeric()) %>% arrange(chrom_order)  %>% 
     mutate(geneLengthkb = (end - start)/1000, nCpGperGenekb = nCpG/geneLengthkb)
   
   # Plot
@@ -417,15 +420,6 @@ plotManhattanGenes(1)$plot
 plotManhattanGenes(2)$plot
 plotManhattanGenes(3)$plot
 plotManhattanGenes(4)$plot
-```
-
-## Which genes have at least 1 CpG differentially methylated per kb:
-
-```{r, echo=FALSE, results='asis'}
-for (i in 1:4){
-  df = plotManhattanGenes(i)$topGenes
-  print(kable(data.frame(comparison= vecCompa[i], chr=df$chr, gene=unlist(df$Note), row.names = NULL)))
-}
 ```
 
 ## Gene Ontology analysis:
@@ -457,73 +451,57 @@ The GO ontology is set up as a directed acyclic graph, where a parent term is co
 The conditional hypergeometric takes this into account, and only uses those terms that were not already significant when testing a higher order (parent) term.
 
 ```{r}
-makedfGO <- function(i){
-  anot4BP = plotManhattanGenes(i)$anot4BP
-  
-  ## Create subuniverse:
-  sub_universe <- gene_universe %>%
-    subset(gene_universe$Name %in% unlist(anot4BP$Parent))
-  
-  ## Run conditional hypergeometric test:
-  runTestHypGeom <- function(sub_universe, onto){
-    ## Constructing a GOHyperGParams objects or KEGGHyperGParams objects from a GeneSetCollection
-    
-    # Use GOEnrich as a wrapper around GOStat for extra FDR comparison
-    ## Does not solve all issues, but better than nothing.
-    ## See: https://support.bioconductor.org/p/5571/
-    
-    ## To do (maybe?) add gene count in internal GOEnrich function
-    GO_fdr <- joinGOEnrichResults(goEnrichTest(gsc=gsc_universe,
-                                               gene.ids = as.vector(unique(sub_universe[["Name"]])),# genes in selected gene set
-                                               univ.gene.ids = unique(gene_universe$Name),
-                                               ontologies = onto, # A string for GO to use ("BP", "CC", or "MF")
-                                               pvalue.cutoff = 0.05,
-                                               cond = TRUE, # see note above
-                                               test.dir = "over"),# over represented GO terms
-                                  p.adjust.method = "fdr")
-    
-    
-    ## Run hypergeometric test:
-    return(GO_fdr)
-  }
-  
-  ## TO DO: add extra pFDR correction cf Mel
-  GO_MF <- runTestHypGeom(sub_universe = sub_universe, onto = "MF")
-  GO_CC <- runTestHypGeom(sub_universe = sub_universe, onto = "CC")
-  GO_BP <- runTestHypGeom(sub_universe = sub_universe, onto = "BP")
-  
-  # Merge the df MP and BP
-  dfGO = rbind(GO_MF, GO_CC, GO_BP)
-  
-  dfGO = dfGO %>% mutate(Term = factor(x = GO.term, levels = GO.term),
-                         Comp = factor(x = vecCompa[i], levels = vecCompa[i]))
-  return(dfGO)
-}
-
 ## For each comparison:
-A=makedfGO(1); B=makedfGO(2); C=makedfGO(3); D=makedfGO(4)
+A=makedfGO(1, gene_universe); B=makedfGO(2, gene_universe); C=makedfGO(3, gene_universe); D=makedfGO(4, gene_universe)
 
 dfGO = rbind(A, B, C, D)
 
 # add type of comparison:
 dfGO$group = "Different parental treatment"
 dfGO$group[dfGO$Comp %in% c("CC_CT", "TC_TT")] = "Different offpring treatment"
-
-
-# # to keep the comparison in order:
-# dfGO$Comp = factor(dfGO$Comp, levels = unique(dfGO$Comp))
-## To save:
-# htmlReport(GO_MF_0633, file="../Routput/GO/GO_MF_0633.html")
-# write.table(as.data.frame(summary(GO_MF_0633)),"../Routput/GO/GO_MF_0633.txt", sep="\t", row.names = F)
 ```
+
+### GO plot
 
 ```{r, fig.height = 25, fig.width = 10}
 dfGO %>% ggplot(aes(x=Comp, y = factor(GO.name))) +
-  geom_point(aes(color = p.value.adjusted))+#, size = Count)) +
-  scale_color_gradient(name="P value", low = "red", high = "blue") +
-  # scale_size_continuous(name = "Gene number", range = c(1, 10), breaks = c(1,5,15,25))+
+  geom_point(aes(color = p.value.adjusted, size = genePercent)) +
+  scale_color_gradient(name="adjusted\np-value", low = "red", high = "blue") +
+  scale_size_continuous(name = "% of genes")+
   theme_bw() + ylab("") + xlab("Treatments comparison") +
-  facet_grid(fct_inorder(GO.category)~group,scales="free",space = "free")
+  theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"), 
+        legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"), 
+        legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
+  facet_grid(fct_inorder(GO.category)~group, scales="free",space = "free") 
+```
+
+### Which genes have at least 1 CpG differentially methylated per kb:
+```{r}
+getGeneSummary <- function(i){
+  geneNotes = plotManhattanGenes(i)$topGenes$Note
+  # extract uniprot symbol from note, then uppercase
+  genes = sapply(geneNotes, function(x) sub("Similar to ", "", x) %>% str_extract(".*:") %>% str_remove(":") %>% toupper) 
+  # Convert the uniprot gene names to entrez ids
+  topGenesDF = unlist(mapIds(org.Hs.eg.db, keys = genes, column = "ENTREZID", keytype = "SYMBOL")) %>% data.frame() 
+  names(topGenesDF) = "ENTREZID" ; topGenesDF$GeneSymbol = rownames(topGenesDF) ; rownames(topGenesDF) = NULL
+  # Retrieve gene summary & descirption
+  genes = entrez_summary(db="gene", id=topGenesDF$ENTREZID)
+  SummaDF = lapply(genes, function(x) x[["summary"]]) %>% unlist() %>% data.frame()
+  names(SummaDF) = "Summary" ; SummaDF$ENTREZID = rownames(SummaDF) ; rownames(SummaDF) = NULL
+  DescDF = lapply(genes, function(x) x[["description"]]) %>% unlist() %>% data.frame()
+  names(DescDF) = "description" ; DescDF$ENTREZID = rownames(DescDF) ; rownames(DescDF) = NULL
+  # Output complete table
+  topGenesDF = merge(merge(DescDF, topGenesDF, all = T), SummaDF, all = T)
+  # Add which comparison
+  topGenesDF$comparison = vecCompa[i]
+  return(topGenesDF)
+}
+```
+
+```{r, echo=FALSE, results='asis'}
+for (i in 1:4){
+  print(kable(getGeneSummary(i)))
+}
 ```
 
 # Top down analysis: Differential Methylation in parents -> how do they look in offspring?
