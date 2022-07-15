@@ -48,13 +48,6 @@ list.of.packages <- c(
   "vegan", ## for Adonis
   "VennDiagram")
 
-##########################################
-## install packages from github if not yet
-install_github("ropensci/rentrez")
-install_github("asishallab/goEnrichment")
-install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
-install_github("gaospecial/ggVennDiagram")
-
 ###################################################################
 ## install from CRAN and require all libraries from CRAN and github
 ipak <- function(pkg){
@@ -64,6 +57,13 @@ ipak <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 ipak(list.of.packages)
+
+##########################################
+## install packages from github if not yet
+install_github("ropensci/rentrez")
+install_github("asishallab/goEnrichment")
+install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+install_github("gaospecial/ggVennDiagram")
 
 #####################################################
 ## install from biocmanager and require all libraries

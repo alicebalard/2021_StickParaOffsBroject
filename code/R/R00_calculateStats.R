@@ -59,7 +59,6 @@ if (rerun==TRUE){
   
   ## Export summary table:
   write.csv(fullMetadata, "/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/data/fullMetadata135_Alice.csv", row.names=FALSE, quote=FALSE)
-  
 }
 
 #######################################

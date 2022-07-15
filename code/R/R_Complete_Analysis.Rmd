@@ -1,0 +1,1470 @@
+---
+title: "Explore differential methylation"
+author: "Alice Balard"
+date: '2022-06-23'
+output: 
+  html_document:
+    number_sections: true
+    toc: true
+    theme: united
+---
+
+```{r setup}
+library(knitr)
+knitr::opts_chunk$set(cache = TRUE, warning = FALSE, 
+                      message = FALSE, cache.lazy = FALSE, cache.path = "../../gitignore/RmdCache/", # keep heavy data in gitignore cache
+                      fig.path = "Rfigures/Rmd/")
+```
+
+```{r load, message=FALSE}
+machine="mythinkpad" # define the machine we work on
+loadALL = TRUE # load all uniteCov objects
+loadannot = TRUE # load genome annotations
+sourceDMS = TRUE # Load the calculated DMS
+sourceSubUnite = FALSE
+source("R02.3_DATALOAD.R")
+```
+
+**Data getting loaded:**
+
+- uniteCovALL_woSexAndUnknowChr #-> 55530 CpG positions shared by all fish
+- uniteCov6_G1_woSexAndUnknowChrOVERLAP #-> 1001880 CpG positions shared by half the parents in each trt group, overlapping with the parental ones
+- uniteCov14_G2_woSexAndUnknowChrOVERLAP#-> 1001880 CpG positions shared by half the offspring in each trt group, overlapping with the offspring ones
+
+# Global methylation and fitness
+
+Compare fitness traits between the different offsprings groups. Follow up of Sagonas 2020 & Ferre Ortega's master's dissertation
+
+## Calculate BCI
+
+Kaufmann et al. 2014: Body condition of the G2 fish, an estimate of fish health and a predictor of energy reserves and reproductive success, was calculated using there residuals from the  regression of body mass on body length (Chellappaet al.1995).
+
+```{r}
+fullMetadata_OFFS$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|brotherPairID), data=fullMetadata_OFFS))
+
+## and for parents (no sex difference, only males):
+fullMetadata_PAR$BCI <- residuals(lmer(Wnettofin ~ Slfin + (1|brotherPairID), data=fullMetadata_PAR))
+```
+
+Effect of paternal treatment on body condition of offspring:
+Kaufmann et al. 2014:
+"To investigate in which way paternal G1 exposure affected offspring tolerance, we tested how the relationship between G2 body condition and infection intensity was affected by paternal G1 exposure. This was tested in a linear mixed model on G2 body condition with paternal G1 treatment and the interaction between paternal G1 treatment and G2 infection intensity as fixed effects. Maternal half-sibship identity was set as a random effect"
+
+## Effect of paternal exposure on tolerance
+
+### BCI per trt
+
+Effect of treatment groups of offspring on body condition(Kaufmann et al. 2014): "The linear mixed effect model (nlme function in R) included G2 body condition as dependent variable, sex, G2 treatment (exposed vs. control), paternal G1 treatment (exposed vs. control) and their interactions as fixed effects as well as maternal G2 half-sibship identity as a random effect"
+
+```{r, fig.width=6, fig.height=6}
+mod1 <- lme(BCI ~ offsTrt * patTrt, random=~1|brotherPairID,data=fullMetadata_OFFS)
+anova(mod1) # strong significant effect of both offspring trt & paternal + interactions
+
+mod1.2 <- lme(BCI ~  trtG1G2, random=~1|brotherPairID,data=fullMetadata_OFFS)
+## pairwise posthoc test
+emmeans(mod1.2, list(pairwise ~ trtG1G2), adjust = "tukey")
+## Control father - treatment offspring has a strongly significantly lower BC than 
+## every other group, same as Kaufmann et al. 2014
+
+myplot1 <- ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI, fill=trtG1G2))+
+  geom_boxplot()+
+  geom_signif(comparisons = list(c("NE_control", "NE_exposed")),
+              map_signif_level=TRUE, annotations="***",
+              y_position = 150, tip_length = 0, vjust=0.4) +
+  geom_signif(comparisons = list(c("NE_exposed", "E_control")),
+              map_signif_level=TRUE, annotations="***",
+              y_position = 200, tip_length = 0, vjust=0.4) +
+  geom_signif(comparisons = list(c("NE_exposed", "E_exposed")),
+              map_signif_level=TRUE, annotations="***",
+              y_position = 250, tip_length = 0, vjust=0.4) +
+  scale_fill_manual(values = colOffs)+
+  theme_bw() + theme(legend.position = "none") +
+  ylab("Body Condition Index") + 
+  scale_x_discrete(labels=c("NE_control" = "G1 control\nG2 control", "NE_exposed" = "G1 control\nG2 infected",
+                            "E_control" = "G1 infected\nG2 control", "E_exposed" = "G1 infected\nG2 infected"),
+                   name = NULL)
+myplot1
+```
+
+### Tolerance (slope of BCI on worms count) per paternal status
+
+```{r}
+mod_Tol <- lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=fullMetadata_OFFS, REML = F)
+
+## Model selection:
+step(mod_Tol, reduce.random = F) # Model found: full model
+
+## The slope of BCI on nbrworms varies upon treatment
+plot(ggpredict(mod_Tol, terms = c("No.Worms", "PAT")), add.data=T)+ theme_bw() +
+  ylab("Body Condition Index") + xlab("Number of worms") +
+  ggtitle("Predicted values of Body Condition Index in offspring")+
+  scale_color_manual(NULL, values = c("black", "red")) +
+  scale_fill_manual(NULL, values = c("black", "red"))  +
+  scale_x_continuous(breaks = 0:10)+
+  geom_point(size=0)+ # to have color key in legend as point
+  guides(colour = guide_legend(override.aes = list(size=3,linetype=0, fill = NA)))
+```
+
+## Link between methylation and fitness (BCI and tolerance)
+
+Calculate number of methylated sites, mean coverage, and residuals of methylated sites by covered sites (to account for coverage bias)
+
+```{r}
+mycalcRMS <- function(myUniteCov, myMetaData){
+  percMethMat = methylKit::percMethylation(myUniteCov)
+  # create a dataframe with all info
+  percMethDF = data.frame(SampleID = colnames(percMethMat),
+                          Nbr_methCpG = colSums(percMethMat>=70 & !is.na(percMethMat)), ## number of methylated sites
+                          Nbr_coveredCpG = colSums(!is.na(percMethMat)), ## number of sites covered in this sample
+                          Nbr_NOTcoveredCpG = colSums(is.na(percMethMat)),## number of sites NOT covered in this sample
+                          MeanCoverage = colMeans(methylKit::getData(myUniteCov)[,myUniteCov@coverage.index], na.rm = T), ## coverage.index: vector denoting which columns in the data correspond to coverage values
+                          OverallPercentageMethylation = colMeans(methylKit::percMethylation(myUniteCov), na.rm = T))
+
+  ## RMS in this sample based on covered sites
+  percMethDF$RMS_coveredCpG = percMethDF$Nbr_methCpG / percMethDF$Nbr_coveredCpG
+  ## merge with original metadata:
+  myMetaData = merge(myMetaData, percMethDF)
+  # calculate also RMS global, considering CpG covered or not (to compare)
+  myMetaData$RMS_allCpG_coveredOrNot = myMetaData$Nbr_methCpG / (myMetaData$M.Seqs_rawReads*10e6)
+  # calculate residuals of nbr of methCpG by nbr of covered CpG
+  myMetaData$res_Nbr_methCpG_Nbr_coveredCpG = residuals(
+    lm(myMetaData$Nbr_methCpG ~ myMetaData$Nbr_coveredCpG))
+  ## REORDER myMetaData by sample ID
+  myMetaData = myMetaData[order(as.numeric(gsub("S", "", myMetaData$SampleID))),]
+  return(myMetaData)
+}
+
+fullMetadata <- mycalcRMS(uniteCovALL_woSexAndUnknowChr, fullMetadata)
+
+fullMetadata_PAR <- mycalcRMS(uniteCov6_G1_woSexAndUnknowChrOVERLAP, fullMetadata_PAR)
+
+fullMetadata_OFFS  <- mycalcRMS(uniteCov14_G2_woSexAndUnknowChrOVERLAP, fullMetadata_OFFS)
+```
+
+## Nbr/Ratio of Methylated Sites in different groups
+
+We kept in total `r nrow(fullMetadata)` samples. On average, `r round(mean(fullMetadata$M.Seqs_rawReads), 2)` [+/- `r round(qnorm(0.975)*sd(fullMetadata$M.Seqs_rawReads)/sqrt(nrow(fullMetadata)), 2)`] million reads were sequenced.
+The average mapping efficiency was `r round(mean(fullMetadata$MappingEfficiency.BSBoldvsGynogen))`% [+/- `r round(qnorm(0.975)*sd(fullMetadata$MappingEfficiency.BSBoldvsGynogen)/sqrt(nrow(fullMetadata)),2)`%].
+
+The mean coverage per CpG site in the full dataset, considering positions covered in all fish, is `r round(mean(fullMetadata$MeanCoverage))` [+/- `r round(qnorm(0.975)*sd(fullMetadata$MeanCoverage)/sqrt(nrow(fullMetadata)),2)`].
+
+**For G1 only:** 
+We kept in total `r nrow(fullMetadata_PAR)` samples. On average, `r round(mean(fullMetadata_PAR$M.Seqs_rawReads), 2)` [+/- `r round(qnorm(0.975)*sd(fullMetadata_PAR$M.Seqs_rawReads)/sqrt(nrow(fullMetadata_PAR)), 2)`] million reads were sequenced.
+The average mapping efficiency was `r round(mean(fullMetadata_PAR$MappingEfficiency.BSBoldvsGynogen))`% [+/- `r round(qnorm(0.975)*sd(fullMetadata_PAR$MappingEfficiency.BSBoldvsGynogen)/sqrt(nrow(fullMetadata_PAR)),2)`%].
+
+The mean coverage per CpG site in G1, considering positions shared by at least 6 fish per treatment group (half individuals per group), and which overlap with positions retained in G2, is `r round(mean(fullMetadata_PAR$MeanCoverage))` [+/- `r round(qnorm(0.975)*sd(fullMetadata_PAR$MeanCoverage)/sqrt(nrow(fullMetadata_PAR)),2)`].
+
+**For G2 only:**
+We kept in total `r nrow(fullMetadata_OFFS)` samples. On average, `r round(mean(fullMetadata_OFFS$M.Seqs_rawReads), 2)` [+/- `r round(qnorm(0.975)*sd(fullMetadata_OFFS$M.Seqs_rawReads)/sqrt(nrow(fullMetadata_OFFS)), 2)`] million reads were sequenced.
+The average mapping efficiency was `r round(mean(fullMetadata_OFFS$MappingEfficiency.BSBoldvsGynogen))`% [+/- `r round(qnorm(0.975)*sd(fullMetadata_OFFS$MappingEfficiency.BSBoldvsGynogen)/sqrt(nrow(fullMetadata_OFFS)),2)`%].
+
+The mean coverage per CpG site in G2, considering positions shared by at least 14 fish per treatment group (half individuals per group), and which overlap with positions retained in G1, is `r round(mean(fullMetadata_OFFS$MeanCoverage))` [+/- `r round(qnorm(0.975)*sd(fullMetadata_OFFS$MeanCoverage)/sqrt(nrow(fullMetadata_OFFS)),2)`].
+
+## Choice of global methylation value
+
+```{r}
+cor.test(fullMetadata_PAR$Nbr_coveredCpG,
+         fullMetadata_PAR$Nbr_methCpG, method = "spearman")
+## S = 350, p-value = 2.15e-06, rho = 0.85
+ggplot(fullMetadata_PAR, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
+  geom_smooth(method = "lm", col="black")+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = c("grey", "red")) +
+  theme_bw() + ggtitle(label = "Parents, CpG shared by half fish/trt")
+
+## Check after RMS correction for coverage bias: CORRECTED (p-value = 0.4485)
+cor.test(fullMetadata_PAR$Nbr_coveredCpG,
+         fullMetadata_PAR$RMS_coveredCpG, method = "spearman")
+ggplot(fullMetadata_PAR, aes(x=Nbr_coveredCpG, y=RMS_coveredCpG))+
+  geom_smooth(method = "lm", col="black")+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = c("grey", "red")) +
+  theme_bw() + ggtitle(label = "Parents, CpG shared by half fish/trt")
+
+## and with residuals: COMPLETELY CORRECTED p-value = 0.9562
+cor.test(fullMetadata_PAR$Nbr_coveredCpG,
+         fullMetadata_PAR$res_Nbr_methCpG_Nbr_coveredCpG, method = "spearman")
+ggplot(fullMetadata_PAR, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_coveredCpG))+
+  geom_smooth(method = "lm", col="black")+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = c("grey", "red")) +
+  theme_bw() + ggtitle(label = "Parents, CpG shared by half fish/trt")
+
+############
+## Offspring:
+cor.test(fullMetadata_OFFS$Nbr_coveredCpG,
+         fullMetadata_OFFS$Nbr_methCpG, method = "spearman")
+## S = 20254, p-value < 2.2e-16 rho = 0.91
+ggplot(fullMetadata_OFFS, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
+  geom_smooth(method = "lm", col="black")+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
+  scale_x_continuous("Number of cytosines covered") +
+  scale_y_continuous("Number of methylated cytosines") +
+  theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
+
+## Plot distance to residuals:
+fit <- lm(Nbr_methCpG ~ Nbr_coveredCpG, data = fullMetadata_OFFS)
+plotdf <- fullMetadata_OFFS
+plotdf$predicted <- predict(fit)   # Save the predicted values
+plotdf$residuals <- residuals(fit) 
+ggplot(plotdf, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
+  geom_smooth(method = "lm", col="black")+
+  geom_segment(aes(xend = Nbr_coveredCpG, yend = predicted), col = "grey") +
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
+  scale_x_continuous("Number of cytosines covered") +
+  scale_y_continuous("Number of methylated cytosines") +
+  theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
+
+## Check after RMS correction for coverage bias: SEMI CORRECTED (p-value = 0.01, rho = -0.24)
+cor.test(fullMetadata_OFFS$Nbr_coveredCpG,
+         fullMetadata_OFFS$RMS_coveredCpG, method = "spearman")
+ggplot(fullMetadata_OFFS, aes(x=Nbr_coveredCpG, y=RMS_coveredCpG))+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
+  geom_smooth(method = "lm", col="black")+
+  theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
+
+## and with residuals: COMPLETELY CORRECTED p-value = 0.51
+cor.test(fullMetadata_OFFS$Nbr_coveredCpG,
+         fullMetadata_OFFS$res_Nbr_methCpG_Nbr_coveredCpG, method = "spearman")
+ggplot(fullMetadata_OFFS, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_coveredCpG))+
+  geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
+  geom_smooth(method = "lm", col="black")+
+  scale_x_continuous("Number of cytosines covered") +
+  scale_y_continuous("Residuals of number of methylated cytosines\n on number of cytosines covered") +
+  theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
+```
+
+## Why we should we correct for sex
+
+### No difference in mappability (p>0.05)
+```{r}
+mod = lm(MappingEfficiency.BSBoldvsGynogen ~ Sex, data = fullMetadata_OFFS)
+summary(step(mod))
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
+```
+
+NB: this is WITH unknown and sex chromosomes, before filtering.
+
+### No difference in number of reads (p>0.05)
+
+```{r}
+mod = lm(M.Seqs_rawReads ~ Sex, data = fullMetadata_OFFS)
+summary(step(mod))
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
+```
+
+NB: this is WITH unknown and sex chromosomes, before filtering.
+
+### No difference in mean coverage per CpG in the filtered dataset (p>0.05)
+
+```{r}
+mod = lm(MeanCoverage ~ Sex, data = fullMetadata_OFFS)
+summary(step(mod))
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
+```
+
+NB: this is in G2, considering positions shared by at least 14 fish per treatment group (half individuals per group), and which overlap with positions retained in G1, without sex and unknown chromosome (after filtering)
+
+### No difference in number of sites covered in the filtered dataset (p>0.05)
+
+```{r}
+mod = lm(Nbr_coveredCpG ~ Sex, data = fullMetadata_OFFS)
+summary(step(mod))
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
+```
+NB: this is in G2, considering positions shared by at least 14 fish per treatment group (half individuals per group), and which overlap with positions retained in G1, without sex and unknown chromosome (after filtering)
+
+### No difference in number of sites covered in the filtered dataset (p>0.05)
+
+```{r}
+mod = lm(OverallPercentageMethylation ~ Sex, data = fullMetadata_OFFS)
+summary(step(mod))
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
+```
+
+NB: this is in G2, considering positions shared by at least 14 fish per treatment group (half individuals per group), and which overlap with positions retained in G1, without sex and unknown chromosome (after filtering)
+
+### Males have a lower global methylation than females (residuals of nbr of methylated sites by nbr of sites covered)
+
+```{r}
+mod = lm(res_Nbr_methCpG_Nbr_coveredCpG ~ Sex, data = fullMetadata_OFFS)
+summary(step(mod)) # sex is significant p = 0.000157 ***
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
+```
+
+## Are mean residuals meth sites different following tolerance slope?
+
+### In all offspring
+
+```{r}
+fullMetadata_OFFS$res_Nbr_methCpG_Nbr_coveredCpG_div1000 <- (fullMetadata_OFFS$res_Nbr_methCpG_Nbr_coveredCpG)/1000
+
+mod_Tol.Meth <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), 
+                     data=fullMetadata_OFFS, REML = F)
+
+## Model selection:
+step(mod_Tol.Meth, reduce.random = F) # Model found: BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
+## The slope of BCI on nbrworms varies upon treatment but methylation does NOT vary with tolerance
+mod_Tol.Meth <- lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), 
+                     data=fullMetadata_OFFS)
+
+plot(ggpredict(mod_Tol.Meth, terms = c("No.Worms", "PAT")), add.data=T)+ theme_bw() +
+  ylab("Body Condition Index") + xlab("Number of worms") +
+  ggtitle("Predicted values of Body Condition Index in offspring")+
+  scale_color_manual(NULL, values = c("black", "red")) +
+  scale_fill_manual(NULL, values = c("black", "red"))  +
+  geom_point(size=0)+ # to have color key in legend as point
+  guides(colour = guide_legend(override.aes = list(size=3,linetype=0, fill = NA)))
+
+## And by treatment instead of No.worms?
+mod_Tol.Meth2 <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*PAT*outcome + (1|brotherPairID)+ (1|Sex), 
+                     data=fullMetadata_OFFS, REML = F)
+
+plot(ggpredict(mod_Tol.Meth2, terms = c("res_Nbr_methCpG_Nbr_coveredCpG_div1000","PAT", "outcome")), add.data=T)+
+  scale_color_manual(values = colOffs)
+
+## Model selection:
+step(mod_Tol.Meth2, reduce.random = F) # Model found: BCI ~ PAT + outcome + (1 | brotherPairID) + (1 | Sex) + PAT:outcome
+## The slope of BCI on nbrworms varies upon parental treatment = methylation does NOT vary with tolerance
+```
+
+### In exposed offspring only
+
+```{r}
+## By group, tolerance slope as a function of methylation residuals:
+modFULL <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*No.Worms + (1|brotherPairID) + (1|Sex), 
+                data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
+## Model selection:
+step(modFULL, reduce.random = F) # Model found: BCI ~ (1 | brotherPairID) + (1 | Sex)
+
+modFULL <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*PAT + (1|brotherPairID) + (1|Sex), 
+                data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
+## Model selection:
+step(modFULL, reduce.random = F) # Model found: BCI ~ PAT + (1 | brotherPairID) + (1 | Sex)
+
+plot(ggpredict(modFULL, terms = c("res_Nbr_methCpG_Nbr_coveredCpG_div1000", "PAT")))
+```
+
+## Pretty summary picture
+
+```{r}
+# Set up scatterplot
+scatterplot <- ggplot(fullMetadata_OFFS,
+                      aes(x = res_Nbr_methCpG_Nbr_coveredCpG, 
+                          y = BCI, fill=trtG1G2)) +
+  geom_point(pch=21, size =3, alpha = .8) +
+  guides(color = "none") +
+  scale_fill_manual(values = colOffs, name = "Treatment",
+                    labels = c("G1 control - G2 control", "G1 control - G2 exposed", "G1 exposed - G2 control", "G1 exposed - G2 exposed")) + 
+  theme(plot.margin = margin()) + theme_bw() +
+  theme(legend.position = "none") + 
+  xlab("Methylation residuals (methylated sites/coverage")+
+  ylab("Body Condition Index")
+
+# Define marginal histogram
+marginal_distribution <- function(x, var, group) {
+  ggplot(x, aes_string(x = var, fill = group)) +
+    # geom_histogram(bins = 30, alpha = 0.4, position = "identity") +
+    geom_density(alpha = 0.6, size = 0.2) +
+    guides(fill = "none") +
+    scale_fill_manual(values = colOffs) + 
+    theme_void() +
+    theme(plot.margin = margin())
+}
+
+# Set up marginal histograms
+x_hist <- marginal_distribution(fullMetadata_OFFS, "res_Nbr_methCpG_Nbr_coveredCpG", "trtG1G2")
+y_hist <- marginal_distribution(fullMetadata_OFFS, "BCI", "trtG1G2") +
+  coord_flip()
+
+# Align histograms with scatterplot
+aligned_x_hist <- align_plots(x_hist, scatterplot, align = "v")[[1]]
+aligned_y_hist <- align_plots(y_hist, scatterplot, align = "h")[[1]]
+
+# Arrange plots
+cowplot::plot_grid(
+  aligned_x_hist, NULL, scatterplot, aligned_y_hist, ncol = 2, nrow = 2, rel_heights = c(0.2, 1), rel_widths = c(1, 0.2)
+)
+```
+
+# Methylation profile
+
+Methylation profiles, CpG present in all fish
+
+## Dendogram of methylations
+### All 135 fish:
+```{r, fig.width=15, fig.height=8}
+makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr, fullMetadata,
+                      my.cols.trt=c("#333333ff","#ff0000ff","#ffe680ff","#ff6600ff","#aaccffff","#aa00d4ff"),
+                      my.cols.fam = c(1:4), nbrk = 8)
+```
+
+### Offspring:
+```{r, fig.width=15, fig.height=8}
+makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
+                      my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
+                      my.cols.fam = c(1:4), nbrk = 8)
+```
+
+## Adonis tests: impact of different variables on methylation pattern
+
+Permutational multivariate analysis of variance (PERMANOVA) is a non-parametric multivariate statistical test. It is used to compare groups of objects and test the null hypothesis that the centroids and dispersion of the groups as defined by measure space are equivalent for all groups.
+
+```{r}
+# make distance matrix with B-C distances
+data.dist = makeDatadistFUN(uniteCovALL_G2_woSexAndUnknowChr)
+
+## Adonis test: importance of each predictor
+adonis2(data.dist ~ PAT * outcome * Sex * brotherPairID, data = fullMetadata_OFFS)
+```
+
+Results: family of the father (brotherPairID) explains more than 14% of the variance in methylation. 
+
+To focus on G1 and G2 treatments, we define the permutation structure considering brother pairs (N = 8), and use a PERMANOVA to test the hypothesis that paternal treatment, offspring treatment and their interactions significantly influencing global methylation.
+
+```{r}
+perm <- how(nperm = 1000) # 1000 permutations
+setBlocks(perm) <- with(fullMetadata_OFFS, brotherPairID) # define the permutation structure considering brotherPairID and sex
+print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permutations = perm))
+```
+
+Results:
+- 1.5% of the variation explained by PAT (R2=0.01470, p < 0.001)
+- 1% of the variation explained by outcome (R2=0.01009, p = 0.05)
+- 1.3% of the variation explained by Sex (R2=0.01277, p < 0.01)
+
+## NMDS
+
+```{r}
+#### RUN Goodness of fit
+myGOF.NMDS.FUN(dataset = uniteCovALL_G2_woSexAndUnknowChr) 
+```
+Goodness of fit for NMDS suggested the presence of six dimensions with a stress value > 0.1 and 2 with > 0.2
+
+```{r, results="hide"}
+## to find the seed that allows convergence: 
+# sapply(3:10, function(x) myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = x))
+NMDSanalysis <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = 4)
+```
+
+
+```{r, fig.height = 13, fig.width = 10}
+# png(filename = "Rfigures/NMDSplot_allG2.png", width = 900, height = 1100)
+NMDSanalysis$NMDSplot
+# dev.off()
+```
+
+## The methylation pattern is more affected by direct treatment when the father was infected (Adonis test WITHIN both parental trt)
+
+### 1. Parents NOT infected
+
+```{r}
+AdonisWithinG1trtFUN(trtgp = c(2,3))
+```
+
+Results:
+
+- brother pair explains 22% of the observed variance p < 0.01
+- sex explains 2.3% of the observed variance p < 0.01
+- Offspring trt explains 1.6% of the observed variance (non significant)
+
+```{r, results="hide"}
+NMDSanalysis_G1control <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, 
+                                    metadata = fullMetadata_OFFS, myseed = 25,
+                                    byParentTrt=TRUE,
+                                    trtgp = c(2,3))
+```
+
+```{r,  fig.height = 9, fig.width = 10}
+#png(filename = "Rfigures/NMDSplot_G1fromControlG2.png", width = 900, height = 900)
+NMDSanalysis_G1control$NMDSplot
+#dev.off()
+```
+
+### 2. Parents infected
+
+```{r}
+AdonisWithinG1trtFUN(trtgp = c(5,6))
+```
+
+Results:
+
+- brother pair explains 22% of the observed variance p = 0.01
+- sex explains 2.1% of the observed variance (non significant)
+- Offspring trt explains 2.3% of the observed variance p < 0.01
+
+```{r, results="hide"}
+NMDSanalysis_G1infected <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, 
+                                    metadata = fullMetadata_OFFS, myseed = 25,
+                                    byParentTrt=TRUE,
+                                    trtgp = c(5,6))
+```
+
+```{r,  fig.height = 9, fig.width = 10}
+#png(filename = "Rfigures/NMDSplot_G1fromInfectedG2.png", width = 900, height = 900)
+NMDSanalysis_G1infected$NMDSplot
+#dev.off()
+```
+
+# Differential methylations "Bottom up": DM in offspring
+
+## Differential methylation in all G2 (brother pair and sex as covariate)
+
+### TREATMENT EFFECT: Differential methylation between control and infected, within each parental treatment
+
+```{r}
+## Features Annotation (use package genomation v1.24.0)
+## NB Promoters are defined by options at genomation::readTranscriptFeatures function. 
+## The default option is to take -1000,+1000bp around the TSS and you can change that. 
+## -> following Heckwolf 2020 and Sagonas 2020, we consider 1500bp upstream and 500 bp downstream
+
+## Parents comparison:
+diffAnn_PAR = annotateWithGeneParts(as(DMSlist$DMS_15pc_G1_C_T,"GRanges"),annotBed12)
+## Offspring from control parents comparison: 
+diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMSlist$DMS_15pc_CC_CT,"GRanges"),annotBed12)
+## Offspring from infected parents comparison:
+diffAnn_G2_infectedG1 = annotateWithGeneParts(as(DMSlist$DMS_15pc_TC_TT,"GRanges"),annotBed12)
+```
+
+```{r, fig.height = 6, fig.width = 10}
+par(mfrow=c(1,3))
+par(mar = c(.1,0.1,5,0.1)) # Set the margin on all sides to 2
+## Parents comparison:
+diffAnn_PAR = annotateWithGeneParts(as(DMSlist$DMS_15pc_G1_C_T,"GRanges"),annotBed12)
+diffAnn_PAR
+genomation::plotTargetAnnotation(diffAnn_PAR,precedence=TRUE, main="DMS G1", cex.legend = 1, border="white")
+
+## Offspring from control parents comparison:
+diffAnn_G2_controlG1 = annotateWithGeneParts(as(DMSlist$DMS_15pc_CC_CT,"GRanges"),annotBed12)
+diffAnn_G2_controlG1
+genomation::plotTargetAnnotation(diffAnn_G2_controlG1,precedence=TRUE, main="DMS G2-G1c", cex.legend = 1, border="white")
+## Offspring from infected parents comparison:
+diffAnn_G2_infectedG1 = annotateWithGeneParts(as(DMSlist$DMS_15pc_TC_TT,"GRanges"),annotBed12)
+diffAnn_G2_infectedG1
+genomation::plotTargetAnnotation(diffAnn_G2_infectedG1,precedence=TRUE, main="DMS G2-G1i", cex.legend = 1, border="white")
+par(mfrow=c(1,1))
+```
+
+```{r}
+## Run the function to get DMS info
+DMS_info_G1 <- myDMSinfo(DMSlist$DMS_15pc_G1_C_T, uniteCov6_G1_woSexAndUnknowChrOVERLAP)
+DMS_info_G2_G1c_final <- myDMSinfo(DMSlist$DMS_15pc_CC_CT, uniteCov14_G2_woSexAndUnknowChrOVERLAP)
+DMS_info_G2_G1i_final <- myDMSinfo(DMSlist$DMS_15pc_TC_TT,uniteCov14_G2_woSexAndUnknowChrOVERLAP)
+```
+
+NB Kostas' results: "We found a total of 1,973 CpG sites out of 1,172,887 CpGs (0.17%) across the genome that showed at least 15% differential fractional methylation (differentially methylated site [DMS]; q < 0.01) between infected and uninfected fish"
+
+Here: we obtain out a total of `r nrow(uniteCov14_G2_woSexAndUnknowChrOVERLAP)` CpG sites: `r length(DMS_info_G1$DMS)` (`r round(DMS_info_G1$percentDMS, 2)`%) showed at least 15% differential fractional methylation (differentially methylated site [DMS]; q < 0.01) between infected and uninfected fish in the parental group; `r length(DMS_info_G2_G1c_final$DMS)` (`r round(DMS_info_G2_G1c_final$percentDMS, 2)`%) in the offspring from **control parents** comparison; `r length(DMS_info_G2_G1i_final$DMS)` (`r round(DMS_info_G2_G1i_final$percentDMS, 2)`%) in the offspring from **infected parents** comparison.
+
+#### Intersections of DMS: Venn diagrams
+
+```{r}
+## Chi2 test: are the number of DMS from G2-G1C and G2-G1I overlapping with DMSpar statistically different?
+
+A=length(intersect(DMS_info_G1$DMS,DMS_info_G2_G1c_final$DMS))
+B=length(DMS_info_G2_G1c_final$DMS)
+C=length(intersect(DMS_info_G1$DMS,DMS_info_G2_G1i_final$DMS))
+D=length(DMS_info_G2_G1i_final$DMS)
+
+Observed=matrix(c(A, B-A, C, D-C),nrow=2)
+Observed
+
+chisq.test(Observed)
+## not statistically different
+```
+
+``````{r, fig.width = 12, fig.height = 15}
+## output Venn diagrams
+allVenn <- ggVennDiagram(list("DMS G1" = DMS_info_G1$DMS, "DMS G2-c" = DMS_info_G2_G1c_final$DMS, "DMS G2-i" = DMS_info_G2_G1i_final$DMS), label_alpha = 0) +
+  scale_fill_gradient(low="white",high = "red")
+hypoVenn <- ggVennDiagram(list("DMS G1\nhypo" = DMS_info_G1$DMS[DMS_info_G1$direction %in% "hypo"],
+                               "DMS G2-c\nhypo" = DMS_info_G2_G1c_final$DMS[DMS_info_G2_G1c_final$direction %in% "hypo"],
+                               "DMS G2-i\nhypo" = DMS_info_G2_G1i_final$DMS[DMS_info_G2_G1i_final$direction %in% "hypo"]), label_alpha = 0) +
+  scale_fill_gradient(low="white",high = "red")
+hyperVenn <- ggVennDiagram(list("DMS G1\nhyper" = DMS_info_G1$DMS[DMS_info_G1$direction %in% "hyper"],
+                                "DMS G2-c\nhyper" = DMS_info_G2_G1c_final$DMS[DMS_info_G2_G1c_final$direction %in% "hyper"],
+                                "DMS G2-i\nhyper" = DMS_info_G2_G1i_final$DMS[DMS_info_G2_G1i_final$direction %in% "hyper"]), label_alpha = 0) +
+  scale_fill_gradient(low="white",high = "red")
+
+ggarrange(allVenn,
+          ggarrange(hypoVenn, hyperVenn, ncol = 2, legend = "none"),
+          nrow = 2, widths = c(.5,1))
+```
+
+##### Venn with annotated features
+
+```{r}
+runHyperHypoAnnot <- function(){
+  par(mfrow=c(2,3))
+  par(mar = c(.1,0.1,5,0.1)) # Set the margin on all sides to 2
+  ####### HYPO
+  ## Parents comparison:
+  A = annotateWithGeneParts(
+    as(DMSlist$DMS_15pc_G1_C_T[DMS_info_G1$direction %in% "hypo",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(A,precedence=TRUE, main="DMS G1\nhypo", 
+                                   cex.legend = .4, border="white")
+  ## Offspring from control parents comparison:
+  B = annotateWithGeneParts(
+    as(DMSlist$DMS_15pc_CC_CT[DMS_info_G2_G1c_final$direction %in% "hypo",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(B,precedence=TRUE, main="DMS G2-G1c\nhypo", 
+                                   cex.legend = .4, border="white")
+  ## Offspring from infected parents comparison:
+  C = annotateWithGeneParts(
+    as(DMSlist$DMS_15pc_TC_TT[DMS_info_G2_G1i_final$direction %in% "hypo",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(C,precedence=TRUE, main="DMS G2-G1i\nhypo", 
+                                   cex.legend = .4, border="white")
+  ####### HYPER
+  ## Parents comparison:
+  D = annotateWithGeneParts(
+    as(DMSlist$DMS_15pc_G1_C_T[DMS_info_G1$direction %in% "hyper",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(D,precedence=TRUE, main="DMS G1\nhyper", 
+                                   cex.legend = .4, border="white")
+  ## Offspring from control parents comparison:
+  E = annotateWithGeneParts(
+    as(DMSlist$DMS_15pc_CC_CT[DMS_info_G2_G1c_final$direction %in% "hyper",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(E,precedence=TRUE, main="DMS G2-G1c\nhyper", 
+                                   cex.legend = .4, border="white")
+  ## Offspring from infected parents comparison:
+  f = annotateWithGeneParts(
+    as(DMSlist$DMS_15pc_TC_TT[DMS_info_G2_G1i_final$direction %in% "hyper",],"GRanges"),annotBed12)
+  genomation::plotTargetAnnotation(f,precedence=TRUE, main="DMS G2-G1i\nhyper", 
+                                   cex.legend = .4, border="white")
+  par(mfrow=c(1,1))
+  return(list(G1hypo=A, G2G1chypo=B, G2G1ihypo=C, G1hyper=D, G2G1chyper=E, G2G1ihyper=f))
+}
+
+myannot=runHyperHypoAnnot()
+```
+
+
+```{r}
+############################################################
+## Venn diagram of overlapping features by their annotation:
+table(rowSums(as.data.frame(myannot$G1hypo@members))) # NB: some positions are labelled with several features!
+## as in MBE 2021: "giving precedence to the following order promoters, exons,
+## introns, and intergenic regions when features overlapped"
+
+myAnnotateDMS <- function(DMS, annot){
+  ## sanity check
+  if (nrow(DMS) != nrow(annot)){"STOP error in arguments"}
+  DMS$pos <- paste(DMS$chr, DMS$start, DMS$end)
+  ## NB as in MBE 2021: "giving precedence to the following order promoters, exons,
+  ## introns, and intergenic regions when features overlapped"
+  DMS$feature <- NA
+  ## 1. promoters
+  DMS$feature[which(annot$prom == 1)] = "promoter"
+  ## 2. exons
+  DMS$feature[which(annot$exon == 1 & annot$prom ==0)] = "exon"
+  ## 3. intron
+  DMS$feature[which(annot$intro == 1 & annot$exon == 0 & annot$prom ==0)] = "intron"
+  ## 4. intergenic regions
+  DMS$feature[which(annot$intro == 0 & annot$exon == 0 & annot$prom ==0)] = "intergenic"
+  return(DMS)
+}
+
+DMSlist$DMS_15pc_G1_C_T = myAnnotateDMS(DMSlist$DMS_15pc_G1_C_T, as.data.frame(diffAnn_PAR@members))
+DMSlist$DMS_15pc_G1_C_T_HYPO = myAnnotateDMS(DMSlist$DMS_15pc_G1_C_T[DMS_info_G1$direction %in% "hypo",],
+                                             as.data.frame(myannot$G1hypo@members))
+DMSlist$DMS_15pc_G1_C_T_HYPER = myAnnotateDMS(DMSlist$DMS_15pc_G1_C_T[DMS_info_G1$direction %in% "hyper",],
+                                              as.data.frame(myannot$G1hyper@members))
+
+DMSlist$DMS_15pc_CC_CT = myAnnotateDMS(DMSlist$DMS_15pc_CC_CT, as.data.frame(diffAnn_G2_controlG1@members))
+DMSlist$DMS_15pc_CC_CT_HYPO = myAnnotateDMS(DMSlist$DMS_15pc_CC_CT[DMS_info_G2_G1c_final$direction %in% "hypo",],
+                                            as.data.frame(myannot$G2G1chypo@members))
+DMSlist$DMS_15pc_CC_CT_HYPER = myAnnotateDMS(DMSlist$DMS_15pc_CC_CT[DMS_info_G2_G1c_final$direction %in% "hyper",],
+                                             as.data.frame(myannot$G2G1chyper@members))
+
+DMSlist$DMS_15pc_TC_TT = myAnnotateDMS(DMSlist$DMS_15pc_TC_TT, as.data.frame(diffAnn_G2_infectedG1@members))
+DMSlist$DMS_15pc_TC_TT_HYPO = myAnnotateDMS(DMSlist$DMS_15pc_TC_TT[DMS_info_G2_G1i_final$direction %in% "hypo",],
+                                            as.data.frame(myannot$G2G1ihypo@members))
+DMSlist$DMS_15pc_TC_TT_HYPER = myAnnotateDMS(DMSlist$DMS_15pc_TC_TT[DMS_info_G2_G1i_final$direction %in% "hyper",],
+                                             as.data.frame(myannot$G2G1ihyper@members))
+
+## Make Venn diagram for each feature
+getFeatureDFHYPO <- function(myfeat){
+  a = DMSlist$DMS_15pc_G1_C_T_HYPO$pos[DMSlist$DMS_15pc_G1_C_T_HYPO$feature %in% myfeat]
+  b = DMSlist$DMS_15pc_CC_CT_HYPO$pos[DMSlist$DMS_15pc_CC_CT_HYPO$feature %in% myfeat]
+  c = DMSlist$DMS_15pc_TC_TT_HYPO$pos[DMSlist$DMS_15pc_TC_TT_HYPO$feature %in% myfeat]
+  return(list(a=a,b=b,c=c))
+}
+
+getFeatureDFHYPER <- function(myfeat){
+  a = DMSlist$DMS_15pc_G1_C_T_HYPER$pos[DMSlist$DMS_15pc_G1_C_T_HYPER$feature %in% myfeat]
+  b = DMSlist$DMS_15pc_CC_CT_HYPER$pos[DMSlist$DMS_15pc_CC_CT_HYPER$feature %in% myfeat]
+  c = DMSlist$DMS_15pc_TC_TT_HYPER$pos[DMSlist$DMS_15pc_TC_TT_HYPER$feature %in% myfeat]
+  return(list(a=a,b=b,c=c))
+}
+
+getVenn <- function(feat, direction){
+  if (direction == "hypo"){
+    ggVennDiagram(list(A = getFeatureDFHYPO(feat)[["a"]],
+                       B = getFeatureDFHYPO(feat)[["b"]],
+                       C = getFeatureDFHYPO(feat)[["c"]]), label_alpha = 0,
+                  category.names = c(paste0("DMS G1\nhypo\n", feat), paste0("DMS G2-c\nhypo\n", feat), paste0("DMS G2-i\nhypo\n", feat))) +
+      scale_fill_gradient(low="white",high = "red")
+  } else if (direction == "hyper"){
+    ggVennDiagram(list(A = getFeatureDFHYPER(feat)[["a"]],
+                       B = getFeatureDFHYPER(feat)[["b"]],
+                       C = getFeatureDFHYPER(feat)[["c"]]), label_alpha = 0,
+                  category.names = c(paste0("DMS G1\nhyper\n", feat), paste0("DMS G2-c\nhyper\n", feat), paste0("DMS G2-i\nhyper\n", feat))) +
+      scale_fill_gradient(low="white",high = "red")
+  }
+}
+```
+
+
+```{r, fig.width = 12, fig.height = 15}
+ggarrange(getVenn("promoter", "hypo"), getVenn("exon", "hypo"),
+          getVenn("intron", "hypo"), getVenn("intergenic", "hypo"),
+          nrow = 2, ncol = 2)
+```
+
+
+```{r, fig.width = 12, fig.height = 15}
+ggarrange(getVenn("promoter", "hyper"), getVenn("exon", "hyper"),
+          getVenn("intron", "hyper"), getVenn("intergenic", "hyper"),
+          nrow = 2, ncol = 2)
+```
+
+#### Manhattan plot of DMS 
+
+```{r, fig.width= 10, fig.height=3}
+## Parents trt-ctrl
+# load annotation
+annot_PAR <- as.data.frame(diffAnn_PAR@members)
+makeManhattanPlots(DMSfile = DMSlist$DMS_15pc_G1_C_T, annotFile = annot_PAR, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G1 DMS")
+
+## G2-G1c trt-ctrl
+# load annotation
+annot_G2_G1c <- as.data.frame(diffAnn_G2_controlG1@members)
+makeManhattanPlots(DMSfile = DMSlist$DMS_15pc_CC_CT, annotFile = annot_G2_G1c, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1c DMS")
+
+## G2-G1i trt-ctrl
+# load annotation
+annot_G2_G1i <- as.data.frame(diffAnn_G2_infectedG1@members)
+makeManhattanPlots(DMSfile = DMSlist$DMS_15pc_TC_TT, annotFile = annot_G2_G1i, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1i DMS")
+
+## Outliers in Manhattan plot: 15% diff + 2SD
+outliers_G1_final <- which(abs(DMSlist$DMS_15pc_G1_C_T$meth.diff) > 15 + 2*sd(abs(DMSlist$DMS_15pc_G1_C_T$meth.diff)))
+outliers_annot_G1 <- as.data.frame(diffAnn_PAR@members)[outliers_G1_final,]
+makeManhattanPlots(DMSfile = DMSlist$DMS_15pc_G1_C_T[outliers_G1_final, ],
+                   annotFile = outliers_annot_G1, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G1 DMS")
+
+outliers_G2_G1c_final <- which(abs(DMSlist$DMS_15pc_CC_CT$meth.diff) > 15 + 2*sd(abs(DMSlist$DMS_15pc_CC_CT$meth.diff)))
+outliers_annot_G2_G1c <- as.data.frame(diffAnn_G2_controlG1@members)[outliers_G2_G1c_final,]
+makeManhattanPlots(DMSfile = DMSlist$DMS_15pc_CC_CT[outliers_G2_G1c_final, ],
+                   annotFile = outliers_annot_G2_G1c, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1c DMS")
+
+outliers_G2_G1i_final <- which(abs(DMSlist$DMS_15pc_TC_TT$meth.diff) > 15 + 2*sd(abs(DMSlist$DMS_15pc_TC_TT$meth.diff)))
+outliers_annot_G2_G1i <- as.data.frame(diffAnn_G2_infectedG1@members)[outliers_G2_G1i_final,]
+makeManhattanPlots(DMSfile = DMSlist$DMS_15pc_TC_TT[outliers_G2_G1i_final, ],
+                   annotFile = outliers_annot_G2_G1i, GYgynogff = GYgynogff, 
+                   mycols = c("red", "grey", "black", "green"), mytitle = "Manhattan plot of G2-G1i DMS")
+```
+
+### PARENTAL EFFECT: Differential methylation between control G2 (G1 infected or not) and between infected G2 (G1 infected of not)
+
+## Differential methylation by brother pair (sex as covariate)
+
+1. CC-TC = CONTROL fish (parent CvsT)
+2. CT-TT = TREATMENT fish (parent CvsT)
+3. CC-CT = fish from CONTROL parents (G2 CvsT)
+4. TC-TT = fish from TREATMENT parents (G2 CvsT)
+
+TBC To be continued
+
+```{r}
+## All in DMSBPlist
+# 
+# ## Add fam to bp
+# names(DMSBPlist) <- paste0(plyr::join(data.frame(BP = names(DMSBPlist)),
+#                                       unique(data.frame(BP = fullMetadata_OFFS$brotherPairID, 
+#                                                         fam = fullMetadata_OFFS$Family)))[[2]], "_", names(DMSBPlist))
+
+## Extract DMS (by position)
+myPosList = lapply(DMSBPlist, lapply, function(x){paste(x$chr, x$end)})
+
+## Find DMS present in at least 4 BP out of 8 (half):
+get2keep = function(Compa){
+  x <- lapply(myPosList, function(x){unlist(x[[paste0("DMS_15pc_BP_", Compa)]])})
+  f <- table(unlist((x))) # each DMS present between 1 and 8 times
+  tokeep <- names(f)[f >= 4]
+  print(length(tokeep))
+  ## Keep the DMS present in 4 families minimum
+  DMSBPlist_INTER4 <- lapply(x, function(x){x[x %in% tokeep]})
+  ## Reorder by family:
+  DMSBPlist_INTER4 <- DMSBPlist_INTER4[names(DMSBPlist_INTER4)[order(names(DMSBPlist_INTER4))]]
+  return(DMSBPlist_INTER4)
+}
+```
+
+### Attribute plot of these DMS in every BP
+
+```{r}
+## Prepare df for complexUpset
+getUpsetDF = function(i){ # for a given comparison
+  A = get2keep(vecCompa[i]) 
+  A2 = lapply(A, function(x){
+    x = data.frame(x)    # vector of DMS as df
+    names(x) = "DMS"    # name each CpG
+    return(x)
+  })
+  ## Add BP name
+  for (i in 1:length(names(A2))){
+    A2[[i]]["BP"] = names(A2)[i]
+  }
+  # make a dataframe
+  A2 = A2 %>% reduce(full_join, by = "DMS")
+  # names column with BP id
+  for (i in 2:ncol(A2)) {names(A2)[i] = unique(A2[!is.na(A2[i]), i])}
+  # replace by 0 or 1 the DMS absence/presence
+  A = data.frame(apply(A2[2:9], 2, function(x) ifelse(is.na(x), 0, 1)))
+  # add DMS
+  A$DMS = A2$DMS
+  return(A)
+}
+
+## Vector of all 4 comparisons
+vecCompa <- c("CC_TC", "CT_TT", "CC_CT", "TC_TT")
+```
+
+
+```{r, fig.width=25, fig.height=8}
+## Make upset plots
+for (i in 1:4){
+  df = getUpsetDF(i)
+  print(ComplexUpset::upset(
+    df,
+    names(df)[1:8],
+    width_ratio=0.1,
+    sort_intersections_by=c('degree', 'cardinality'),
+    queries=query_by_degree(
+      df,  names(df)[1:8],
+      params_by_degree=list(
+        '1'=list(color='red', fill='red'),
+        '2'=list(color='purple', fill='purple'),
+        '3'=list(color='blue', fill='blue'),
+        '4'=list(color='grey', fill='grey'),
+        '5'=list(color='red', fill='red'),
+        '6'=list(color='purple', fill='purple'),
+        '7'=list(color='blue', fill='blue'),
+        '8'=list(color='green', fill='green')
+      ),
+      only_components=c("intersections_matrix", "Intersection size")
+    )))
+}
+```
+
+### Get annotation of these DMS present in at least 4 BP
+```{r, fig.height = 5, fig.width = 12}
+plotManhattanGenes <- function(i){
+  print(paste0("The number of DMS in the ", vecCompa[i] ," comparison is:"))
+  DMSvec = unique(unlist(get2keep(vecCompa[i])))
+  # Annotate the DMS present in at least 4 BP: 
+  # Change the vector into a methobject:
+  df <- data.frame(chr=sapply(strsplit(DMSvec, " "), `[`, 1), 
+                   start=sapply(strsplit(DMSvec, " "), `[`, 2),
+                   end=sapply(strsplit(DMSvec, " "), `[`, 2)) 
+  # get annotation
+  anot4BP <- getAnnotationFun(makeGRangesFromDataFrame(df))
+  print(paste0("The number of genes with DMS in the ", vecCompa[i] ," comparison is:"))
+  print(nrow(anot4BP)) # number of genes
+  # Reorder chromosome
+  anot4BP <- anot4BP %>% 
+    mutate(chr = gsub("Gy_chr", "", seqid), chrom_nr = seqid %>% deroman(), chrom_order=factor(chrom_nr) %>% 
+             as.numeric()) %>% arrange(chrom_order)  %>% 
+    mutate(geneLengthkb = (end - start)/1000, nCpGperGenekb = nCpG/geneLengthkb)
+  
+  # Plot
+  plot = ggplot(anot4BP, aes(x=start, y = nCpGperGenekb)) + geom_point(alpha=.4) +
+    facet_grid(.~fct_inorder(chr)) +
+    geom_hline(yintercept = 1)+
+    theme(axis.text.x=element_blank()) +
+    xlab(paste0("Genes with DMS present in at least 4 brother pairs\nComparison: ", vecCompa[i])) +
+    ylab("Number of differentially methylated CpG per gene kb")
+  
+  ## Genes with at least 1 CpG differentially methylated per kb:
+  topGenes = anot4BP[anot4BP$nCpGperGenekb >= 1,]
+  return(list(plot = plot, anot4BP = anot4BP, topGenes = topGenes))
+}
+
+plotManhattanGenes(1)$plot
+plotManhattanGenes(2)$plot
+plotManhattanGenes(3)$plot
+plotManhattanGenes(4)$plot
+```
+
+## Gene Ontology analysis:
+
+- Gene universe: all genes which are present in the dataset
+- Gene sub-universe: all genes in DMS in the GOterm universe we only want genes with (1) DMS between G2 exposed to parasites, by brother pair, present in AT LEAST 4 BP/8 for which (2) CpGs were covered, and (3) which have a GOterm attributed
+
+```{r}
+# create gene universe
+gene_universe <- data.frame(
+  subsetByOverlaps(GRanges(annotGff3), GRanges(uniteCov14_G2_woSexAndUnknowChrOVERLAP))) %>% # subselect covered CpGs
+  filter(lengths(Ontology_term)!=0) %>% # rm non existing GO terms
+  filter(type %in% "gene")  %>% # keep all the 7416 genes with GO terms
+  dplyr::select(c("Name", "Ontology_term")) %>%
+  mutate(go_linkage_type = "IEA") %>% #NB: IEA but not necessarily true, it's from Interproscan after Maker. Sticklebacks (biomart) have 82701 IEA and 63 ISS.
+  relocate("Ontology_term","go_linkage_type","Name") %>%
+  unnest(Ontology_term) %>% # one GO per line (was a list before in this column)
+  data.frame()
+
+# Create gene set collection
+goFrame <- GOFrame(gene_universe, organism="Gasterosteus aculeatus")
+goAllFrame <- GOAllFrame(goFrame)
+gsc_universe <- GeneSetCollection(goAllFrame, setType = GOCollection())
+```
+
+**IMPORTANT NOTE from Mel: why conditional hypergeometric test?**
+The GO ontology is set up as a directed acyclic graph, where a parent term is comprised of all its child terms. If you do a standard hypergeometric, you might e.g., find 'positive regulation of kinase activity' to be significant. If you then test 'positive regulation of catalytic activity', which is a parent term, then it might be significant as well, but only because of the terms coming from positive regulation of kinase activity.
+
+The conditional hypergeometric takes this into account, and only uses those terms that were not already significant when testing a higher order (parent) term.
+
+```{r}
+## For each comparison:
+A=makedfGO(1, gene_universe); B=makedfGO(2, gene_universe); C=makedfGO(3, gene_universe); D=makedfGO(4, gene_universe)
+
+dfGO = rbind(A, B, C, D)
+
+# add type of comparison:
+dfGO$group = "Different parental treatment"
+dfGO$group[dfGO$Comp %in% c("CC_CT", "TC_TT")] = "Different offpring treatment"
+```
+
+### GO plot
+
+```{r, fig.height = 25, fig.width = 10}
+dfGO %>% ggplot(aes(x=Comp, y = factor(GO.name))) +
+  geom_point(aes(color = p.value.adjusted, size = genePercent)) +
+  scale_color_gradient(name="adjusted\np-value", low = "red", high = "blue") +
+  scale_size_continuous(name = "% of genes")+
+  theme_bw() + ylab("") + xlab("Treatments comparison") +
+  theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"), 
+        legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"), 
+        legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
+  facet_grid(fct_inorder(GO.category)~group, scales="free",space = "free") 
+```
+
+### Which genes have at least 1 CpG differentially methylated per kb:
+```{r}
+getGeneSummary <- function(i){
+  geneNotes = plotManhattanGenes(i)$topGenes$Note
+  # extract uniprot symbol from note, then uppercase
+  genes = sapply(geneNotes, function(x) sub("Similar to ", "", x) %>% str_extract(".*:") %>% str_remove(":") %>% toupper) 
+  # Convert the uniprot gene names to entrez ids
+  topGenesDF = unlist(mapIds(org.Hs.eg.db, keys = genes, column = "ENTREZID", keytype = "SYMBOL")) %>% data.frame() 
+  names(topGenesDF) = "ENTREZID" ; topGenesDF$GeneSymbol = rownames(topGenesDF) ; rownames(topGenesDF) = NULL
+  # Retrieve gene summary & descirption
+  genes = entrez_summary(db="gene", id=topGenesDF$ENTREZID)
+  SummaDF = lapply(genes, function(x) x[["summary"]]) %>% unlist() %>% data.frame()
+  names(SummaDF) = "Summary" ; SummaDF$ENTREZID = rownames(SummaDF) ; rownames(SummaDF) = NULL
+  DescDF = lapply(genes, function(x) x[["description"]]) %>% unlist() %>% data.frame()
+  names(DescDF) = "description" ; DescDF$ENTREZID = rownames(DescDF) ; rownames(DescDF) = NULL
+  # Output complete table
+  topGenesDF = merge(merge(DescDF, topGenesDF, all = T), SummaDF, all = T)
+  # Add which comparison
+  topGenesDF$comparison = vecCompa[i]
+  return(topGenesDF)
+}
+```
+
+```{r, echo=FALSE, results='asis'}
+for (i in 1:4){
+  print(kable(getGeneSummary(i)))
+}
+```
+
+# Differential methylations "Top down": DM in parents -> how do they look in offspring?
+
+## I. Focus on CpG positions at parental (Ctrl-Inf) DMS 
+
+Question: how are the beta values in the different groups at the parental DMS?
+
+```{r}
+##############
+## Prepare dataset
+PM_G1 <- getPMdataset(uniteCov = uniteCov6_G1_woSexAndUnknowChrOVERLAP, MD = fullMetadata_PAR, gener="parents")
+PM_G2 <- getPMdataset(uniteCov = uniteCov14_G2_woSexAndUnknowChrOVERLAP, MD = fullMetadata_OFFS, gener="offspring")
+```
+
+### What is the relative contribution of methylation to brother pair & paternal treatment?
+
+Test of VCA: variance component analysis https://cran.r-project.org/web/packages/VCA/vignettes/VCA_package_vignette.html
+
+#### Hypo methylation
+
+```{r}
+PM_G2_mean_hypo <- PM_G2[PM_G2$hypohyper %in% "hypo", ] %>% 
+  group_by(brotherPairID, G1_trt, G2_trt, ID) %>% 
+  dplyr::summarize(MeanBetaValue = mean(BetaValue, na.rm=TRUE)) %>% data.frame()
+
+varPlot(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hypo, 
+        MeanLine=list(var=c("G1_trt", "G2_trt"), 
+                      col=c("white", "blue"), lwd=c(2,2)), 
+        BG=list(var="G2_trt", col=paste0("gray", c(80, 90))),
+        YLabel=list(cex = .8, text="Mean beta value at parDMS \n hypomethylated upon infection"))
+```
+
+
+```{r}
+myfitVCA_hypo <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hypo) 
+
+### Real values
+trtEffect <- sum(myfitVCA_hypo$aov.tab[2:4, 5])
+genEffect <- sum(myfitVCA_hypo$aov.tab[5:8, 5])
+error <- sum(myfitVCA_hypo$aov.tab[9, 5])
+realValHypoVCA <- data.frame(trtEffect=trtEffect, genEffect=genEffect,error=error)
+
+### Randomisation
+myrandomVCA <- function(df=PM_G2_mean_hypo){
+  randomDF = df
+  randomDF$G1_trt = sample(PM_G2_mean_hypo$G1_trt, replace = F)
+  randomDF$G2_trt = sample(PM_G2_mean_hypo$G2_trt, replace = F)
+  randomDF$brotherPairID = sample(PM_G2_mean_hypo$brotherPairID, replace = F)
+  myfitVCA <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = randomDF) 
+  trtEffect <- sum(myfitVCA$aov.tab[2:4, 5])
+  genEffect <- sum(myfitVCA$aov.tab[5:8, 5])
+  error <- sum(myfitVCA$aov.tab[9, 5])
+  return(data.frame(trtEffect=trtEffect, genEffect=genEffect,error=error))
+}
+
+# randomHypoVCA = do.call(rbind, lapply(1:1000, function(x) {
+#   df=myrandomVCA(PM_G2_mean_hypo)
+#   df$rep=x
+#   return(df)}))
+
+# randomHypoVCA = melt(randomHypoVCA, id.vars = "rep")
+# saveRDS(randomHypoVCA, file = "Rdata/randomHypoVCA.RDS")
+randomHypoVCA <- readRDS(file = "Rdata/randomHypoVCA.RDS")
+df2=reshape2::melt(realValHypoVCA)
+
+sumDF <- randomHypoVCA %>% 
+  group_by(variable) %>%
+  dplyr::summarize(value = mean(value)) %>% data.frame()
+
+ggplot(randomHypoVCA, aes(x=variable, y=value))+
+  geom_boxplot()+
+  geom_jitter(width=.1, alpha=.2)+
+  geom_point(data = df2, col = "red", size = 6)+
+  geom_text(data=sumDF, aes(label=round(value)), col="white")+
+  geom_text(data = df2, aes(label=round(value)), col="white")+
+  theme_cleveland()+
+  ggtitle("VCA with bootstrap N=1000 at hypo-parDMS", subtitle = "red: observed values")
+
+# estimate 95% confidence intervals, request CI for
+# all variance components via 'VarVC=TRUE'
+VCAinference(myfitVCA_hypo, VarVC=TRUE)
+```
+
+#### Hyper methylation
+```{r}
+PM_G2_mean_hyper <- PM_G2[PM_G2$hypohyper %in% "hyper", ] %>% 
+  group_by(brotherPairID, G1_trt, G2_trt, ID) %>% 
+  dplyr::summarize(MeanBetaValue = mean(BetaValue, na.rm=TRUE)) %>% data.frame()
+
+varPlot(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hyper, 
+        MeanLine=list(var=c("G1_trt", "G2_trt"), 
+                      col=c("white", "blue"), lwd=c(2,2)), 
+        BG=list(var="G2_trt", col=paste0("gray", c(80, 90))),
+        YLabel=list(cex = .8, text="Mean beta value at parDMS \n hypermethylated upon infection"))
+```
+
+```{r}
+myfitVCA_hyper <- fitVCA(form = MeanBetaValue~(G1_trt* G2_trt*brotherPairID), Data = PM_G2_mean_hyper) 
+
+### Real values
+trtEffect <- sum(myfitVCA_hyper$aov.tab[2:4, 5])
+genEffect <- sum(myfitVCA_hyper$aov.tab[5:8, 5])
+error <- sum(myfitVCA_hyper$aov.tab[9, 5])
+realValHyperVCA <- data.frame(trtEffect=trtEffect, genEffect=genEffect,error=error)
+
+### Randomisation
+# randomHyperVCA = do.call(rbind, lapply(1:1000, function(x) {
+#   df=myrandomVCA(PM_G2_mean_hyper)
+#   df$rep=x
+#   return(df)}))
+# 
+# randomHyperVCA = melt(randomHyperVCA, id.vars = "rep")
+# saveRDS(randomHyperVCA, file = "Rdata/randomHyperVCA.RDS")
+randomHyperVCA <- readRDS(file = "Rdata/randomHyperVCA.RDS")
+df2=reshape2::melt(realValHyperVCA)
+
+sumDF <- randomHyperVCA %>% 
+  group_by(variable) %>%
+  dplyr::summarize(value = mean(value)) %>% data.frame()
+
+ggplot(randomHyperVCA, aes(x=variable, y=value))+
+  geom_boxplot()+
+  geom_jitter(width=.1, alpha=.2)+
+  geom_point(data = df2, col = "red", size = 6)+
+  geom_text(data=sumDF, aes(label=round(value)), col="white")+
+  geom_text(data = df2, aes(label=round(value)), col="white")+
+  theme_cleveland()+
+  ggtitle("VCA with bootstrap N=1000 at hyper-parDMS", subtitle = "red: observed values")
+
+# estimate 95% confidence intervals, request CI for
+# all variance components via 'VarVC=TRUE'
+VCAinference(myfitVCA_hypo, VarVC=TRUE)
+```
+
+## DMS values in parents
+```{r}
+parmod <- lmer(data = PM_G1, BetaValue ~ meth.diff.parentals : Treatment + (1|CpGSite) + (1|brotherPairID))
+
+## check normality of residuals assumption
+qqnorm(resid(parmod))
+qqline(resid(parmod))
+
+pred <- ggpredict(parmod, terms = c("meth.diff.parentals", "Treatment"))
+plot(pred, add.data = T)+
+  scale_color_manual(values = c("black", "red"))+
+  scale_y_continuous(name = "Beta values")+
+  scale_x_continuous(name = "Methylation difference between infected and control parents in percentage")+
+  ggtitle("Predicted methylation ratio (Beta) values in parents\n as a function of differential methylation between exposed and control groups")+
+  theme_bw()
+```
+
+### Linear model: does the beta value of offspring at DMS depends on treatment Parent x Offspring?
+```{r}
+modFull <- lmer(BetaValue ~ (G1_trt * G2_trt):hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID),data = PM_G2, REML = F) # REML =F for model comparison
+mod_noG1trt <- lmer(BetaValue ~ G2_trt:hypohyper + (1|CpGSite)+ (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+mod_noG2trt <-lmer(BetaValue ~ G1_trt:hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+mod_noInteractions <- lmer(BetaValue ~ (G1_trt + G2_trt):hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+mod_noHypoHyper <- lmer(BetaValue ~ (G1_trt * G2_trt) + (1|CpGSite) + (1|Sex) + (1|brotherPairID), data = PM_G2, REML = F)
+
+## check normality of residuals assumption
+qqnorm(resid(modFull))
+qqline(resid(modFull))
+
+## Likelihood ratio tests for all variables:
+lrtest(modFull, mod_noG1trt) # G1 trt is VERY VERY significant (LRT: χ² (4) = 1163.6, p < 0.001)
+lrtest(modFull, mod_noG2trt) # G2 trt is VERY VERY significant (LRT: χ² (4) = 30.02, p < 0.001) NB that changed when brotherpair is used instead of family!
+lrtest(modFull, mod_noInteractions) # interactions are significant (LRT: χ² (2) = 9.21, p < 0.01)
+lrtest(modFull, mod_noHypoHyper) # hypo/hyper VERY VERY significant (LRT: χ² (4) = 1140, p < 0.001)
+
+## Post-hoc tests between treatments
+modFull <- lmer(BetaValue ~ (G1_trt * G2_trt):hypohyper + (1|CpGSite) + (1|Sex) + (1|brotherPairID),data = PM_G2)
+modFull_emmeans <- emmeans(modFull, list(pairwise ~ (G1_trt:G2_trt):hypohyper), adjust = "tukey")
+modFull_emmeans
+
+P1 <- plot(modFull_emmeans, by = "hypohyper", comparisons = TRUE) +
+  # coord_flip()+
+  theme_bw() +
+  ggtitle("Estimated marginal means of methylation ratio (beta)\n of offspring at parental DMS")+
+  theme(legend.position = "none", axis.title.x = element_blank()) +
+  scale_x_continuous("Beta value (methylation ratio)", limits = c(47,69.5))
+
+## NB: Comparison arrows: https://cran.r-project.org/web/packages/emmeans/vignettes/xplanations.html
+## two estimated marginal means (EMMs) differ significantly if, and only if, their respective comparison arrows do not overlap
+## These comparison arrows are decidedly not the same as confidence intervals.
+## Confidence intervals for EMMs are based on the statistical properties of the individual EMMs, whereas comparison arrows
+## are based on the statistical properties of differences of EMMs.
+
+## Add the PARENTAL DMS value
+## Same test on ALL, G1 and G2 fish
+modFullG1 <- lmer(BetaValue ~ G1_trt:hypohyper + (1|CpGSite) + (1|brotherPairID), data = PM_G1)
+
+modFullG1_emmeans <- emmeans(modFullG1, list(pairwise ~ G1_trt:hypohyper), adjust = "tukey")
+modFullG1_emmeans
+
+P2 <- plot(modFullG1_emmeans, by = "hypohyper", comparisons = TRUE) +
+  theme_bw() +
+  ggtitle("Estimated marginal means of methylation ratio (beta)\n of parents at DMS")+
+  theme(legend.position = "none", axis.title.x = element_blank()) +
+  scale_x_continuous("Beta value (methylation ratio)", limits = c(47,69.5))
+
+ggarrange(P2, P1, labels = c("A", "B"), ncol = 1, nrow = 2)
+```
+
+### Are the nbr of residuals methylation AT PARENTAL DMS different in the 4 G2 trt? (for hypo vs hypermeth)? 
+```{r}
+length(unique(PM_G1$CpGSite))# 3648 positions
+PM_G1 %>% dplyr::count(ID)## NB: not all covered in all samples
+length(unique(PM_G2$CpGSite[PM_G2$hypohyper %in% "hypo"]))# 1176 positions hypomethylated upon parental inf
+length(unique(PM_G2$CpGSite[PM_G2$hypohyper %in% "hyper"]))# 2472 positions hypermethylated upon parental inf
+
+myfun <- function(X){
+  ## Calculate nbr of CpG hypo/hypermethylated per individual, and nbr of covered CpG:
+  X <- X %>% group_by(ID, Treatment, brotherPairID, clutch.ID, Sex) %>%
+    dplyr::summarise(ncov = n(),
+                     hypoMeth = sum(BetaValue < 0.3),
+                     hyperMeth = sum(BetaValue > 0.7)) %>% data.frame()
+  # Calculate residuals of nbr of methCpG by nbr of covered CpG
+  X$res_Nbr_methCpG_Nbr_coveredCpG_HYPO = residuals(lm(X$hypoMeth ~ X$ncov))
+  X$res_Nbr_methCpG_Nbr_coveredCpG_HYPER = residuals(lm(X$hyperMeth ~ X$ncov))
+  
+  ## Statistical model: is it different in each offspring trt group?
+  mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPO ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
+               data = X, REML = F)
+  mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPO ~ 1 + (1|brotherPairID/clutch.ID) + (1|Sex),
+               data = X, REML = F)
+  print(lrtest(mod1, mod0))
+  
+  ## Post-hoc test:
+  modhypo <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPO ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
+                  data = X)
+  ## pairwise posthoc test
+  print(emmeans(modhypo, list(pairwise ~ Treatment), adjust = "tukey"))
+  
+  mod3 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPER ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
+               data = X, REML = F)
+  mod4 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPER ~ 1 + (1|brotherPairID/clutch.ID) + (1|Sex),
+               data = X, REML = F)
+  print(lrtest(mod3, mod4))
+  
+  ## Post-hoc test:
+  modhyper <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPER ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
+                   data = X)
+  ## pairwise posthoc test
+  print(emmeans(modhyper, list(pairwise ~ Treatment), adjust = "tukey"))
+  
+  ## Plot
+  phypo <- plot(ggpredict(modhypo, terms = c("Treatment")), add.data = TRUE)+
+    scale_y_continuous("Residuals of number of hypomethylated methylated \ncytosines on number of cytosines covered") +
+    ggtitle("Predicted residuals nbr of hypomethylated CpG")+
+    theme_bw()
+  
+  phyper <- plot(ggpredict(modhyper, terms = c("Treatment")), add.data = TRUE)+
+    scale_y_continuous("Residuals of number of hypermethylated methylated \n cytosines on number of cytosines covered") +
+    ggtitle("Predicted residuals nbr of hypermethylated CpG")+
+    theme_bw()
+  return(list(phypo, phyper))
+}
+
+listplots <- myfun(X = PM_G2[PM_G2$hypohyper %in% "hypo",])
+## NOT significant
+annotate_figure(ggarrange(listplots[[1]], listplots[[2]],ncol = 2, nrow = 1),
+                top = text_grob("Parental DMS hypomethylated upon infection, in offspring"))
+```
+
+```{r}
+listplots <- myfun(X = PM_G2[PM_G2$hypohyper %in% "hyper",])
+## Treatment SIGNIFICANT in both excess hypo/hyper methylation **
+
+# $`pairwise differences of Treatment`
+## HYPO
+# 1                       estimate   SE   df t.ratio p.value
+# NE_control - E_control     23.71 7.28 10.3   3.257  0.0353
+# NE_control - E_exposed     26.88 7.26 10.3   3.701  0.0172
+
+## HYPER
+# 1                       estimate   SE   df t.ratio p.value
+# NE_control - E_control    -24.06 7.36 10.3  -3.269  0.0348
+# NE_control - E_exposed    -27.07 7.34 10.3  -3.687  0.0177
+
+annotate_figure(ggarrange(listplots[[1]], listplots[[2]],ncol = 2, nrow = 1),
+                top = text_grob("Parental DMS hypermethylated upon infection, in offspring"))
+```
+
+-> The beta values in parentalDMS in offspring follow the parental pattern hypo/hyper methylated upon infection
+
+## II. CORE DMS: Which of the parental DMS are also found in offspring comparisons? ##
+```{r}
+intersect(paste(DMSlist$DMS_15pc_G1_C_T$chr, DMSlist$DMS_15pc_G1_C_T$start),
+          intersect(paste(DMSlist$DMS_15pc_CC_CT$chr, DMSlist$DMS_15pc_CC_CT$start),
+                    paste(DMSlist$DMS_15pc_TC_TT$chr, DMSlist$DMS_15pc_TC_TT$start)))
+## ONLY 4!!! "Gy_chrII 22196179"  "Gy_chrXII 10863858" "Gy_chrXVII 2658079" "Gy_chrXX 5344222"
+```
+
+## CORE DMS: Which of the DMS are common to CC-CI and IC-II? ##
+
+```{r}
+DMS1 = DMSlist$DMS_15pc_CC_CT # from: getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1CONTROL, myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6),])
+DMS2 = DMSlist$DMS_15pc_TC_TT # from: getDiffMeth(myuniteCov = uniteCov14_G2_woSexAndUnknowChr_G1INFECTED, myMetadata = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3),])
+coreDMS <- intersect(paste(DMS1$chr, DMS1$start), paste(DMS2$chr, DMS2$start))
+
+## prepare manhattan plot df
+comp1 = "CC-CI"; comp2 = "IC-II"
+
+A <- methylKit::select(DMS1, which(paste(DMS1$chr, DMS1$start) %in% coreDMS))
+B <- as.data.frame(annotateWithGeneParts(as(A,"GRanges"),annotBed12)@members)
+A2 <- methylKit::select(DMS2, which(paste(DMS2$chr, DMS2$start) %in% coreDMS))
+B2 <- as.data.frame(annotateWithGeneParts(as(A2,"GRanges"),annotBed12)@members)
+
+## Make Manhattan plot:
+ggarrange(
+  makeManhattanPlots(DMSfile = DMS1, 
+                     annotFile = as.data.frame(annotateWithGeneParts(as(DMS1,"GRanges"),annotBed12)@members),
+                     GYgynogff = GYgynogff, mycols = c("red", "grey", "black", "green"), 
+                     mytitle = paste0("Manhattan plot of ", comp1, " DMS")),
+  makeManhattanPlots(DMSfile = DMS2, 
+                     annotFile = as.data.frame(annotateWithGeneParts(as(DMS2,"GRanges"),annotBed12)@members),
+                     GYgynogff = GYgynogff, mycols = c("red", "grey", "black", "green"), 
+                     mytitle = paste0("Manhattan plot of ", comp2, " DMS")),
+  makeManhattanPlots(DMSfile = A, annotFile = B, GYgynogff = GYgynogff, 
+                     mycols = c("red", "grey", "black", "green"), mytitle = paste0("Manhattan plot core DMS in ", comp1)),
+  makeManhattanPlots(DMSfile = A2, annotFile = B2, GYgynogff = GYgynogff, 
+                     mycols = c("red", "grey", "black", "green"), mytitle = paste0("Manhattan plot core DMS in ", comp2)),
+  labels = c("A", "B", "C", "D"), ncol = 1, nrow = 4, common.legend = T)
+```
+
+## Gene annotation of the core DMS (N=30): 
+
+```{r}
+# Change the vector into a methobject:
+df <- data.frame(chr=sapply(strsplit(coreDMS, " "), `[`, 1), 
+                 start=sapply(strsplit(coreDMS, " "), `[`, 2),
+                 end=sapply(strsplit(coreDMS, " "), `[`, 2)) 
+# get annotation
+anotcore <- getAnnotationFun(makeGRangesFromDataFrame(df))
+print(paste0("The number of genes associated with core DMS is:"))
+print(nrow(anotcore)) # number of genes
+# Reorder chromosome
+anotcore <- anotcore %>% 
+  mutate(chr = gsub("Gy_chr", "", seqid), chrom_nr = seqid %>% deroman(), chrom_order=factor(chrom_nr) %>% 
+           as.numeric()) %>% arrange(chrom_order)  %>% 
+  mutate(geneLengthkb = (end - start)/1000, nCpGperGenekb = nCpG/geneLengthkb)
+
+# Plot
+ggplot(anotcore, aes(x=start, y = nCpGperGenekb)) + geom_point(alpha=.4) +
+  facet_grid(.~fct_inorder(chr)) +
+  geom_hline(yintercept = 1)+
+  theme(axis.text.x=element_blank()) +
+  xlab("Genes genes associated with core DMS") +
+  ylab("Number of differentially methylated CpG per gene kb")
+```
+
+### Core gene annotations:
+
+```{r}
+## Genes with at least 1 CpG differentially methylated per kb: NONE
+anotcore[anotcore$nCpGperGenekb >= 1,]
+
+## For all genes:
+geneNotes = anotcore$Note
+# extract uniprot symbol from note, then uppercase
+genes = sapply(geneNotes, function(x) sub("Similar to ", "", x) %>% str_extract(".*:") %>% str_remove(":") %>% toupper) 
+# Convert the uniprot gene names to entrez ids
+topGenesDF = unlist(mapIds(org.Hs.eg.db, keys = genes, column = "ENTREZID", keytype = "SYMBOL")) %>% data.frame() 
+names(topGenesDF) = "ENTREZID" ; topGenesDF$GeneSymbol = rownames(topGenesDF) ; rownames(topGenesDF) = NULL
+# Retrieve gene summary & descirption
+genes = entrez_summary(db="gene", id=topGenesDF$ENTREZID)
+SummaDF = lapply(genes, function(x) x[["summary"]]) %>% unlist() %>% data.frame()
+names(SummaDF) = "Summary" ; SummaDF$ENTREZID = rownames(SummaDF) ; rownames(SummaDF) = NULL
+DescDF = lapply(genes, function(x) x[["description"]]) %>% unlist() %>% data.frame()
+names(DescDF) = "description" ; DescDF$ENTREZID = rownames(DescDF) ; rownames(DescDF) = NULL
+# Output complete table
+topGenesDF = merge(merge(DescDF, topGenesDF, all = T), SummaDF, all = T)
+```
+
+```{r, echo=FALSE, results='asis'}
+print(kable(topGenesDF))
+```
+
+
+
+
+
+
+
+
+
+## TRANSMITTED DMS: Which of the DMS are found in CCvsIC and CIvsII?
+
+```{r, fig.height = 10, fig.width = 10}
+DMS1 = DMSlist$DMS_15pc_CC_TC
+DMS2 = DMSlist$DMS_15pc_CT_TT
+transmDMS <- intersect(paste(DMS1$chr, DMS1$start), paste(DMS2$chr, DMS2$start))
+
+length(transmDMS)
+
+## prepare manhattan plot df
+comp1 = "CC_TC"; comp2 = "CT_TT"
+
+A <- methylKit::select(DMS1, which(paste(DMS1$chr, DMS1$start) %in% transmDMS))
+B <- as.data.frame(annotateWithGeneParts(as(A,"GRanges"),annotBed12)@members)
+A2 <- methylKit::select(DMS2, which(paste(DMS2$chr, DMS2$start) %in% transmDMS))
+B2 <- as.data.frame(annotateWithGeneParts(as(A2,"GRanges"),annotBed12)@members)
+
+## Make Manhattan plot:
+ggarrange(
+  makeManhattanPlots(DMSfile = DMS1, 
+                     annotFile = as.data.frame(annotateWithGeneParts(as(DMS1,"GRanges"),annotBed12)@members),
+                     GYgynogff = GYgynogff, mycols = c("red", "grey", "black", "green"), 
+                     mytitle = paste0("Manhattan plot of ", comp1, " DMS")),
+  makeManhattanPlots(DMSfile = DMS2, 
+                     annotFile = as.data.frame(annotateWithGeneParts(as(DMS2,"GRanges"),annotBed12)@members),
+                     GYgynogff = GYgynogff, mycols = c("red", "grey", "black", "green"), 
+                     mytitle = paste0("Manhattan plot of ", comp2, " DMS")),
+  makeManhattanPlots(DMSfile = A, annotFile = B, GYgynogff = GYgynogff, 
+                     mycols = c("red", "grey", "black", "green"), mytitle = paste0("Manhattan plot transmitted DMS in ", comp1)),
+  makeManhattanPlots(DMSfile = A2, annotFile = B2, GYgynogff = GYgynogff, 
+                     mycols = c("red", "grey", "black", "green"), mytitle = paste0("Manhattan plot transmitted DMS in ", comp2)),
+  labels = c("A", "B", "C", "D"), ncol = 1, nrow = 4, common.legend = T)
+```
+
+## Plot mean Beta values of offsprings at parental DMS, per trt, along the chromosomes
+```{r}
+meanBeta_G2_simple <- PM_G2 %>% group_by(Chr, Pos, Treatment) %>%
+  dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
+names(meanBeta_G2_simple) <- c("Chr", "Pos", "Treatment_G2", "MeanBetaG2")
+
+genome <- GYgynogff %>%
+  mutate(chrom_nr=chrom %>% deroman(), chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
+  arrange(chrom_order) %>%
+  mutate(gstart=lag(length,default=0) %>% cumsum(), gend=gstart+length, 
+         type=LETTERS[2-(chrom_order%%2)],   gmid=(gstart+gend)/2)
+
+mydata = tibble(trt=meanBeta_G2_simple$Treatment_G2,
+                chrom=meanBeta_G2_simple$Chr, pos=meanBeta_G2_simple$Pos, beta=meanBeta_G2_simple$MeanBetaG2)
+mydata$pos <- as.numeric(mydata$pos)
+mydata$pos <- as.numeric(mydata$pos)
+
+table(mydata$chrom)## check that chrXIX and chrUN are well removed!!
+
+# join DMS and genomic position
+data = dplyr::left_join(mydata, genome) %>% dplyr::mutate(gpos=pos+gstart)
+
+# plot:
+ggplot()+
+  geom_rect(data=genome,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=type), alpha=.2)+
+  geom_point(data=data, aes(x=gpos,y=beta, shape=trt, col=trt),fill="white", size = 1)+
+  scale_color_manual(values = colOffs)+
+  scale_shape_manual(values=c(21,21,21,21))+
+  scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none")+
+  scale_x_continuous(breaks=genome$gmid,labels=genome$chrom %>% str_remove(.,"Gy_chr"),
+                     position = "top",expand = c(0,0))+
+  theme_minimal()+
+  theme(panel.grid = element_blank(),
+        axis.line=element_blank(),
+        axis.title = element_blank(),
+        strip.placement = "outside")+
+  facet_grid(trt~.)+
+  ggtitle("Mean methylation proportions at the 3648 parental DMS for each offspring group")
+```
+
+## Not conclusive: test hyp that beta value is different (higher?) in the center of the chromosome, where there are less recombinations. Test for each chromosome
+```{r}
+meanBeta_G2_extended <- PM_G2 %>% group_by(Chr, Pos, Treatment, Sex, brotherPairID) %>%
+  dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
+names(meanBeta_G2_extended) <- c("Chr", "Pos", "Treatment_G2","Sex", "brotherPairID", "MeanBetaG2")
+
+mydata = tibble(trt=meanBeta_G2_extended$Treatment_G2, sex = meanBeta_G2_extended$Sex, brotherPairID = meanBeta_G2_extended$brotherPairID,
+                chrom=meanBeta_G2_extended$Chr, pos=meanBeta_G2_extended$Pos, beta=meanBeta_G2_extended$MeanBetaG2)
+mydata$pos <- as.numeric(mydata$pos)
+
+# join DMS and genomic position
+data = dplyr::left_join(mydata, genome) %>% dplyr::mutate(gpos=pos+gstart)
+
+## Add distance to center
+data$dist2mid <- abs(data$gmid - data$gpos)
+
+mod <- lmer(beta ~ dist2mid:chrom + (1|trt) + (1|sex) + (1|brotherPairID), data = data, REML = F)
+mod0 <- lmer(beta ~ dist2mid + (1|trt) + (1|sex) + (1|brotherPairID), data = data, REML = F)
+mod00 <- lmer(beta ~ chrom + (1|trt) + (1|sex) + (1|brotherPairID), data = data, REML = F)
+
+lrtest(mod, mod0) # chromosome matters
+lrtest(mod0, mod00) # distance to middle matters
+
+## check normality of residuals assumption
+qqnorm(resid(mod))
+qqline(resid(mod)) # quite skewed
+
+pred <- ggpredict(mod, terms = c("dist2mid","chrom"))
+plot(pred) +
+  scale_color_manual(values = 1:20)
+```
