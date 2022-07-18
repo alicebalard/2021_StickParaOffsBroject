@@ -85,3 +85,19 @@ if (run == TRUE){
   
   saveRDS(DMlist, "../../data/DiffMeth/DMperBP_list.RDS")
 }
+
+## For positions present in all fish (for upset plot)
+run = TRUE
+if (run == TRUE){
+  #### We will apply the following function to all BP:
+  vecBP <- unique(fullMetadata_OFFS$brotherPairID)
+  
+  ## Loop over all BP
+  DMlist <- list() # empty plot list
+  for (i in 1:length(vecBP)){
+    DMlist[[i]] <- getDMperBP2(BP = vecBP[[i]])
+  } 
+  names(DMlist) <- vecBP
+  
+  saveRDS(DMlist, "../../data/DiffMeth/DMperBP_ALLpos_list.RDS")
+}
