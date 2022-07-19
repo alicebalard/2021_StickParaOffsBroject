@@ -16,7 +16,7 @@ knitr::opts_chunk$set(cache = TRUE, warning = FALSE,
                       fig.path = "Rfigures/Rmd/")
 ```
 
-```{r load, message=FALSE}
+```{r load, message=FALSE, results='hide'}
 machine="mythinkpad" # define the machine we work on
 loadALL = TRUE # load all uniteCov objects
 loadannot = TRUE # load genome annotations
@@ -88,7 +88,7 @@ myplot1
 
 ### Tolerance (slope of BCI on worms count) per paternal status
 
-```{r}
+```{r, fig.width=6,fig.height=4}
 mod_Tol <- lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=fullMetadata_OFFS, REML = F)
 
 ## Model selection:
@@ -119,7 +119,7 @@ mycalcRMS <- function(myUniteCov, myMetaData){
                           Nbr_NOTcoveredCpG = colSums(is.na(percMethMat)),## number of sites NOT covered in this sample
                           MeanCoverage = colMeans(methylKit::getData(myUniteCov)[,myUniteCov@coverage.index], na.rm = T), ## coverage.index: vector denoting which columns in the data correspond to coverage values
                           OverallPercentageMethylation = colMeans(methylKit::percMethylation(myUniteCov), na.rm = T))
-
+  
   ## RMS in this sample based on covered sites
   percMethDF$RMS_coveredCpG = percMethDF$Nbr_methCpG / percMethDF$Nbr_coveredCpG
   ## merge with original metadata:
@@ -283,10 +283,15 @@ NB: this is in G2, considering positions shared by at least 14 fish per treatmen
 
 ### Males have a lower global methylation than females (residuals of nbr of methylated sites by nbr of sites covered)
 
-```{r}
+```{r, fig.width=5, fig.height=4}
 mod = lm(res_Nbr_methCpG_Nbr_coveredCpG ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod)) # sex is significant p = 0.000157 ***
-plot(ggpredict(mod, terms = c("Sex")), add.data = T)
+anova(mod)
+
+plot(ggpredict(mod, terms = c("Sex")), add.data = T) +
+  xlab(NULL)+
+  ylab("Residuals of N methylated sites on N covered sites") +
+  ggtitle("Predicted values of global methylation in offspring")
 ```
 
 ## Are mean residuals meth sites different following tolerance slope?
@@ -315,7 +320,7 @@ plot(ggpredict(mod_Tol.Meth, terms = c("No.Worms", "PAT")), add.data=T)+ theme_b
 
 ## And by treatment instead of No.worms?
 mod_Tol.Meth2 <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*PAT*outcome + (1|brotherPairID)+ (1|Sex), 
-                     data=fullMetadata_OFFS, REML = F)
+                      data=fullMetadata_OFFS, REML = F)
 
 plot(ggpredict(mod_Tol.Meth2, terms = c("res_Nbr_methCpG_Nbr_coveredCpG_div1000","PAT", "outcome")), add.data=T)+
   scale_color_manual(values = colOffs)
@@ -389,15 +394,21 @@ cowplot::plot_grid(
 Methylation profiles, CpG present in all fish
 
 ## Dendogram of methylations
-### All 135 fish:
+
+Methylation profile for the `r nrow(uniteCovALL_woSexAndUnknowChr)` CpG sites covered in all G1 & G2 fish (N = `r length(uniteCovALL_woSexAndUnknowChr@sample.ids)`:
+
 ```{r, fig.width=15, fig.height=8}
+
 makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr, fullMetadata,
                       my.cols.trt=c("#333333ff","#ff0000ff","#ffe680ff","#ff6600ff","#aaccffff","#aa00d4ff"),
                       my.cols.fam = c(1:4), nbrk = 8)
 ```
 
 ### Offspring:
-```{r, fig.width=15, fig.height=8}
+
+Methylation profile for the `r nrow(uniteCovALL_G2_woSexAndUnknowChr)` CpG sites covered in all G2 fish (N = `r length(uniteCovALL_G2_woSexAndUnknowChr@sample.ids)`:
+
+```{r, fig.width=8, fig.height=4}
 makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
                       my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
                       my.cols.fam = c(1:4), nbrk = 8)
@@ -426,8 +437,9 @@ print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permuta
 ```
 
 Results:
+
 - 1.5% of the variation explained by PAT (R2=0.01470, p < 0.001)
-- 1% of the variation explained by outcome (R2=0.01009, p = 0.05)
+- 1% of the variation explained by outcome (R2=0.01009, p = 0.03)
 - 1.3% of the variation explained by Sex (R2=0.01277, p < 0.01)
 
 ## NMDS
@@ -444,7 +456,7 @@ Goodness of fit for NMDS suggested the presence of six dimensions with a stress 
 NMDSanalysis <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = 4)
 ```
 
-```{r, fig.height = 13, fig.width = 10}
+```{r, fig.height = 11, fig.width = 10}
 # png(filename = "Rfigures/NMDSplot_allG2.png", width = 900, height = 1100)
 NMDSanalysis$NMDSplot
 # dev.off()
@@ -461,7 +473,7 @@ AdonisWithinG1trtFUN(trtgp = c(2,3))
 Results:
 
 - brother pair explains 22% of the observed variance p < 0.01
-- sex explains 2.3% of the observed variance p < 0.01
+- sex explains 2.3% of the observed variance p < 0.001
 - Offspring trt explains 1.6% of the observed variance (non significant)
 
 ```{r, results="hide"}
@@ -491,9 +503,9 @@ Results:
 
 ```{r, results="hide"}
 NMDSanalysis_G1infected <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, 
-                                    metadata = fullMetadata_OFFS, myseed = 25,
-                                    byParentTrt=TRUE,
-                                    trtgp = c(5,6))
+                                     metadata = fullMetadata_OFFS, myseed = 25,
+                                     byParentTrt=TRUE,
+                                     trtgp = c(5,6))
 ```
 
 ```{r,  fig.height = 9, fig.width = 10}
@@ -504,7 +516,7 @@ NMDSanalysis_G1infected$NMDSplot
 
 # Differential methylations "Bottom up": DM in offspring
 
-## PARENTAL EFFECT: Differential methylation between control G2 (G1 infected or not) and between infected G2 (G1 infected of not)
+## PARENTAL EFFECT: Differential methylation between control G2 (G1 infected or not) and between infected G2 (G1 infected or not)
 
 Differential methylation by brother pair (sex as covariate):
 
@@ -515,21 +527,16 @@ Differential methylation by brother pair (sex as covariate):
 
 ```{r}
 ## All in DMSBPlist
-# 
-# ## Add fam to bp
-# names(DMSBPlist) <- paste0(plyr::join(data.frame(BP = names(DMSBPlist)),
-#                                       unique(data.frame(BP = fullMetadata_OFFS$brotherPairID, 
-#                                                         fam = fullMetadata_OFFS$Family)))[[2]], "_", names(DMSBPlist))
 
 ## Extract DMS (by position)
 myPosList = lapply(DMSBPlist, lapply, function(x){paste(x$chr, x$end)})
 
 ## Find DMS present in at least 4 BP out of 8 (half):
-get2keep = function(Compa){
+get2keep = function(Compa, NBP = 4){
   x <- lapply(myPosList, function(x){unlist(x[[paste0("DMS_15pc_BP_", Compa)]])})
   f <- table(unlist((x))) # each DMS present between 1 and 8 times
-  tokeep <- names(f)[f >= 4]
-  print(length(tokeep))
+  tokeep <- names(f)[f >= NBP]
+  # print(length(tokeep))
   ## Keep the DMS present in 4 families minimum
   DMSBPlist_INTER4 <- lapply(x, function(x){x[x %in% tokeep]})
   ## Reorder by family:
@@ -542,8 +549,8 @@ get2keep = function(Compa){
 
 ```{r}
 ## Prepare df for complexUpset
-getUpsetDF = function(i){ # for a given comparison
-  A = get2keep(vecCompa[i]) 
+getUpsetDF = function(i, NBP){ # for a given comparison
+  A = get2keep(vecCompa[i], NBP) 
   A2 = lapply(A, function(x){
     x = data.frame(x)    # vector of DMS as df
     names(x) = "DMS"    # name each CpG
@@ -569,15 +576,16 @@ vecCompa <- c("CC_TC", "CT_TT", "CC_CT", "TC_TT")
 vecCompaVerbose <- c("Control offspring in control vs infected parents", "Infected offspring in control vs infected parents", "Control vs infected offspring from control parent", "Control vs infected offspring from infected parent")
 ```
 
+Make upset plots for DMS found in at least 4 BP:
 
-```{r, fig.width=25, fig.height=8}
-## Make upset plots
+```{r, fig.width=20, fig.height=8}
 for (i in 1:4){
-  df = getUpsetDF(i)
+  df = getUpsetDF(i, NBP = 4)
   print(ComplexUpset::upset(
     df,
-    names(df)[1:8],
+    names(df)[1:8], 
     width_ratio=0.1,
+    themes=upset_default_themes(text=element_text(size=25)),
     sort_intersections_by=c('degree', 'cardinality'),
     queries=query_by_degree(
       df,  names(df)[1:8],
@@ -592,14 +600,42 @@ for (i in 1:4){
         '8'=list(color='green', fill='green')
       ),
       only_components=c("intersections_matrix", "Intersection size")
-    )) + ggtitle(paste0("Differentially methylated sites found in more than four brother pairs in the comparison: ", vecCompaVerbose[i])))
+    )) + ggtitle(paste0("Differentially methylated sites found in more than four brother pairs in the comparison: \n", vecCompaVerbose[i])) + theme(plot.title = element_text(size = 30)))
+}
+```
+
+Make upset plots for DMS found in at least 6 BP:
+
+```{r, fig.width=10, fig.height=5}
+for (i in 1:4){
+  df = getUpsetDF(i, NBP = 6)
+  print(ComplexUpset::upset(
+    df,
+    names(df)[1:8], 
+    width_ratio=0.1,
+    themes=upset_default_themes(text=element_text(size=15)),
+    sort_intersections_by=c('degree', 'cardinality'),
+    queries=query_by_degree(
+      df,  names(df)[1:8],
+      params_by_degree=list(
+        '1'=list(color='red', fill='red'),
+        '2'=list(color='purple', fill='purple'),
+        '3'=list(color='blue', fill='blue'),
+        '4'=list(color='grey', fill='grey'),
+        '5'=list(color='red', fill='red'),
+        '6'=list(color='purple', fill='purple'),
+        '7'=list(color='blue', fill='blue'),
+        '8'=list(color='green', fill='green')
+      ),
+      only_components=c("intersections_matrix", "Intersection size")
+    )) + ggtitle(paste0("Differentially methylated sites found in more than six brother pairs in the comparison: \n", vecCompaVerbose[i]))) #+ theme(plot.title = element_text(size = 30)))
 }
 ```
 
 ### Get annotation of these DMS present in at least 4 BP
 ```{r, fig.height = 5, fig.width = 12}
 plotManhattanGenes <- function(i){
-  print(paste0("The number of DMS in the ", vecCompa[i] ," comparison is:"))
+  # print(paste0("The number of DMS in the ", vecCompa[i] ," comparison is:"))
   DMSvec = unique(unlist(get2keep(vecCompa[i])))
   # Annotate the DMS present in at least 4 BP: 
   # Change the vector into a methobject:
@@ -608,8 +644,29 @@ plotManhattanGenes <- function(i){
                    end=sapply(strsplit(DMSvec, " "), `[`, 2)) 
   # get annotation
   anot4BP <- getAnnotationFun(makeGRangesFromDataFrame(df))
-  print(paste0("The number of genes with DMS in the ", vecCompa[i] ," comparison is:"))
-  print(nrow(anot4BP)) # number of genes
+  
+  # Add info: in how many Brother pairs is a differential methylation found in a gene?
+  anotBPs = data.frame()
+  for (j in 4:8){
+    vec = names(table(unlist(get2keep(vecCompa[i])))[table(unlist(get2keep(vecCompa[i]))) %in% j])
+    if(!is_empty(vec)){ # in case of 8 BP, empty in some comparisons
+      df = data.frame(chr=sapply(strsplit(vec, " "), `[`, 1), 
+                      start=sapply(strsplit(vec, " "), `[`, 2),
+                      end=sapply(strsplit(vec, " "), `[`, 2)) 
+      anot = getAnnotationFun(makeGRangesFromDataFrame(df))
+      anot$N_BP = j
+      anotBPs = rbind(anotBPs, anot)
+    }
+  }
+  
+  # keep the highest N of BP (how many BP have at least one site DM in the gene)
+  anotBPs = anotBPs %>%
+    group_by(ID) %>% 
+     dplyr::slice(which.max(N_BP)) %>%  dplyr::select(c(ID, N_BP))
+  
+  # Ad N_BP info
+  anot4BP = merge(anot4BP, anotBPs)
+  
   # Reorder chromosome
   anot4BP <- anot4BP %>% 
     mutate(chr = gsub("Gy_chr", "", seqid), chrom_nr = seqid %>% deroman(), chrom_order=factor(chrom_nr) %>% 
@@ -617,10 +674,12 @@ plotManhattanGenes <- function(i){
     mutate(geneLengthkb = (end - start)/1000, nCpGperGenekb = nCpG/geneLengthkb)
   
   # Plot
-  plot = ggplot(anot4BP, aes(x=start, y = nCpGperGenekb)) + geom_point(alpha=.4) +
+  plot = ggplot(anot4BP, aes(x=start, y = nCpGperGenekb)) + geom_point(aes(col=as.factor(N_BP)), size = 2) +
+    scale_color_manual(values = c('grey', 'red', 'purple', 'blue', 'green'),
+                       name = "Gene found differentially methylated in N brother pairs:") + 
     facet_grid(.~fct_inorder(chr)) +
     geom_hline(yintercept = 1)+
-    theme(axis.text.x=element_blank()) +
+    theme(axis.text.x=element_blank(), legend.position="top") +
     xlab(paste0("Genes with DMS present in at least 4 brother pairs\nComparison: ", vecCompa[i])) +
     ylab("Number of differentially methylated CpG per gene kb")
   
@@ -689,15 +748,18 @@ dfGO %>% ggplot(aes(x=Comp, y = factor(GO.name))) +
 ```
 
 ### Which genes have at least 1 CpG differentially methylated per kb:
+
 ```{r}
 getGeneSummary <- function(i){
-  geneNotes = plotManhattanGenes(i)$topGenes$Note
-  # extract uniprot symbol from note, then uppercase
-  genes = sapply(geneNotes, function(x) sub("Similar to ", "", x) %>% str_extract(".*:") %>% str_remove(":") %>% toupper) 
+  topgenes = plotManhattanGenes(i)$topGenes
+  
+  df = data.frame(GeneSymbol = sapply(topgenes$Note, function(x) sub("Similar to ", "", x) %>% str_extract(".*:") %>% str_remove(":") %>% toupper),  # extract uniprot symbol from note, then uppercase
+                  N_BP = topgenes$N_BP, seqid = topgenes$seqid) #add info: on how many BP? which chr? how many Cpg ar diffmeth?nCpGperGenekb = topgenes$nCpGperGenekb, 
+  
   # Convert the uniprot gene names to entrez ids
-  topGenesDF = unlist(mapIds(org.Hs.eg.db, keys = genes, column = "ENTREZID", keytype = "SYMBOL")) %>% data.frame() 
+  topGenesDF = unlist(mapIds(org.Hs.eg.db, keys = df$GeneSymbol, column = "ENTREZID", keytype = "SYMBOL")) %>% data.frame() 
   names(topGenesDF) = "ENTREZID" ; topGenesDF$GeneSymbol = rownames(topGenesDF) ; rownames(topGenesDF) = NULL
-  # Retrieve gene summary & descirption
+  # Retrieve gene summary & description
   genes = entrez_summary(db="gene", id=topGenesDF$ENTREZID)
   SummaDF = lapply(genes, function(x) x[["summary"]]) %>% unlist() %>% data.frame()
   names(SummaDF) = "Summary" ; SummaDF$ENTREZID = rownames(SummaDF) ; rownames(SummaDF) = NULL
@@ -705,9 +767,17 @@ getGeneSummary <- function(i){
   names(DescDF) = "description" ; DescDF$ENTREZID = rownames(DescDF) ; rownames(DescDF) = NULL
   # Output complete table
   topGenesDF = merge(merge(DescDF, topGenesDF, all = T), SummaDF, all = T)
+  
   # Add which comparison
   topGenesDF$comparison = vecCompa[i]
-  return(topGenesDF)
+  
+  # Add Number of brother pairs in which the gene is found
+  topGenesDF = merge(topGenesDF, df)
+  
+  # order by N_BP
+  topGenesDF = topGenesDF[order(topGenesDF$N_BP, decreasing = T),]
+  
+  return(topGenesDF)   # NB: some genes are not found automatically
 }
 ```
 
@@ -716,6 +786,38 @@ for (i in 1:4){
   print(kable(getGeneSummary(i)))
 }
 ```
+
+## Correlation between methylation and phenotype (nbr worms, BCI)
+
+Approach: 
+
+1. 
+- raw beta values at DMS shared by >4 (or more) BP, and BCI or nbr worms
+or
+- derive difference between individual and mean of the group
+
+2. PCA
+
+3. extract axes 1 & 2
+
+4. Correlation with parasite load/BCI
+
+```{r}
+i = 1
+
+DMSvec = unique(unlist(get2keep(vecCompa[i], NBP = 4)))
+
+# get raw values
+pos2keep = which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in% DMSvec)
+uniteAtDMS = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, pos2keep)
+percAtDMS = percMethylation(uniteAtDMS)
+
+
+
+```
+
+
+
 
 # Differential methylations "Top down": DM in parents -> how do they look in offspring?
 
@@ -994,7 +1096,7 @@ Test of VCA: variance component analysis https://cran.r-project.org/web/packages
 
 #### Hypo methylation
 
-```{r}
+```{r, fig.width=10}
 PM_G2_mean_hypo <- PM_G2[PM_G2$hypohyper %in% "hypo", ] %>% 
   group_by(brotherPairID, G1_trt, G2_trt, ID) %>% 
   dplyr::summarize(MeanBetaValue = mean(BetaValue, na.rm=TRUE)) %>% data.frame()
@@ -1058,7 +1160,7 @@ VCAinference(myfitVCA_hypo, VarVC=TRUE)
 ```
 
 #### Hyper methylation
-```{r}
+```{r, fig.width=10}
 PM_G2_mean_hyper <- PM_G2[PM_G2$hypohyper %in% "hyper", ] %>% 
   group_by(brotherPairID, G1_trt, G2_trt, ID) %>% 
   dplyr::summarize(MeanBetaValue = mean(BetaValue, na.rm=TRUE)) %>% data.frame()

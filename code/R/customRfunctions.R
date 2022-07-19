@@ -30,9 +30,9 @@ makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam, nbrk)
   x = length(levels(brotherPairID))
   col_brotherPairID <- sample(pal$hex, x)[brotherPairID]
   ## Clutch ID
-  clutch <- factor(metadata$clutch.ID)
-  x = length(levels(clutch))
-  col_clutch <- sample(pal$hex, x)[clutch]
+  # clutch <- factor(metadata$clutch.ID)
+  # x = length(levels(clutch))
+  # col_clutch <- sample(pal$hex, x)[clutch]
   
   ## Make dendrogram
   mydendro <- clusterSamples(OBJ, dist="correlation", method="ward", plot=FALSE)
@@ -40,11 +40,11 @@ makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam, nbrk)
   
   ## and plot
   dend %>% plot(main=paste(OBJ@context, "methylation clustering\n", 
-                           "Distance method: correlation; Clustering method: ward.D"),
-                ylab = "Height")
+                           "Distance method: correlation; Clustering method: ward.D"), 
+                font.main = 1, cex.main = .8, ylab = "Height", nodePar = list(lab.cex = 0.6, pch = c(NA, NA))) 
   dend %>% rect.dendrogram(k=nbrk, border = 8, lty = 5, lwd = 2)
-  colored_bars(cbind(col_trt, col_trtPAT, col_clutch, brotherPairID, col_fam), dend, y_shift = -0.1,
-               rowLabels = c("Treatment", "Paternal treatment", "Clutch", "Brother pair",  "Father's family"))
+  colored_bars(cbind(col_trt, col_trtPAT, brotherPairID, col_fam), dend, y_shift = -0.1, #col_clutch
+               rowLabels = c("G2 treatment", "G1 treatment", "G1 family",  "G0 family")) #"Clutch"
 }
 
 ####################
