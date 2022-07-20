@@ -310,25 +310,15 @@ step(mod_Tol.Meth, reduce.random = F) # Model found: BCI ~ No.Worms + PAT + (1 |
 mod_Tol.Meth <- lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), 
                      data=fullMetadata_OFFS)
 
-plot(ggpredict(mod_Tol.Meth, terms = c("No.Worms", "PAT")), add.data=T)+ theme_bw() +
-  ylab("Body Condition Index") + xlab("Number of worms") +
-  ggtitle("Predicted values of Body Condition Index in offspring")+
-  scale_color_manual(NULL, values = c("black", "red")) +
-  scale_fill_manual(NULL, values = c("black", "red"))  +
-  geom_point(size=0)+ # to have color key in legend as point
-  guides(colour = guide_legend(override.aes = list(size=3,linetype=0, fill = NA)))
-
 ## And by treatment instead of No.worms?
 mod_Tol.Meth2 <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*PAT*outcome + (1|brotherPairID)+ (1|Sex), 
                       data=fullMetadata_OFFS, REML = F)
 
-plot(ggpredict(mod_Tol.Meth2, terms = c("res_Nbr_methCpG_Nbr_coveredCpG_div1000","PAT", "outcome")), add.data=T)+
-  scale_color_manual(values = colOffs)
-
 ## Model selection:
 step(mod_Tol.Meth2, reduce.random = F) # Model found: BCI ~ PAT + outcome + (1 | brotherPairID) + (1 | Sex) + PAT:outcome
-## The slope of BCI on nbrworms varies upon parental treatment = methylation does NOT vary with tolerance
 ```
+
+The slope of BCI on nbr worms varies upon parental treatment, but methylation does NOT vary with tolerance
 
 ### In exposed offspring only
 
@@ -343,8 +333,6 @@ modFULL <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*PAT + (1|brotherPai
                 data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
 ## Model selection:
 step(modFULL, reduce.random = F) # Model found: BCI ~ PAT + (1 | brotherPairID) + (1 | Sex)
-
-plot(ggpredict(modFULL, terms = c("res_Nbr_methCpG_Nbr_coveredCpG_div1000", "PAT")))
 ```
 
 ## Pretty summary picture
@@ -792,7 +780,7 @@ for (i in 1:4){
 Approach: 
 
 1. 
-- raw beta values at DMS shared by >4 (or more) BP, and BCI or nbr worms
+- raw beta values at DMS shared by >4 (or more) BP
 or
 - derive difference between individual and mean of the group
 
@@ -803,14 +791,79 @@ or
 4. Correlation with parasite load/BCI
 
 ```{r}
-i = 1
+## Keep DMS positions detected for parental effect (vecCompa 1 & 2)
+DMSvec_parentalEffect = unique(unlist(c(get2keep(vecCompa[1], NBP = 4), get2keep(vecCompa[2], NBP = 4)))) # at least in 4 brother pairs (half)
 
-DMSvec = unique(unlist(get2keep(vecCompa[i], NBP = 4)))
-
-# get raw values
-pos2keep = which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in% DMSvec)
+# 1. get raw values
+pos2keep = which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in% DMSvec_parentalEffect)
 uniteAtDMS = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, pos2keep)
 percAtDMS = percMethylation(uniteAtDMS)
+```
+
+We found `r nrow(percAtDMS)` DMS linked with parental effect (comparisons CC_TC and CT_TT)
+
+```{r}
+# 2. PCA
+
+# keep complete data: to few
+# nrow(na.omit(percAtDMS))
+
+# prcomp(percAtDMS, scale = TRUE, center = TRUE)
+# BiocManager::install("pcaMethods")
+# browseVignettes("pcaMethods")
+
+## Other possibility: (computationally intensive) 
+# http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html
+# https://www.youtube.com/watch?v=OOM8_FH6_8o
+
+# Perform PCA with missing values using the imputePCA functions, with the number of components determined by the estim_ncpPCA.
+library(missMDA)
+library("FactoMineR")
+# The package missMDA allows the use of principal component methods for an incomplete data set. To achieve this goal in the case of PCA, the missing values are predicted using the iterative PCA algorithm for a predefined number of dimensions. Then, PCA is performed on the imputed data set. The single imputation step requires tuning the number of dimensions used to impute the data.
+
+nb <- estim_ncpPCA(t(percAtDMS), scale = T) # estimate the number of components from incomplete data
+nb$ncp # 5
+res.comp <- imputePCA(t(percAtDMS), ncp = nb$ncp, scale = T) # impute the table
+res.PCA <- PCA(res.comp$completeObs) # perform PCA
+
+res.PCA <- PCA(t(head(percAtDMS))) # perform PCA
+
+res.PCA$eig # take component 1 + 2 
+
+# 3. extract axes 1 & 2
+metadata = fullMetadata_OFFS
+
+# check that the sample names are in the same order
+ifelse(table(rownames(res.PCA$ind$coord) == fullMetadata_OFFS$SampleID), "sample names are in the same order", "ERROR in PCA sample names order")
+
+metadata$PCA1 = res.PCA$ind$coord[,1] # axis 1
+metadata$PCA2 = res.PCA$ind$coord[,2] # axis 2
+
+# 4. Correlation with parasite load/BCI
+mod_Tol.Meth3 <- lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), 
+                     data=metadata, REML = F)
+
+## Model selection:
+step(mod_Tol.Meth3, reduce.random = F) 
+# Model found: PCA2 axis has an effect
+
+mod_Tol.Meth3_final <- lmer(BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + PCA2:PAT + No.Worms:PAT, 
+                     data=metadata, REML = F)
+
+mod_Tol.Meth3_final_NOPCA2 <- lmer(BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT, 
+                     data=metadata,  REML = F)
+
+lrtest(mod_Tol.Meth3_final, mod_Tol.Meth3_final_NOPCA2)
+
+## The slope of BCI on nbrworms varies upon treatment
+plot(ggpredict(mod_Tol.Meth3_final, terms = c("No.Worms", "PCA2", "PAT")), add.data=T)+ theme_bw() #+
+  # ylab("Body Condition Index") + xlab("Number of worms") +
+  # ggtitle("Predicted values of Body Condition Index in offspring")+
+  # scale_color_manual(NULL, values = c("black", "red")) +
+  # scale_fill_manual(NULL, values = c("black", "red"))  +
+  # scale_x_continuous(breaks = 0:10)+
+  # geom_point(size=0)+ # to have color key in legend as point
+  # guides(colour = guide_legend(override.aes = list(size=3,linetype=0, fill = NA)))
 
 
 
