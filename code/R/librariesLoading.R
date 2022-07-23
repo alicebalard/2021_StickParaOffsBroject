@@ -11,6 +11,8 @@ list.of.packages <- c(
   "devtools",
   "dplyr",
   "emmeans", ## for post-hoc Tukey tests
+  "factoextra", # color PCA plots
+  "FactoMineR", # for PCA
   "forcats", # keeps characters in previous order axis ggplot (for bubble plot)
   "genomation", ## for annotation
   "ggeffects", # to plot random effects predictions
@@ -28,6 +30,8 @@ list.of.packages <- c(
   "lmerTest", # for stepwise analysis of lmer
   "magrittr",      # provides the %>% operator
   "methylKit",
+  "MuMIn", # participation of variables to the variance
+  "missMDA",# PCA for incomplete data
   "nlme", ## for mixed models
   "org.Hs.eg.db", # gene annotation from online databases
   "pairwiseAdonis",

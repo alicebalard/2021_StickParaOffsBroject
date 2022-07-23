@@ -335,6 +335,60 @@ modFULL <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*PAT + (1|brotherPai
 step(modFULL, reduce.random = F) # Model found: BCI ~ PAT + (1 | brotherPairID) + (1 | Sex)
 ```
 
+## PCA based on all methylation values in G2
+
+```{r, warning=FALSE}
+# 1. get raw values
+percmeth = percMethylation(uniteCov14_G2_woSexAndUnknowChrOVERLAP)
+
+# Run PCA on complete data (CpG covered in all fish)
+PCA_allpos <- myPCA(x = t(na.omit(percmeth)), incomplete = FALSE)
+```
+
+We perform a PCA on `r nrow(na.omit(percmeth))` CpG sites covered in all G2 individuals. We first perform a test on the complete dataset.
+
+### PCA plot with associated colors for treatments
+
+```{r}
+fviz_pca_ind(PCA_allpos$res.PCA,  label="none", habillage=PCA_allpos$metadata$trtG1G2) + 
+  scale_color_manual(values = colOffs)+
+  scale_shape_manual(values=c(19,19,19,19))
+```
+
+### PCA plot with associated colors for brother pair
+
+```{r}
+fviz_pca_ind(PCA_allpos$res.PCA,  label="none", habillage=as.factor(PCA_allpos$metadata$brotherPairID)) 
+```
+
+```{r}
+# The function dimdesc() can be used to identify the most correlated variables with a given principal component.
+mydimdesc <- dimdesc(PCA_allpos$res.PCA, axes = c(1,2), proba = 0.05)
+```
+
+There are `r nrow(mydimdesc$Dim.1$quanti)` CpG sites most correlated (p < 0.05) with the first principal component , and `r nrow(mydimdesc$Dim.2$quanti)` with the second principal component.
+
+The 2 first PCA axes do not explain BCI (p<0.05)
+
+### How much of the BCI variance is explained by each variables?
+
+```{r}
+# Percentage of variance explained by each factor:
+formula(PCA_allpos$modSel) # BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
+mod_noworms = lmer(BCI ~ PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_allpos$metadata)
+mod_noPAT = lmer(BCI ~ No.Worms + (1 | brotherPairID) + (1 | Sex), data = PCA_allpos$metadata)
+
+# R2c conditional R2 value associated with fixed effects plus the random effects.
+A = (MuMIn::r.squaredGLMM(PCA_allpos$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noworms)[2])*100 
+
+B = (MuMIn::r.squaredGLMM(PCA_allpos$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
+```
+
+- `r round(A, 2)`% of the variance in associated with the parasite load (number of worms)
+- `r round(B, 2)`% of the variance in associated with the paternal treatment
+
 ## Pretty summary picture
 
 ```{r}
@@ -386,7 +440,6 @@ Methylation profiles, CpG present in all fish
 Methylation profile for the `r nrow(uniteCovALL_woSexAndUnknowChr)` CpG sites covered in all G1 & G2 fish (N = `r length(uniteCovALL_woSexAndUnknowChr@sample.ids)`:
 
 ```{r, fig.width=15, fig.height=8}
-
 makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr, fullMetadata,
                       my.cols.trt=c("#333333ff","#ff0000ff","#ffe680ff","#ff6600ff","#aaccffff","#aa00d4ff"),
                       my.cols.fam = c(1:4), nbrk = 8)
@@ -650,7 +703,7 @@ plotManhattanGenes <- function(i){
   # keep the highest N of BP (how many BP have at least one site DM in the gene)
   anotBPs = anotBPs %>%
     group_by(ID) %>% 
-     dplyr::slice(which.max(N_BP)) %>%  dplyr::select(c(ID, N_BP))
+    dplyr::slice(which.max(N_BP)) %>%  dplyr::select(c(ID, N_BP))
   
   # Ad N_BP info
   anot4BP = merge(anot4BP, anotBPs)
@@ -790,87 +843,154 @@ or
 
 4. Correlation with parasite load/BCI
 
-```{r}
+### PCA based on all methylation values at DMS positions detected for parental effect covered in all G2
+
+```{r, warning=FALSE}
+# 1. get raw values
+
 ## Keep DMS positions detected for parental effect (vecCompa 1 & 2)
 DMSvec_parentalEffect = unique(unlist(c(get2keep(vecCompa[1], NBP = 4), get2keep(vecCompa[2], NBP = 4)))) # at least in 4 brother pairs (half)
 
-# 1. get raw values
 pos2keep = which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in% DMSvec_parentalEffect)
 uniteAtDMS = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, pos2keep)
 percAtDMS = percMethylation(uniteAtDMS)
+
+# Run PCA on complete data (CpG covered in all fish)
+PCA_percAtDMS_all <- myPCA(x = t(na.omit(percAtDMS)), incomplete = FALSE)
 ```
+
+We perform a PCA on `r nrow(na.omit(percAtDMS))` CpG sites covered in all G2 individuals. We first perform a test on the complete dataset.
+
+### PCA plot of individuals with associated colors for treatments
+
+```{r}
+fviz_pca_ind(PCA_percAtDMS_all$res.PCA,  label="none", habillage=PCA_percAtDMS_all$metadata$trtG1G2) + 
+  scale_color_manual(values = colOffs)+
+  scale_shape_manual(values=c(19,19,19,19))
+```
+
+### PCA plot of individuals with associated colors for brother pair
+
+```{r}
+fviz_pca_ind(PCA_percAtDMS_all$res.PCA,  label="none", habillage=as.factor(PCA_percAtDMS_all$metadata$brotherPairID)) 
+```
+
+```{r}
+# The function dimdesc() can be used to identify the most correlated variables with a given principal component.
+mydimdesc <- dimdesc(PCA_percAtDMS_all$res.PCA, axes = c(1,2), proba = 0.05)
+
+# There are `r nrow(mydimdesc$Dim.1$quanti)` CpG sites most correlated (p < 0.05) with the first principal component , and `r nrow(mydimdesc$Dim.2$quanti)` with the second principal component.
+
+nrow(mydimdesc$Dim.1$quanti)
+
+nrow(mydimdesc$Dim.2$quanti)
+
+# The second PCA axis is significant in BCI (`r formula(PCA_percAtDMS_all$modSel)`).
+
+formula(PCA_percAtDMS_all$modSel)
+```
+
+### How much of the BCI variance is explained by each variables?
+
+```{r}
+# Percentage of variance explained by each factor:
+mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_all$metadata)
+mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_all$metadata)
+mod_noPCA2 = lmer(BCI ~ No.Worms + PAT + No.Worms:PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_all$metadata)
+
+# R2c conditional R2 value associated with fixed effects plus the random effects.
+A = (MuMIn::r.squaredGLMM(PCA_percAtDMS_all$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noworms)[2])*100 
+B = (MuMIn::r.squaredGLMM(PCA_percAtDMS_all$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
+C = (MuMIn::r.squaredGLMM(PCA_percAtDMS_all$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
+```
+
+- `r round(A, 2)`% of the variance in associated with the parasite load (number of worms)
+- `r round(B, 2)`% of the variance in associated with the paternal treatment
+- `r round(C, 2)`% of the variance in associated with the second PCA axis
+
+### PCA based on all methylation values at DMS positions detected for parental effect, with imputation of missing values
 
 We found `r nrow(percAtDMS)` DMS linked with parental effect (comparisons CC_TC and CT_TT)
 
+We use missMDA and FactoMineR for imputation of missing data and performing of PCA:
+(see:
+
+- http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html
+- https://www.youtube.com/watch?v=OOM8_FH6_8o)
+
+```{r, warning=FALSE}
+# 1. get raw values
+
+# Run PCA on complete data (CpG covered in all fish)
+PCA_percAtDMS_imputed <- myPCA(x = t(percAtDMS), incomplete = TRUE)
+```
+
+### PCA plot of individuals with associated colors for paternal treatments
+
 ```{r}
-# 2. PCA
+fviz_pca_ind(PCA_percAtDMS_imputed$res.PCA,  label="none", habillage=as.factor(PCA_percAtDMS_imputed$metadata$PAT)) + 
+  scale_shape_manual(values=c(19,19))
+```
 
-# keep complete data: to few
-# nrow(na.omit(percAtDMS))
+### PCA plot of individuals with associated colors for brother pair
 
-# prcomp(percAtDMS, scale = TRUE, center = TRUE)
-# BiocManager::install("pcaMethods")
-# browseVignettes("pcaMethods")
+```{r}
+fviz_pca_ind(PCA_percAtDMS_imputed$res.PCA,  label="none", habillage=as.factor(PCA_percAtDMS_imputed$metadata$brotherPairID)) 
+```
 
-## Other possibility: (computationally intensive) 
-# http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html
-# https://www.youtube.com/watch?v=OOM8_FH6_8o
-
-# Perform PCA with missing values using the imputePCA functions, with the number of components determined by the estim_ncpPCA.
-library(missMDA)
-library("FactoMineR")
-# The package missMDA allows the use of principal component methods for an incomplete data set. To achieve this goal in the case of PCA, the missing values are predicted using the iterative PCA algorithm for a predefined number of dimensions. Then, PCA is performed on the imputed data set. The single imputation step requires tuning the number of dimensions used to impute the data.
-
-nb <- estim_ncpPCA(t(percAtDMS), scale = T) # estimate the number of components from incomplete data
-nb$ncp # 5
-res.comp <- imputePCA(t(percAtDMS), ncp = nb$ncp, scale = T) # impute the table
-res.PCA <- PCA(res.comp$completeObs) # perform PCA
-
-res.PCA <- PCA(t(head(percAtDMS))) # perform PCA
-
-res.PCA$eig # take component 1 + 2 
-
-# 3. extract axes 1 & 2
-metadata = fullMetadata_OFFS
-
-# check that the sample names are in the same order
-ifelse(table(rownames(res.PCA$ind$coord) == fullMetadata_OFFS$SampleID), "sample names are in the same order", "ERROR in PCA sample names order")
-
-metadata$PCA1 = res.PCA$ind$coord[,1] # axis 1
-metadata$PCA2 = res.PCA$ind$coord[,2] # axis 2
-
-# 4. Correlation with parasite load/BCI
-mod_Tol.Meth3 <- lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), 
-                     data=metadata, REML = F)
-
-## Model selection:
-step(mod_Tol.Meth3, reduce.random = F) 
-# Model found: PCA2 axis has an effect
-
-mod_Tol.Meth3_final <- lmer(BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + PCA2:PAT + No.Worms:PAT, 
-                     data=metadata, REML = F)
-
-mod_Tol.Meth3_final_NOPCA2 <- lmer(BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT, 
-                     data=metadata,  REML = F)
-
-lrtest(mod_Tol.Meth3_final, mod_Tol.Meth3_final_NOPCA2)
-
-## The slope of BCI on nbrworms varies upon treatment
-plot(ggpredict(mod_Tol.Meth3_final, terms = c("No.Worms", "PCA2", "PAT")), add.data=T)+ theme_bw() #+
-  # ylab("Body Condition Index") + xlab("Number of worms") +
-  # ggtitle("Predicted values of Body Condition Index in offspring")+
-  # scale_color_manual(NULL, values = c("black", "red")) +
-  # scale_fill_manual(NULL, values = c("black", "red"))  +
-  # scale_x_continuous(breaks = 0:10)+
-  # geom_point(size=0)+ # to have color key in legend as point
-  # guides(colour = guide_legend(override.aes = list(size=3,linetype=0, fill = NA)))
+```{r}
+# The function dimdesc() can be used to identify the most correlated variables with a given principal component.
+mydimdesc <- dimdesc(PCA_percAtDMS_imputed$res.PCA, axes = c(1,2), proba = 0.05)
 
 
+# There are `r nrow(mydimdesc$Dim.1$quanti)` CpG sites most correlated (p < 0.05) with the first principal component , and `r nrow(mydimdesc$Dim.2$quanti)` with the second principal component.
+
+nrow(mydimdesc$Dim.1$quanti)
+nrow(mydimdesc$Dim.2$quanti)
+
+# The second PCA axis is significant in BCI (`r formula(PCA_percAtDMS_imputed$modSel)`).
+formula(PCA_percAtDMS_imputed$modSel)
 
 ```
 
+### How much of the BCI variance is explained by each variables?
+
+```{r}
+# Percentage of variance explained by each factor:
+mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
+mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
+mod_noPCA2 = lmer(BCI ~ No.Worms + PAT + No.Worms:PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
+
+# R2c conditional R2 value associated with fixed effects plus the random effects.
+A = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noworms)[2])*100 
+B = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
+C = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
+```
+
+- `r round(A, 2)`% of the variance in associated with the parasite load (number of worms)
+- `r round(B, 2)`% of the variance in associated with the paternal treatment
+- `r round(C, 2)`% of the variance in associated with the second PCA axis
+
+### Plot of the model
+
+```{r}
+plot(ggpredict(PCA_percAtDMS_imputed$modSel, terms = c("PCA2", "No.Worms", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
+  scale_color_gradient(name = "Number of worms", low = "blue", high = "red")+
+  scale_fill_gradient(low = "blue", high = "red") +
+  ylab("Body Condition Index") + 
+  ggtitle("Predicted values of Body Condition Index in offspring")
+```
+
+### Which DMS are involved in the second PCA axis? TBC
 
 
+tbc
 
 # Differential methylations "Top down": DM in parents -> how do they look in offspring?
 
@@ -937,7 +1057,7 @@ chisq.test(Observed)
 ## not statistically different
 ```
 
-``````{r, fig.width = 12, fig.height = 15}
+```{r, fig.width = 12, fig.height = 15}
 ## output Venn diagrams
 allVenn <- ggVennDiagram(list("DMS G1" = DMS_info_G1$DMS, "DMS G2-c" = DMS_info_G2_G1c_final$DMS, "DMS G2-i" = DMS_info_G2_G1i_final$DMS), label_alpha = 0) +
   scale_fill_gradient(low="white",high = "red")
@@ -999,7 +1119,6 @@ runHyperHypoAnnot <- function(){
 
 myannot=runHyperHypoAnnot()
 ```
-
 
 ```{r}
 ############################################################
@@ -1550,6 +1669,7 @@ ggarrange(
 ```
 
 ## Plot mean Beta values of offsprings at parental DMS, per trt, along the chromosomes
+
 ```{r}
 meanBeta_G2_simple <- PM_G2 %>% group_by(Chr, Pos, Treatment) %>%
   dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
@@ -1590,6 +1710,7 @@ ggplot()+
 ```
 
 ## Not conclusive: test hyp that beta value is different (higher?) in the center of the chromosome, where there are less recombinations. Test for each chromosome
+
 ```{r}
 meanBeta_G2_extended <- PM_G2 %>% group_by(Chr, Pos, Treatment, Sex, brotherPairID) %>%
   dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))

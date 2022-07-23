@@ -278,6 +278,36 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
   return(list(NMDS = NMDS, mystressplot=mystressplot, NMDSplot = figure))
 }
 
+#########
+## PCA ## 
+#########
+
+myPCA <- function(x, incomplete){
+  if (incomplete==TRUE){
+    # estimate the number of components from incomplete data
+    nb <- estim_ncpPCA(x, scale = T)
+    # impute the table
+    res.comp <- imputePCA(x, ncp = nb$ncp, scale = T) 
+    x = res.comp$completeObs
+  }
+  # 2. run PCA
+  res.PCA = FactoMineR::PCA(x, scale.unit = T, graph = FALSE) # perform PCA
+  metadata = fullMetadata_OFFS
+  # check that the sample names are in the same order
+  ifelse(table(rownames(res.PCA$ind$coord) == metadata$SampleID), "sample names are in the same order", "ERROR in PCA sample names order")
+  # 3. extract axes 1, 2
+  metadata$PCA1 = res.PCA$ind$coord[,1] # axis 1
+  metadata$PCA2 = res.PCA$ind$coord[,2] # axis 2
+  # 4. Correlation with parasite load/BCI
+  mod = lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+  ## Model selection:
+  modSel = lmer(formula = attr(attr(step(mod, reduce.random = F), "drop1"), "heading")[3],
+                data=metadata, REML = F)
+  print("The chosen model is:")
+  print(formula(modSel))
+  return(list(res.PCA=res.PCA, modSel = modSel, metadata = metadata))
+}
+
 ## II. Functions used in R04.2 explore differential methylations
 
 ## Calculate beta values (methylation proportion per CpG site) for the 1001880 positions covered in half G1 and half G2
