@@ -557,33 +557,153 @@ calcAveMeth <- function(perc_uniteObj){
 ################
 ## Annotation ## 
 ################
+########################### 
+## Function to annotate DMS
+## It needs (1) a df of DMS (2) annotations in bed12  and (3) annotation in gff3 
+## Precision: the bed12 needs the "good" type of bed12, 12 columns
+## The df of DMS must be this format (freq can be just 1, or different numbers if found in different brother pairs):
+# DMSdf = data.frame(table(unlist(get2keep(vecCompa[1]))))
+#                    Var1 Freq
+# 1      Gy_chrI 10264570    4
+# 2      Gy_chrI 10416684    4
 
-### Function to get the annotation of a methylkit object (methylDiff or methylBase)
-getAnnotationFun <- function(METHOBJ){
-  A = annotateWithGeneParts(target = as(METHOBJ,"GRanges"), feature = annotBed12)
-  # Heckwolf 2020: To be associated to a gene, the pop-DMS had to be either inside the gene or,
+getAnnotationFun <- function(DMSdf, annotBed12, annotGff3){
+  DMSvec = as.character(DMSdf[[1]]) # vector of DMS
+  # Change the vector into a GRange:
+  GRangeOBJ = makeGRangesFromDataFrame(data.frame(chr=sapply(strsplit(DMSvec, " "), `[`, 1), 
+                                                  start=sapply(strsplit(DMSvec, " "), `[`, 2),
+                                                  end=sapply(strsplit(DMSvec, " "), `[`, 2),
+                                                  nbrBP=DMSdf[[2]]), keep.extra.columns = T) # add brother pairs number
+  A = annotateWithGeneParts(target = as(GRangeOBJ,"GRanges"), feature = annotBed12)
+  # Heckwolf 2020: To be associated to a gene, the DMS had to be either inside the gene or,
   # if intergenic, not further than 10 kb away from the TSS.
-  rows2rm = which((A@dist.to.TSS$dist.to.feature>10000 |
-                     A@dist.to.TSS$dist.to.feature< -10000) &
+  rows2rm = which((A@dist.to.TSS$dist.to.feature>10000 | A@dist.to.TSS$dist.to.feature< -10000) &
                     rowSums(A@members) %in% 0)
   if (is_empty(rows2rm)){
-    METHOBJ2 = METHOBJ
+    GRangeOBJ = GRangeOBJ
   } else {
-    METHOBJ2 = METHOBJ[-rows2rm,]
+    GRangeOBJ = GRangeOBJ[-rows2rm,]
   }
-  ## Re annotate the subsetted object
-  B = annotateWithGeneParts(as(METHOBJ2,"GRanges"),annotBed12)
-  ## Get genes associated
+  ## Re-annotate the subsetted object
+  B = annotateWithGeneParts(as(GRangeOBJ,"GRanges"),annotBed12)
+  ## Get genes associated with these
   C = getAssociationWithTSS(B)
-  ## How many CpG per gene?
-  nCpG = table(C$feature.name)
+  #########################
   ## Get annotations for these genes
-  subAnnot <- data.frame(subset(annotGff3, Name %in% C$feature.name))
-  subAnnot$nCpG = nCpG
+  subAnnot = data.frame(subset(annotGff3, Name %in% C$feature.name))
+  #########################
+  ## Add nbr brother pairs
+  dfBP=data.frame(Name=C$feature.name, nbrBP=GRangeOBJ$nbrBP)
+  # How many brother pairs max have at least a DMS in a given gene?
+  dfBP=dfBP %>%
+    group_by(Name) %>%  dplyr::filter(nbrBP == max(nbrBP)) %>% unique() %>% data.frame()  
+  ## Add brother pair info:
+  subAnnot=merge(subAnnot, dfBP)
+  #########################
+  ## How many CpG per gene?
+  nCpGdf = data.frame(table(C$feature.name))
+  names(nCpGdf) = c("Name", "nCpG")
+  # Merge both by Name
+  subAnnot = merge(subAnnot, nCpGdf)
+  
+  # Add extra info (nbr CpG per gene length, gene length, chrom name)
+  subAnnot = subAnnot  %>% 
+    mutate(geneLengthkb = (end - start)/1000, nCpGperGenekb = nCpG/geneLengthkb, chrom = seqid)
+
+  # Order by nCpGperGenekb
+  subAnnot = subAnnot[order(subAnnot$nCpGperGenekb, decreasing = T),]
   return(subAnnot)
 }
 
-## GO function
+## Manhattan plots function:
+# GYgynogff a data frame with a "chrom" and a "length" columns (NB: here "genome4Manhattan" is specific to my stickleback file)
+plotManhattanGenesDMS4BP <- function(annotFile, i, GYgynogff){
+  ## Prepare genome for Manhattan plots:
+  genome4Manhattan = GYgynogff %>%
+    #genome without chrXIX and unknown re-type:
+    filter(chrom!="Gy_chrXIX" & chrom!= "Gy_chrUn")%>%
+    mutate(chrom_nr=chrom %>% deroman(), 
+           chrom_order=factor(chrom_nr) %>% as.numeric()) %>% arrange(chrom_order) %>%
+    mutate(gstart=lag(length,default=0) %>% cumsum(), 
+           gend=gstart+length, 
+           typeBG=LETTERS[2-(chrom_order%%2)],   
+           gmid=(gstart+gend)/2)
+  
+  # Prepare data and change gene position to start at the good chromosome
+  data4Manhattan = dplyr::left_join(annotFile, genome4Manhattan) %>% dplyr::mutate(posInPlot=start+gstart)
+  
+  # Manhattan plot
+  ggplot()+
+    # add grey background every second chromosome
+    geom_rect(data=genome4Manhattan,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=typeBG), alpha=.2)+
+    scale_x_continuous(breaks=genome4Manhattan$gmid,labels=genome4Manhattan$chrom %>% str_remove(.,"Gy_chr"),
+                       position = "top",expand = c(0,0))+
+    scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none") +
+    # add points
+    geom_point(data = data4Manhattan, aes(x=posInPlot, y = nCpGperGenekb, col=as.factor(nbrBP)), size = 2) +
+    scale_color_manual(values = c('grey', 'red', 'purple', 'blue', 'green'),
+                       name = "Genes found differentially methylated in N brother pairs:") + 
+    # geom_hline(yintercept = 1)+ # if want to add line break
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=1))+ # add frame
+    scale_y_continuous(breaks = seq(0, 20)) +
+    xlab(paste0("Genes with DMS present in at least 4 brother pairs\nComparison: ", vecCompa[i])) +
+    ylab("Number of differentially methylated CpG per gene kb")
+}
+
+#######################################
+## Get full annotation from NCBI ENTREZ
+## This function return a complete table adding to the previous annotation a longer summary
+## of functions for corresponding human genes
+## Input format: myGeneSet=get(paste0("annotComp",i))
+getGeneSummary <- function(myGeneSet){
+  # Extract gene symbol from the "Note" attribute
+  myGeneSet$Note = unlist(myGeneSet$Note)
+  myGeneSet$GeneSymbol = str_extract(myGeneSet$Note, "(?<=Similar to )(\\w+)")
+  
+  # MANUAL CURATION!! All the genes that are weirdly named, with "-" or so
+  #check = myGeneSet[c("Note", "GeneSymbol")]
+  listOfWeirdos = c("Type-4 ice-structuring protein LS-12", "MNCb-2990", "Trypsin-3", "anxa2-b", "unc5b-b", "QtsA-11015", # comp1
+                    "Type-4 ice-structuring protein LS-12", "MNCb-2990", "en2-a", "draxin-B", "Trypsin-3", " Protein C1orf43 homolog", "Uncharacterized protein FLJ43738", "tlcd4-b", #comp2
+                    "tlcd4-b", # comp3
+                    "anxa2-b", "QtsA-11015", "unc5b-b") # comp4
+  for (i in 1:length(listOfWeirdos)){ 
+    myGeneSet[grepl(listOfWeirdos[i],myGeneSet$Note),"GeneSymbol"] = listOfWeirdos[i]
+  }
+  myGeneSet$GeneSymbol = myGeneSet$GeneSymbol %>% toupper # upper case all gene symbols to fit human DB
+  
+  # Convert the uniprot gene names to entrez ids
+  ENTREZIDlist = mapIds(org.Hs.eg.db, keys = myGeneSet$GeneSymbol, column = "ENTREZID", keytype = "SYMBOL")
+  
+  # Retrieve gene summary & description IN HUMANS (more annotation)
+  ## Fix if DB too big:
+  if (length(ENTREZIDlist) > 400){
+    SummaENTREZ1 = entrez_summary(db="gene", id=ENTREZIDlist[1:400])
+    SummaENTREZ2 = entrez_summary(db="gene", id=ENTREZIDlist[400:length(ENTREZIDlist)])
+    SummaENTREZ = c(SummaENTREZ1, SummaENTREZ2)
+  } else {   
+    SummaENTREZ = entrez_summary(db="gene", id=ENTREZIDlist)
+  }
+  SummaDF = data.frame(GeneSymbol=sapply(SummaENTREZ, function(x) x[["name"]]) %>% unlist(),
+                       ENTREZID = names(SummaENTREZ),
+                       description=sapply(SummaENTREZ, function(x) x[["description"]]) %>% unlist(),
+                       summary=sapply(SummaENTREZ, function(x) x[["summary"]]) %>% unlist())
+  
+  # merge with Notes from uniprot (contained in the gff3)
+  SummaDF = unique(merge(myGeneSet, SummaDF, all=T))
+  
+  # Order by nCpGperGenekb
+  SummaDF = SummaDF[order(SummaDF$nCpGperGenekb, decreasing = T),]
+  
+  # Keep meaningful information
+  tokeep = c("GeneSymbol", "Name", "start", "end", "ID", "Note", "Ontology_term", "nbrBP", "nCpG", "geneLengthkb", "nCpGperGenekb", "chrom", "ENTREZID", "description", "summary")
+  SummaDF = SummaDF[names(SummaDF) %in% tokeep]
+  rownames(SummaDF) = NULL
+  return(SummaDF)
+}
+
+########
+## GO ## 
+########
 makedfGO <- function(i, gene_universe){
   anot4BP = plotManhattanGenes(i)$anot4BP
   

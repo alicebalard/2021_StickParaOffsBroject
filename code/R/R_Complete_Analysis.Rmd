@@ -449,10 +449,17 @@ makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr, fullMetadata,
 
 Methylation profile for the `r nrow(uniteCovALL_G2_woSexAndUnknowChr)` CpG sites covered in all G2 fish (N = `r length(uniteCovALL_G2_woSexAndUnknowChr@sample.ids)`:
 
-```{r, fig.width=8, fig.height=4}
+```{r, fig.width=10, fig.height=4}
 makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
                       my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
                       my.cols.fam = c(1:4), nbrk = 8)
+
+# Save
+pdf(file = "Rfigures/clusterALLCpG_offspings.pdf", width = 10, height = 4)
+makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
+                      my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
+                      my.cols.fam = c(1:4), nbrk = 8)
+dev.off()
 ```
 
 ## Adonis tests: impact of different variables on methylation pattern
@@ -498,9 +505,11 @@ NMDSanalysis <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata =
 ```
 
 ```{r, fig.height = 11, fig.width = 10}
-# png(filename = "Rfigures/NMDSplot_allG2.png", width = 900, height = 1100)
 NMDSanalysis$NMDSplot
-# dev.off()
+# Save
+pdf(file = "Rfigures/NMDSplot_allG2.pdf", width = 9, height = 11)
+NMDSanalysis$NMDSplot
+dev.off()
 ```
 
 ## The methylation pattern is more affected by direct treatment when the father was infected (Adonis test WITHIN both parental trt)
@@ -674,65 +683,63 @@ for (i in 1:4){
 ```
 
 ### Get annotation of these DMS present in at least 4 BP
-```{r, fig.height = 5, fig.width = 12}
-plotManhattanGenes <- function(i){
-  # print(paste0("The number of DMS in the ", vecCompa[i] ," comparison is:"))
-  DMSvec = unique(unlist(get2keep(vecCompa[i])))
-  # Annotate the DMS present in at least 4 BP: 
-  # Change the vector into a methobject:
-  df <- data.frame(chr=sapply(strsplit(DMSvec, " "), `[`, 1), 
-                   start=sapply(strsplit(DMSvec, " "), `[`, 2),
-                   end=sapply(strsplit(DMSvec, " "), `[`, 2)) 
-  # get annotation
-  anot4BP <- getAnnotationFun(makeGRangesFromDataFrame(df))
-  
-  # Add info: in how many Brother pairs is a differential methylation found in a gene?
-  anotBPs = data.frame()
-  for (j in 4:8){
-    vec = names(table(unlist(get2keep(vecCompa[i])))[table(unlist(get2keep(vecCompa[i]))) %in% j])
-    if(!is_empty(vec)){ # in case of 8 BP, empty in some comparisons
-      df = data.frame(chr=sapply(strsplit(vec, " "), `[`, 1), 
-                      start=sapply(strsplit(vec, " "), `[`, 2),
-                      end=sapply(strsplit(vec, " "), `[`, 2)) 
-      anot = getAnnotationFun(makeGRangesFromDataFrame(df))
-      anot$N_BP = j
-      anotBPs = rbind(anotBPs, anot)
-    }
-  }
-  
-  # keep the highest N of BP (how many BP have at least one site DM in the gene)
-  anotBPs = anotBPs %>%
-    group_by(ID) %>% 
-    dplyr::slice(which.max(N_BP)) %>%  dplyr::select(c(ID, N_BP))
-  
-  # Ad N_BP info
-  anot4BP = merge(anot4BP, anotBPs)
-  
-  # Reorder chromosome
-  anot4BP <- anot4BP %>% 
-    mutate(chr = gsub("Gy_chr", "", seqid), chrom_nr = seqid %>% deroman(), chrom_order=factor(chrom_nr) %>% 
-             as.numeric()) %>% arrange(chrom_order)  %>% 
-    mutate(geneLengthkb = (end - start)/1000, nCpGperGenekb = nCpG/geneLengthkb)
-  
-  # Plot
-  plot = ggplot(anot4BP, aes(x=start, y = nCpGperGenekb)) + geom_point(aes(col=as.factor(N_BP)), size = 2) +
-    scale_color_manual(values = c('grey', 'red', 'purple', 'blue', 'green'),
-                       name = "Gene found differentially methylated in N brother pairs:") + 
-    facet_grid(.~fct_inorder(chr)) +
-    geom_hline(yintercept = 1)+
-    theme(axis.text.x=element_blank(), legend.position="top") +
-    xlab(paste0("Genes with DMS present in at least 4 brother pairs\nComparison: ", vecCompa[i])) +
-    ylab("Number of differentially methylated CpG per gene kb")
-  
-  ## Genes with at least 1 CpG differentially methylated per kb:
-  topGenes = anot4BP[anot4BP$nCpGperGenekb >= 1,]
-  return(list(plot = plot, anot4BP = anot4BP, topGenes = topGenes))
-}
+```{r annotateGenes}
+# Annotate the DMS present in at least 4 BP, for each of the 4 comparisons:
+annotComp1 = getAnnotationFun(DMSdf = data.frame(table(unlist(get2keep(vecCompa[1])))),
+                              annotBed12 = annotBed12, annotGff3 = annotGff3)
+annotComp2 = getAnnotationFun(DMSdf = data.frame(table(unlist(get2keep(vecCompa[2])))),
+                              annotBed12 = annotBed12, annotGff3 = annotGff3)
+annotComp3 = getAnnotationFun(DMSdf = data.frame(table(unlist(get2keep(vecCompa[3])))),
+                              annotBed12 = annotBed12, annotGff3 = annotGff3)
+annotComp4 = getAnnotationFun(DMSdf = data.frame(table(unlist(get2keep(vecCompa[4])))),
+                              annotBed12 = annotBed12, annotGff3 = annotGff3)
+```
 
-plotManhattanGenes(1)$plot
-plotManhattanGenes(2)$plot
-plotManhattanGenes(3)$plot
-plotManhattanGenes(4)$plot
+
+```{r, fig.height = 8 fig.width = 16}
+## Manhattan plots:
+P1 <- plotManhattanGenesDMS4BP(annotFile = annotComp1, i = 1, GYgynogff = GYgynogff)
+P2 <- plotManhattanGenesDMS4BP(annotFile = annotComp2, i = 2, GYgynogff = GYgynogff)
+P3 <- plotManhattanGenesDMS4BP(annotFile = annotComp3, i = 3, GYgynogff = GYgynogff)
+P4 <- plotManhattanGenesDMS4BP(annotFile = annotComp4, i = 4, GYgynogff = GYgynogff)
+
+## Print
+P1;P2;P3;P4
+```
+
+```{r, fig.height = 5, fig.width = 12}
+# Save Manhattan plots:
+pdf(file = paste0("Rfigures/ManhattanGenes_", vecCompa[1], ".pdf"), width = 10, height = 5)
+P1
+dev.off()
+pdf(file = paste0("Rfigures/ManhattanGenes_", vecCompa[2], ".pdf"), width = 10, height = 5)
+P2
+dev.off()
+pdf(file = paste0("Rfigures/ManhattanGenes_", vecCompa[3], ".pdf"), width = 10, height = 5)
+P3
+dev.off()
+pdf(file = paste0("Rfigures/ManhattanGenes_", vecCompa[4], ".pdf"), width = 10, height = 5)
+P4
+dev.off()
+```
+
+```{r topgenes}
+# Get genes with at least 1 CpG differentially methylated per kb:
+topGenes1=annotComp1[annotComp1$nCpGperGenekb >=1,]
+topGenes2=annotComp2[annotComp2$nCpGperGenekb >=1,]
+topGenes3=annotComp3[annotComp3$nCpGperGenekb >=1,]
+topGenes4=annotComp4[annotComp4$nCpGperGenekb >=1,]
+```
+
+### Which genes have at least 1 CpG differentially methylated per kb:
+
+```{r}
+# Export html files for full annotation (csv is problematic with lists)
+for (i in 1:4){
+  kable_out=knitr::kable(getGeneSummary(myGeneSet = get(paste0("annotComp",i))), "html") %>% 
+    kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+  readr::write_file(kable_out, paste0("Rfigures/DMSGenesSummary_", vecCompa[i], ".html"))
+}
 ```
 
 ## Gene Ontology analysis:
@@ -786,46 +793,6 @@ dfGO %>% ggplot(aes(x=Comp, y = factor(GO.name))) +
         legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"), 
         legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
   facet_grid(fct_inorder(GO.category)~group, scales="free",space = "free") 
-```
-
-### Which genes have at least 1 CpG differentially methylated per kb:
-
-```{r}
-getGeneSummary <- function(i){
-  topgenes = plotManhattanGenes(i)$topGenes
-  
-  df = data.frame(GeneSymbol = sapply(topgenes$Note, function(x) sub("Similar to ", "", x) %>% str_extract(".*:") %>% str_remove(":") %>% toupper),  # extract uniprot symbol from note, then uppercase
-                  N_BP = topgenes$N_BP, seqid = topgenes$seqid) #add info: on how many BP? which chr? how many Cpg ar diffmeth?nCpGperGenekb = topgenes$nCpGperGenekb, 
-  
-  # Convert the uniprot gene names to entrez ids
-  topGenesDF = unlist(mapIds(org.Hs.eg.db, keys = df$GeneSymbol, column = "ENTREZID", keytype = "SYMBOL")) %>% data.frame() 
-  names(topGenesDF) = "ENTREZID" ; topGenesDF$GeneSymbol = rownames(topGenesDF) ; rownames(topGenesDF) = NULL
-  # Retrieve gene summary & description
-  genes = entrez_summary(db="gene", id=topGenesDF$ENTREZID)
-  SummaDF = lapply(genes, function(x) x[["summary"]]) %>% unlist() %>% data.frame()
-  names(SummaDF) = "Summary" ; SummaDF$ENTREZID = rownames(SummaDF) ; rownames(SummaDF) = NULL
-  DescDF = lapply(genes, function(x) x[["description"]]) %>% unlist() %>% data.frame()
-  names(DescDF) = "description" ; DescDF$ENTREZID = rownames(DescDF) ; rownames(DescDF) = NULL
-  # Output complete table
-  topGenesDF = merge(merge(DescDF, topGenesDF, all = T), SummaDF, all = T)
-  
-  # Add which comparison
-  topGenesDF$comparison = vecCompa[i]
-  
-  # Add Number of brother pairs in which the gene is found
-  topGenesDF = merge(topGenesDF, df)
-  
-  # order by N_BP
-  topGenesDF = topGenesDF[order(topGenesDF$N_BP, decreasing = T),]
-  
-  return(topGenesDF)   # NB: some genes are not found automatically
-}
-```
-
-```{r, echo=FALSE, results='asis'}
-for (i in 1:4){
-  print(kable(getGeneSummary(i)))
-}
 ```
 
 ## Correlation between methylation and phenotype (nbr worms, BCI)
@@ -980,11 +947,18 @@ C = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
 ### Plot of the model
 
 ```{r}
-plot(ggpredict(PCA_percAtDMS_imputed$modSel, terms = c("PCA2", "No.Worms", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
+phenoMethPlot <- plot(ggpredict(PCA_percAtDMS_imputed$modSel, terms = c("PCA2", "No.Worms", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
   scale_color_gradient(name = "Number of worms", low = "blue", high = "red")+
   scale_fill_gradient(low = "blue", high = "red") +
   ylab("Body Condition Index") + 
   ggtitle("Predicted values of Body Condition Index in offspring")
+
+phenoMethPlot
+
+# save
+pdf(file = "Rfigures/phenoMethPlot.pdf", width = 10, height = 5)
+phenoMethPlot
+dev.off()
 ```
 
 ### Which DMS are involved in the second PCA axis? TBC
@@ -1674,19 +1648,6 @@ ggarrange(
 meanBeta_G2_simple <- PM_G2 %>% group_by(Chr, Pos, Treatment) %>%
   dplyr::summarize(Mean = mean(BetaValue, na.rm=TRUE))
 names(meanBeta_G2_simple) <- c("Chr", "Pos", "Treatment_G2", "MeanBetaG2")
-
-genome <- GYgynogff %>%
-  mutate(chrom_nr=chrom %>% deroman(), chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
-  arrange(chrom_order) %>%
-  mutate(gstart=lag(length,default=0) %>% cumsum(), gend=gstart+length, 
-         type=LETTERS[2-(chrom_order%%2)],   gmid=(gstart+gend)/2)
-
-mydata = tibble(trt=meanBeta_G2_simple$Treatment_G2,
-                chrom=meanBeta_G2_simple$Chr, pos=meanBeta_G2_simple$Pos, beta=meanBeta_G2_simple$MeanBetaG2)
-mydata$pos <- as.numeric(mydata$pos)
-mydata$pos <- as.numeric(mydata$pos)
-
-table(mydata$chrom)## check that chrXIX and chrUN are well removed!!
 
 # join DMS and genomic position
 data = dplyr::left_join(mydata, genome) %>% dplyr::mutate(gpos=pos+gstart)
