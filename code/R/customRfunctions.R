@@ -567,8 +567,12 @@ calcAveMeth <- function(perc_uniteObj){
 # 1      Gy_chrI 10264570    4
 # 2      Gy_chrI 10416684    4
 
-getAnnotationFun <- function(DMSdf, annotBed12, annotGff3){
-  DMSvec = as.character(DMSdf[[1]]) # vector of DMS
+getAnnotationFun <- function(DMSdf, annotBed12, annotGff3, isDMDaDataframeWithBP=TRUE){
+  if (isDMDaDataframeWithBP==TRUE){
+    DMSvec = as.character(DMSdf[[1]]) # vector of DMS
+  } else {
+    DMSvec = DMSdf
+  }
   # Change the vector into a GRange:
   GRangeOBJ = makeGRangesFromDataFrame(data.frame(chr=sapply(strsplit(DMSvec, " "), `[`, 1), 
                                                   start=sapply(strsplit(DMSvec, " "), `[`, 2),
@@ -588,18 +592,21 @@ getAnnotationFun <- function(DMSdf, annotBed12, annotGff3){
   B = annotateWithGeneParts(as(GRangeOBJ,"GRanges"),annotBed12)
   ## Get genes associated with these
   C = getAssociationWithTSS(B)
-  #########################
+  
   ## Get annotations for these genes
   subAnnot = data.frame(subset(annotGff3, Name %in% C$feature.name))
-  #########################
-  ## Add nbr brother pairs
-  dfBP=data.frame(Name=C$feature.name, nbrBP=GRangeOBJ$nbrBP)
-  # How many brother pairs max have at least a DMS in a given gene?
-  dfBP=dfBP %>%
-    group_by(Name) %>%  dplyr::filter(nbrBP == max(nbrBP)) %>% unique() %>% data.frame()  
-  ## Add brother pair info:
-  subAnnot=merge(subAnnot, dfBP)
-  #########################
+  
+  if (isDMDaDataframeWithBP==TRUE){
+    #########################
+    ## Add nbr brother pairs
+    dfBP=data.frame(Name=C$feature.name, nbrBP=GRangeOBJ$nbrBP)
+    # How many brother pairs max have at least a DMS in a given gene?
+    dfBP=dfBP %>%
+      group_by(Name) %>%  dplyr::filter(nbrBP == max(nbrBP)) %>% unique() %>% data.frame()  
+    ## Add brother pair info:
+    subAnnot=merge(subAnnot, dfBP)
+  }
+  
   ## How many CpG per gene?
   nCpGdf = data.frame(table(C$feature.name))
   names(nCpGdf) = c("Name", "nCpG")
@@ -609,7 +616,7 @@ getAnnotationFun <- function(DMSdf, annotBed12, annotGff3){
   # Add extra info (nbr CpG per gene length, gene length, chrom name)
   subAnnot = subAnnot  %>% 
     mutate(geneLengthkb = (end - start)/1000, nCpGperGenekb = nCpG/geneLengthkb, chrom = seqid)
-
+  
   # Order by nCpGperGenekb
   subAnnot = subAnnot[order(subAnnot$nCpGperGenekb, decreasing = T),]
   return(subAnnot)
