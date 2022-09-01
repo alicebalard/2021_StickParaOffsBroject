@@ -15,7 +15,7 @@ getInteractionDMS <- function(){
   mydms_CC_CT = Reduce(function(...) merge(..., all=T), mydms_CC_CT)
   
   # keep DMS found in at least 4 BP:
-  mydms_CC_CT_4BPmin = mydms_CC_CT[rowSums(is.na(mydms_CC_CT[2:ncol(mydms_CC_CT)]))< 4, ]
+  mydms_CC_CT_4BPmin = mydms_CC_CT[rowSums(!is.na(mydms_CC_CT[2:ncol(mydms_CC_CT)]))>= 4, ]
   
   # Subselect the original unite object for these DMS only 
   subUnite = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, 
@@ -97,7 +97,7 @@ getInteractionDMS <- function(){
   mydms_TC_TT = Reduce(function(...) merge(..., all=T), mydms_TC_TT)
   
   # keep DMS found in at least 4 BP:
-  mydms_TC_TT_4BPmin = mydms_TC_TT[rowSums(is.na(mydms_TC_TT[2:ncol(mydms_TC_TT)]))< 4, ]
+  mydms_TC_TT_4BPmin = mydms_TC_TT[rowSums(!is.na(mydms_TC_TT[2:ncol(mydms_TC_TT)]))>= 4, ]
   
   # Subselect the original unite object for these DMS only 
   subUnite = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, 
