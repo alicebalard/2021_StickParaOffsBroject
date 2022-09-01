@@ -624,7 +624,7 @@ getAnnotationFun <- function(DMSdf, annotBed12, annotGff3, isDMDaDataframeWithBP
 
 ## Manhattan plots function:
 # GYgynogff a data frame with a "chrom" and a "length" columns (NB: here "genome4Manhattan" is specific to my stickleback file)
-plotManhattanGenesDMS4BP <- function(annotFile, i, GYgynogff){
+plotManhattanGenesDMS4BP <- function(annotFile, i = 0, GYgynogff, myxlab = NULL, isBPinfo=TRUE){
   ## Prepare genome for Manhattan plots:
   genome4Manhattan = GYgynogff %>%
     #genome without chrXIX and unknown re-type:
@@ -639,22 +639,36 @@ plotManhattanGenesDMS4BP <- function(annotFile, i, GYgynogff){
   # Prepare data and change gene position to start at the good chromosome
   data4Manhattan = dplyr::left_join(annotFile, genome4Manhattan) %>% dplyr::mutate(posInPlot=start+gstart)
   
+  # Short name of the gene if we want to plot these as labels:
+  data4Manhattan$Note = unlist(data4Manhattan$Note)
+  data4Manhattan$Note = str_extract(data4Manhattan$Note, "(?<=Similar to )(\\w+)")
+  
   # Manhattan plot
-  ggplot()+
+  plot = ggplot()+
     # add grey background every second chromosome
     geom_rect(data=genome4Manhattan,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=typeBG), alpha=.2)+
     scale_x_continuous(breaks=genome4Manhattan$gmid,labels=genome4Manhattan$chrom %>% str_remove(.,"Gy_chr"),
                        position = "top",expand = c(0,0))+
     scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none") +
-    # add points
-    geom_point(data = data4Manhattan, aes(x=posInPlot, y = nCpGperGenekb, col=as.factor(nbrBP)), size = 2) +
-    scale_color_manual(values = c('grey', 'red', 'purple', 'blue', 'green'),
-                       name = "Genes found differentially methylated in N brother pairs:") + 
     # geom_hline(yintercept = 1)+ # if want to add line break
     theme(panel.border = element_rect(colour = "black", fill=NA, size=1))+ # add frame
     scale_y_continuous(breaks = seq(0, 20)) +
-    xlab(paste0("Genes with DMS present in at least 4 brother pairs\nComparison: ", vecCompa[i])) +
     ylab("Number of differentially methylated CpG per gene kb")
+  
+  # add points
+  if (isBPinfo==TRUE){
+    plot = plot + 
+      geom_point(data = data4Manhattan, aes(x=posInPlot, y = nCpGperGenekb, col=as.factor(nbrBP)), size = 2) +
+      scale_color_manual(values = c('grey', 'red', 'purple', 'blue', 'green'),
+                         name = "Genes found differentially methylated in N brother pairs:") +
+      xlab(paste0("Genes with DMS present in at least 4 brother pairs\nComparison: ", vecCompa[i]))
+  } else {
+    plot = plot + 
+      geom_point(data = data4Manhattan, aes(x=posInPlot, y = nCpGperGenekb), size = 2) +
+      geom_label_repel(data = data4Manhattan, aes(x=posInPlot, y = nCpGperGenekb, label = Note))+
+      xlab(myxlab)
+  }
+  return(plot)
 }
 
 #######################################
