@@ -50,7 +50,7 @@ Compare fitness traits between the different offsprings groups. Follow up of Sag
 
 Kaufmann et al. 2014: Body condition of the G2 fish, an estimate of fish health and a predictor of energy reserves and reproductive success, was calculated using there residuals from the regression of body mass on body length (Chellappaet al.1995).
 
-```{r}
+```{r prepBCI}
 fullMetadata_OFFS$BCI <- residuals(lmer(Wnettofin ~ Slfin * Sex + (1|brotherPairID), data=fullMetadata_OFFS))
 
 ## and for parents (no sex difference, only males):
@@ -67,7 +67,7 @@ offspring tolerance, we tested how the relationship between G2 body condition an
 Effect of treatment groups of offspring on body condition(Kaufmann et al. 2014): "The linear mixed effect model (nlme function in R) included
 G2 body condition as dependent variable, sex, G2 treatment (exposed vs. control), paternal G1 treatment (exposed vs. control) and their interactions as fixed effects as well as maternal G2 half-sibship identity as a random effect"
 
-```{r, fig.width=6, fig.height=6}
+```{r modBCI, fig.width=6, fig.height=6}
 mod1 <- lme(BCI ~ offsTrt * patTrt, random=~1|brotherPairID,data=fullMetadata_OFFS)
 anova(mod1) # strong significant effect of both offspring trt & paternal + interactions
 
@@ -99,7 +99,7 @@ myplot1
 
 ### Tolerance (slope of BCI on worms count) per paternal status
 
-```{r, fig.width=6,fig.height=4}
+```{r modTol, fig.width=6,fig.height=4}
 mod_Tol <- lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=fullMetadata_OFFS, REML = F)
 
 ## Model selection:
@@ -120,7 +120,7 @@ plot(ggpredict(mod_Tol, terms = c("No.Worms", "PAT")), add.data=T)+ theme_bw() +
 
 Calculate number of methylated sites, mean coverage, and residuals of methylated sites by covered sites (to account for coverage bias)
 
-```{r}
+```{r calcRMS}
 mycalcRMS <- function(myUniteCov, myMetaData){
   percMethMat = methylKit::percMethylation(myUniteCov)
   # create a dataframe with all info
@@ -170,7 +170,7 @@ The mean coverage per CpG site in G2, considering positions shared by at least 1
 
 ## Choice of global methylation value
 
-```{r}
+```{r globalMethChoice}
 cor.test(fullMetadata_PAR$Nbr_coveredCpG,
          fullMetadata_PAR$Nbr_methCpG, method = "spearman")
 ## S = 350, p-value = 2.15e-06, rho = 0.85
@@ -243,7 +243,7 @@ ggplot(fullMetadata_OFFS, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_coveredCpG
 
 ### No difference in mappability (p\>0.05)
 
-```{r}
+```{r m1}
 mod = lm(MappingEfficiency.BSBoldvsGynogen ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
 plot(ggpredict(mod, terms = c("Sex")), add.data = T)
@@ -253,7 +253,7 @@ NB: this is WITH unknown and sex chromosomes, before filtering.
 
 ### No difference in number of reads (p\>0.05)
 
-```{r}
+```{r m2}
 mod = lm(M.Seqs_rawReads ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
 plot(ggpredict(mod, terms = c("Sex")), add.data = T)
@@ -262,7 +262,7 @@ NB: this is WITH unknown and sex chromosomes, before filtering.
 
 ### No difference in mean coverage per CpG in the filtered dataset (p\>0.05)
 
-```{r}
+```{r m3}
 mod = lm(MeanCoverage ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
 plot(ggpredict(mod, terms = c("Sex")), add.data = T)
@@ -272,7 +272,7 @@ NB: this is in G2, considering positions shared by at least 14 fish per treatmen
 
 ### No difference in number of sites covered in the filtered dataset (p\>0.05)
 
-```{r}
+```{r m4}
 mod = lm(Nbr_coveredCpG ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
 plot(ggpredict(mod, terms = c("Sex")), add.data = T)
@@ -282,7 +282,7 @@ NB: this is in G2, considering positions shared by at least 14 fish per treatmen
 
 ### No difference in number of sites covered in the filtered dataset (p\>0.05)
 
-```{r}
+```{r m5}
 mod = lm(OverallPercentageMethylation ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
 plot(ggpredict(mod, terms = c("Sex")), add.data = T)
@@ -293,7 +293,7 @@ positions retained in G1, without sex and unknown chromosome (after filtering)
 
 ### Males have a lower global methylation than females (residuals of nbr of methylated sites by nbr of sites covered)
 
-```{r, fig.width=5, fig.height=4}
+```{r m6, fig.width=5, fig.height=4}
 mod = lm(res_Nbr_methCpG_Nbr_coveredCpG ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod)) # sex is significant p = 0.000157 ***
 anova(mod)
@@ -308,7 +308,7 @@ plot(ggpredict(mod, terms = c("Sex")), add.data = T) +
 
 ### In all offspring
 
-```{r}
+```{r tolResid}
 fullMetadata_OFFS$res_Nbr_methCpG_Nbr_coveredCpG_div1000 <- (fullMetadata_OFFS$res_Nbr_methCpG_Nbr_coveredCpG)/1000
 
 mod_Tol.Meth <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*No.Worms*PAT + (1|brotherPairID)+ (1|Sex),
@@ -332,7 +332,7 @@ The slope of BCI on nbr worms varies upon parental treatment, but methylation do
 
 ### In exposed offspring only
 
-```{r}
+```{r tolResidExposed}
 ## By group, tolerance slope as a function of methylation residuals:
 modFULL <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*No.Worms + (1|brotherPairID) + (1|Sex),
                 data = fullMetadata_OFFS[fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"),])
@@ -347,7 +347,7 @@ step(modFULL, reduce.random = F) # Model found: BCI ~ PAT + (1 | brotherPairID) 
 
 ## PCA based on all methylation values in G2
 
-```{r, warning=FALSE}
+```{r PCAallval, warning=FALSE}
 # 1. get raw values
 percmeth = percMethylation(uniteCov14_G2_woSexAndUnknowChrOVERLAP)
 
@@ -360,7 +360,7 @@ G2 individuals. We first perform a test on the complete dataset.
 
 ### PCA plot with associated colors for treatments
 
-```{r}
+```{r PCAallval_plot1}
 fviz_pca_ind(PCA_allpos$res.PCA,  label="none", habillage=PCA_allpos$metadata$trtG1G2) +
   scale_color_manual(values = colOffs)+
   scale_shape_manual(values=c(19,19,19,19))
@@ -368,24 +368,22 @@ fviz_pca_ind(PCA_allpos$res.PCA,  label="none", habillage=PCA_allpos$metadata$tr
 
 ### PCA plot with associated colors for brother pair
 
-```{r}
+```{r PCAallval_plot2}
 fviz_pca_ind(PCA_allpos$res.PCA,  label="none", habillage=as.factor(PCA_allpos$metadata$brotherPairID))
 ```
 
-```{r}
+```{r PCAallval_dimdesc}
 # The function dimdesc() can be used to identify the most correlated variables with a given principal component.
 mydimdesc <- dimdesc(PCA_allpos$res.PCA, axes = c(1,2), proba = 0.05)
 ```
 
-There are `r nrow(mydimdesc$Dim.1$quanti)` CpG sites most correlated (p
-\< 0.05) with the first principal component , and
-`r nrow(mydimdesc$Dim.2$quanti)` with the second principal component.
+There are `r nrow(mydimdesc$Dim.1$quanti)` CpG sites most correlated (p < 0.05) with the first principal component , and `r nrow(mydimdesc$Dim.2$quanti)` with the second principal component.
 
-The 2 first PCA axes do not explain BCI (p\<0.05)
+The 2 first PCA axes do not explain BCI (p<0.05)
 
 ### How much of the BCI variance is explained by each variables?
 
-```{r}
+```{r BCIpercvar}
 # Percentage of variance explained by each factor:
 formula(PCA_allpos$modSel) # BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
 mod_noworms = lmer(BCI ~ PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_allpos$metadata)
@@ -399,14 +397,12 @@ B = (MuMIn::r.squaredGLMM(PCA_allpos$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
 ```
 
--   `r round(A, 2)`% of the variance in associated with the parasite
-load (number of worms)
--   `r round(B, 2)`% of the variance in associated with the paternal
-treatment
+-   `r round(A, 2)`% of the variance in associated with the parasite load (number of worms)
+-   `r round(B, 2)`% of the variance in associated with the paternal treatment
 
 ## Pretty summary picture
 
-```{r}
+```{r prettySumPic}
 # Set up scatterplot
 scatterplot <- ggplot(fullMetadata_OFFS,
                       aes(x = res_Nbr_methCpG_Nbr_coveredCpG,
@@ -456,7 +452,7 @@ Methylation profile for the `r nrow(uniteCovALL_woSexAndUnknowChr)` CpG
 sites covered in all G1 & G2 fish (N =
 `r length(uniteCovALL_woSexAndUnknowChr@sample.ids)`:
 
-```{r, fig.width=15, fig.height=8}
+```{r clusterALL, fig.width=15, fig.height=8}
 makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr, fullMetadata,
                       my.cols.trt=c("#333333ff","#ff0000ff","#ffe680ff","#ff6600ff","#aaccffff","#aa00d4ff"),
                       my.cols.fam = c(1:4), nbrk = 8)
@@ -468,7 +464,7 @@ Methylation profile for the `r nrow(uniteCovALL_G2_woSexAndUnknowChr)`
 CpG sites covered in all G2 fish (N =
 `r length(uniteCovALL_G2_woSexAndUnknowChr@sample.ids)`:
 
-```{r, fig.width=10, fig.height=4}
+```{r clusterOff, fig.width=10, fig.height=4}
 makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
                       my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
                       my.cols.fam = c(1:4), nbrk = 8)
@@ -489,7 +485,7 @@ groups of objects and test the null hypothesis that the centroids and
 dispersion of the groups as defined by measure space are equivalent for
 all groups.
 
-```{r}
+```{r Adonis}
 # make distance matrix with B-C distances
 data.dist = makeDatadistFUN(uniteCovALL_G2_woSexAndUnknowChr)
 
@@ -505,7 +501,7 @@ considering brother pairs (N = 8), and use a PERMANOVA to test the
 hypothesis that paternal treatment, offspring treatment and their
 interactions significantly influencing global methylation.
 
-```{r}
+```{r perm}
 perm <- how(nperm = 1000) # 1000 permutations
 setBlocks(perm) <- with(fullMetadata_OFFS, brotherPairID) # define the permutation structure considering brotherPairID and sex
 print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permutations = perm))
@@ -519,7 +515,7 @@ Results:
 
 ## NMDS
 
-```{r, results='hide'}
+```{r NMDSGOF, results='hide'}
 #### RUN Goodness of fit
 myGOF.NMDS.FUN(dataset = uniteCovALL_G2_woSexAndUnknowChr)
 ```
@@ -527,13 +523,13 @@ myGOF.NMDS.FUN(dataset = uniteCovALL_G2_woSexAndUnknowChr)
 Goodness of fit for NMDS suggested the presence of six dimensions with a
 stress value \> 0.1 and 2 with \> 0.2
 
-```{r, results='hide'}
+```{r NMDSrun, results='hide'}
 ## to find the seed that allows convergence:
 # sapply(3:10, function(x) myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = x))
 NMDSanalysis <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = 4)
 ```
 
-```{r, fig.height = 11, fig.width = 10}
+```{r NMDSplot, fig.height = 11, fig.width = 10}
 NMDSanalysis$NMDSplot
 # Save
 pdf(file = "../../dataOut/NMDSplot_allG2.pdf", width = 9, height = 11)
@@ -545,7 +541,7 @@ dev.off()
 
 ### 1. Parents NOT infected
 
-```{r}
+```{r AdonisParCONT}
 AdonisWithinG1trtFUN(trtgp = c(2,3))
 ```
 
@@ -556,14 +552,14 @@ Results:
 -   Offspring trt explains 1.6% of the observed variance (non
 significant)
 
-```{r, results="hide"}
+```{r NMDSparCONT, results="hide"}
 NMDSanalysis_G1control <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr,
                                     metadata = fullMetadata_OFFS, myseed = 25,
                                     byParentTrt=TRUE,
                                     trtgp = c(2,3))
 ```
 
-```{r,  fig.height = 9, fig.width = 10}
+```{r NMDSparCONTplot,  fig.height = 9, fig.width = 10}
 #png(filename = "../../dataOut/NMDSplot_G1fromControlG2.png", width = 900, height = 900)
 NMDSanalysis_G1control$NMDSplot
 #dev.off()
@@ -571,7 +567,7 @@ NMDSanalysis_G1control$NMDSplot
 
 ### 2. Parents infected
 
-```{r}
+```{r NMDSparINF}
 AdonisWithinG1trtFUN(trtgp = c(5,6))
 ```
 
@@ -581,14 +577,14 @@ Results:
 -   sex explains 2.1% of the observed variance (non significant)
 -   Offspring trt explains 2.3% of the observed variance p \< 0.01
 
-```{r, results="hide"}
+```{r NMDSparINF_run, results="hide"}
 NMDSanalysis_G1infected <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr,
                                      metadata = fullMetadata_OFFS, myseed = 25,
                                      byParentTrt=TRUE,
                                      trtgp = c(5,6))
 ```
 
-```{r,  fig.height = 9, fig.width = 10}
+```{r NMDSparINFplot,  fig.height = 9, fig.width = 10}
 #png(filename = "../../dataOut/NMDSplot_G1fromInfectedG2.png", width = 900, height = 900)
 NMDSanalysis_G1infected$NMDSplot
 #dev.off()
@@ -607,7 +603,7 @@ Differential methylation by brother pair (sex as covariate):
 
 ### Attribute plot of the DMS in every BP for the 4 comparisons
 
-```{r}
+```{r upset1}
 ## All DMS are stored in DMSBPlist by brother pair
 
 ## Vector of all 4 comparisons
@@ -643,7 +639,7 @@ getUpsetDF = function(i, NBP){ # for a given comparison
 
 Make upset plots for DMS found in at least 6 BP:
 
-```{r, fig.width=10, fig.height=5}
+```{r upset2, fig.width=10, fig.height=5}
 for (i in 1:4){
   df = getUpsetDF(i, NBP = 6)
   print(ComplexUpset::upset(
@@ -678,7 +674,7 @@ in the opposite direction in TC-TT, or inversely
 
 ### Identify the different DMS groups
 
-```{r}
+```{r identEffectDMS}
 ## Subselect those DMS present in at least 4 out of 8 BP
 get2keep = function(Compa, NBP = 4){
   x <- lapply(myPosList, function(x){unlist(x[[paste0("DMS_15pc_BP_", Compa)]])})
@@ -735,24 +731,30 @@ The size of the different sections of the Venn diagram are as follows:
 
 Plot the reaction norms with real data as a validation of principle:
 
-```{r}
+```{r makePlotReacNorm}
 plots = makePlotsobservedReactionNorms()
 ```
 
-```{r, fig.height=10, fig.width=15}
-pdf("../../dataOut/caseVennG1only.pdf", width = 15, height = 10)
+```{r savePlotReacNorm, fig.height=10, fig.width=15}
+plots$plot1
+plots$plot2
+plots$plot3
+plots$plot4
+plots$plot5
+
+pdf("../../dataOut/reactionNorms/caseVennG1only.pdf", width = 15, height = 10)
 plots$plot1
 dev.off()
-pdf("../../dataOut/caseVennG2only.pdf", width = 15, height = 10)
+pdf("../../dataOut/reactionNorms/caseVennG2only.pdf", width = 15, height = 10)
 plots$plot2
 dev.off()
-pdf("../../dataOut/caseVennG1G2NOinter.pdf", width = 15, height = 10)
+pdf("../../dataOut/reactionNorms/caseVennG1G2NOinter.pdf", width = 15, height = 10)
 plots$plot3
 dev.off()
-pdf("../../dataOut/caseVennG1G2inter.pdf", width = 15, height = 10)
+pdf("../../dataOut/reactionNorms/caseVennG1G2inter.pdf", width = 15, height = 10)
 plots$plot4
 dev.off()
-pdf("../../dataOut/caseVennG2interNOG1.pdf", width = 15, height = 10)
+pdf("../../dataOut/reactionNorms/caseVennG2interNOG1.pdf", width = 15, height = 10)
 plots$plot5
 dev.off()
 ```
@@ -809,11 +811,9 @@ plotAndsave <- function(i){
                            GYgynogff = GYgynogff, isBPinfo = FALSE, 
                            myxlab = paste0("Genes linked with the ", namesCases[[i]], " effect"))
   print(P)
-  pdf(paste0("../../dataOut/Manhattan", namesCases[[i]], ".pdf"), width = 16, height = 5)
+  pdf(paste0("../../dataOut/ManhattanPlots/Manhattan", namesCases[[i]], ".pdf"), width = 16, height = 5)
   P
 }
-
-annot_caseVennG1G2inter[annot_caseVennG1G2inter$chrom %in% "Gy_chrI",]
 
 plotAndsave(1);  dev.off()
 plotAndsave(2);  dev.off()
@@ -866,7 +866,7 @@ dfGO = rbind(GO_G1only, GO_G2only, GO_G1G2NOinter, GO_G1G2inter, GO_G2interNOG1)
 ### GO plot
 
 ```{r geneOnto_plotGO, fig.height = 25, fig.width = 10}
-dfGO %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
+GOplot <- dfGO %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
   geom_point(aes(color = p.value.adjusted, size = genePercent)) +
   scale_color_gradient(name="adjusted\np-value", low = "red", high = "blue") +
   scale_size_continuous(name = "% of genes")+
@@ -875,6 +875,11 @@ dfGO %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
         legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
         legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
   facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")
+GOplot
+
+pdf(GOplot, file = "../../dataOut/GOplot5Venncat.pdf", width = 10, height = 25)
+GOplot
+dev.off()
 ```
 
 ## Correlation between methylation and phenotype (nbr worms, BCI)
@@ -892,7 +897,9 @@ Approach:
 
 4.  Correlation with parasite load/BCI
 
-```{r BCI}
+### I. PCA based on all methylation values at DMS positions detected for INTERACTION effect, with imputation of missing values
+
+```{r BCI_PCA_G1G2inter}
 # PARENTAL effect: DMS found in either CC-TC or CT-TT comparisons
 # DMS_PaternalEffect_4BPmin
 # 
@@ -910,61 +917,45 @@ Approach:
 # caseVennG1G2inter
 # caseVennG2interNOG1
 
-### I. PCA based on all methylation values at DMS positions detected for INTERACTION effect, with imputation of missing values
+# Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+resPCACpG_G1G2inter <- getPCACpG(DMSvec=caseVennG1G2inter, effect="INTERACTION effect G1:G2")
 
-# 1. get raw values
-pos2keep = which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in% 
-                   caseVennG1G2inter)
-uniteAtDMS = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, pos2keep)
-percAtDMS = percMethylation(uniteAtDMS)
-
-nrow(percAtDMS) # 190 DMS linked with INTERACTION effect G1:G2
-
-# We use missMDA and FactoMineR for imputation of missing data and
-# performing of PCA: (see:
-# 
-#                       -   <http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html>
-#                       -   <https://www.youtube.com/watch?v=OOM8_FH6_8o>)
-
-PCA_percAtDMS_imputed <- myPCA(x = t(percAtDMS), incomplete = TRUE)
-
-### PCA plot of individuals with associated colors for paternal treatments
-fviz_pca_ind(PCA_percAtDMS_imputed$res.PCA,  label="none", habillage=as.factor(PCA_percAtDMS_imputed$metadata$PAT)) +
+# PCA plot of individuals with associated colors for paternal treatments
+fviz_pca_ind(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$res.PCA,  label="none", 
+             habillage=as.factor(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$metadata$PAT)) +
   scale_shape_manual(values=c(19,19))
 
-### PCA plot of individuals with associated colors for brother pair
-fviz_pca_ind(PCA_percAtDMS_imputed$res.PCA,  label="none", habillage=as.factor(PCA_percAtDMS_imputed$metadata$brotherPairID))
+# PCA plot of individuals with associated colors for brother pair
+fviz_pca_ind(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$res.PCA,  label="none",
+             habillage=as.factor(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$metadata$brotherPairID))
 
-# The function dimdesc() can be used to identify the most correlated variables with a given principal component.
-mydimdesc <- dimdesc(PCA_percAtDMS_imputed$res.PCA, axes = c(1,2), proba = 0.05)
-
-nrow(mydimdesc$Dim.1$quanti)# 97 CpG sites most correlated (p < 0.05) with the first principal component 
-nrow(mydimdesc$Dim.2$quanti)# 76 with the second principal component
-
-formula(PCA_percAtDMS_imputed$modSel)
+formula(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$modSel)
 # The SECOND PCA axis is significant in BCI
 # BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
 #   PCA2:PAT + No.Worms:PAT
 
 ### How much of the BCI variance is explained by each variables?
-mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
-mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
-mod_noPCA2 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
+mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
+                   data = resPCACpG_G1G2inter$PCA_percAtDMS_imputed$metadata)
+mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), 
+                 data = resPCACpG_G1G2inter$PCA_percAtDMS_imputed$metadata)
+mod_noPCA2 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
+                  data = resPCACpG_G1G2inter$PCA_percAtDMS_imputed$metadata)
 
 # R2c conditional R2 value associated with fixed effects plus the random effects.
-A = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+A = (MuMIn::r.squaredGLMM(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noworms)[2])*100
-B = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+B = (MuMIn::r.squaredGLMM(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
-C = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+C = (MuMIn::r.squaredGLMM(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
 
 round(A, 2) #% of the variance in associated with the parasite load (number of worms)
 round(B, 2) #% of the variance in associated with the paternal treatment
-round(C, 2) #% of the variance in associated with the first PCA axis
+round(C, 2) #% of the variance in associated with the PCA axis
 
 ### Plot of the model
-phenoMethPlot1 <- plot(ggpredict(PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
+phenoMethPlot1 <- plot(ggpredict(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
   scale_color_gradient(low = "blue", high = "red")+
   scale_fill_gradient(low = "blue", high = "red") +
   ylab("Body Condition Index") + xlab("Number of worms")+
@@ -973,144 +964,136 @@ phenoMethPlot1 <- plot(ggpredict(PCA_percAtDMS_imputed$modSel, terms = c("No.Wor
 phenoMethPlot1
 
 # save
-pdf(file = "../../dataOut/phenoMethPlot_G1:G2effect.pdf", width = 10, height = 5)
+pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_G1:G2effect.pdf", width = 10, height = 5)
 phenoMethPlot1
 dev.off()
 
-##################################
+# Run model CpG by CpG, for the CpG in the second PCA axis
+# myDF = data.frame()
+# for (i in 1:nrow(percMethylation(resPCACpG_G1G2inter$CpGPCA2))){
+#   print(i)
+#   metadata = fullMetadata_OFFS
+#   metadata$PCA2percMeth = percMethylation(resPCACpG_G1G2inter$CpGPCA2)[i,]
+#   # rm NA in PCA
+#   metadata=metadata[!is.na(metadata$PCA2percMeth),]
+#   mod = lmer(BCI ~ PCA2percMeth*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+#   modNoMeth = lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+#   print(lrtest(mod, modNoMeth))
+#   myDF <- rbind(myDF, data.frame(CpG=paste(resPCACpG_G1G2inter$CpGPCA2[i]$chr, resPCACpG_G1G2inter$CpGPCA2[i]$end),
+#                                  pvalue=lrtest(mod, modNoMeth)[["Pr(>Chisq)"]][2]))
+# }
+
+# FDR correction
+# myDF[myDF$pvalue<0.05,]
+# myDF[p.adjust(p = myDF$pvalue, method = "fdr")<0.05,] # No position
+```
+
 ### II. PCA based on all methylation values at DMS positions detected for PATERNAL effect, with imputation of missing values
 
-# 1. get raw values
-pos2keep = which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in% 
-                   caseVennG1only)
-uniteAtDMS = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, pos2keep)
-percAtDMS = percMethylation(uniteAtDMS)
+```{r BCI_PCA_G1}
+# Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+resPCACpG_G1only <- getPCACpG(DMSvec=caseVennG1only, effect="G1 only")
 
-nrow(percAtDMS) # DMS linked with parental effect only
-
-# We use missMDA and FactoMineR for imputation of missing data and
-# performing of PCA: (see:
-# 
-#                       -   <http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html>
-#                       -   <https://www.youtube.com/watch?v=OOM8_FH6_8o>)
-
-PCA_percAtDMS_imputed <- myPCA(x = t(percAtDMS), incomplete = TRUE)
-
-### PCA plot of individuals with associated colors for paternal treatments
-fviz_pca_ind(PCA_percAtDMS_imputed$res.PCA,  label="none", habillage=as.factor(PCA_percAtDMS_imputed$metadata$PAT)) +
-  scale_shape_manual(values=c(19,19))
-
-### PCA plot of individuals with associated colors for brother pair
-fviz_pca_ind(PCA_percAtDMS_imputed$res.PCA,  label="none", habillage=as.factor(PCA_percAtDMS_imputed$metadata$brotherPairID))
-
-# The function dimdesc() can be used to identify the most correlated variables with a given principal component.
-mydimdesc <- dimdesc(PCA_percAtDMS_imputed$res.PCA, axes = c(1,2), proba = 0.05)
-
-nrow(mydimdesc$Dim.1$quanti)# CpG sites most correlated (p < 0.05) with the first principal component 
-nrow(mydimdesc$Dim.2$quanti)# with the second principal component.
-
-formula(PCA_percAtDMS_imputed$modSel)
-# The second PCA axis is significant in BCI
+formula(resPCACpG_G1only$PCA_percAtDMS_imputed$modSel)
+# The SECOND PCA axis is significant in BCI
 # BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
 #   PCA2:PAT + No.Worms:PAT
 
 ### How much of the BCI variance is explained by each variables?
-mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
-mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
-mod_noPCA2 = lmer(BCI ~ No.Worms + PAT + No.Worms:PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
+mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
+                   data = resPCACpG_G1only$PCA_percAtDMS_imputed$metadata)
+mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), 
+                 data = resPCACpG_G1only$PCA_percAtDMS_imputed$metadata)
+mod_noPCA2 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
+                  data = resPCACpG_G1only$PCA_percAtDMS_imputed$metadata)
 
 # R2c conditional R2 value associated with fixed effects plus the random effects.
-A = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+A = (MuMIn::r.squaredGLMM(resPCACpG_G1only$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noworms)[2])*100
-B = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+B = (MuMIn::r.squaredGLMM(resPCACpG_G1only$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
-C = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+C = (MuMIn::r.squaredGLMM(resPCACpG_G1only$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
-
 round(A, 2) #% of the variance in associated with the parasite load (number of worms)
 round(B, 2) #% of the variance in associated with the paternal treatment
-round(C, 2) #% of the variance in associated with the second PCA axis
+round(C, 2) #% of the variance in associated with the PCA axis
 
 ### Plot of the model
-phenoMethPlot <- plot(ggpredict(PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
+phenoMethPlot2 <- plot(ggpredict(resPCACpG_G1only$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
   scale_color_gradient(low = "blue", high = "red")+
   scale_fill_gradient(low = "blue", high = "red") +
-  ylab("Body Condition Index") + xlab("Number of worms") +
+  ylab("Body Condition Index") + xlab("Number of worms")+
   ggtitle("Predicted values of Body Condition Index in offspring")
 
-phenoMethPlot
+phenoMethPlot2
 
 # save
-pdf(file = "../../dataOut/phenoMethPlot_G1effectonly.pdf", width = 10, height = 5)
-phenoMethPlot
+pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_G1onlyeffect.pdf", width = 10, height = 5)
+phenoMethPlot2
 dev.off()
 
-##################################
+# Run model CpG by CpG, for the CpG in the second PCA axis
+# myDF = data.frame()
+# for (i in 1:nrow(percMethylation(resPCACpG_G1only$CpGPCA2))){
+#   print(i)
+#   metadata = fullMetadata_OFFS
+#   metadata$PCA2percMeth = percMethylation(resPCACpG_G1only$CpGPCA2)[i,]
+#   # rm NA in PCA
+#   metadata=metadata[!is.na(metadata$PCA2percMeth),]
+#   mod = lmer(BCI ~ PCA2percMeth*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+#   modNoMeth = lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+#   print(lrtest(mod, modNoMeth))
+#   myDF <- rbind(myDF, data.frame(CpG=paste(resPCACpG_G1only$CpGPCA2[i]$chr, resPCACpG_G1only$CpGPCA2[i]$end),
+#                                  pvalue=lrtest(mod, modNoMeth)[["Pr(>Chisq)"]][2]))
+# }
+# 
+# # FDR correction
+# myDF[myDF$pvalue<0.05,]
+# myDF[p.adjust(p = myDF$pvalue, method = "fdr")<0.05,] # No position
+```
+
 ### III. PCA based on all methylation values at DMS positions detected for OFFSPRING effect, with imputation of missing values
 
-# 1. get raw values
-pos2keep = which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in% 
-                   caseVennG2only)
-uniteAtDMS = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, pos2keep)
-percAtDMS = percMethylation(uniteAtDMS)
+```{r BCI_PCA_G2}
+# Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+resPCACpG_G2only <- getPCACpG(DMSvec=caseVennG2only, effect="G2 only")
 
-nrow(percAtDMS) # DMS linked with offspring effect only
-
-# We use missMDA and FactoMineR for imputation of missing data and
-# performing of PCA: (see:
-# 
-#                       -   <http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html>
-#                       -   <https://www.youtube.com/watch?v=OOM8_FH6_8o>)
-
-PCA_percAtDMS_imputed <- myPCA(x = t(percAtDMS), incomplete = TRUE)
-
-### PCA plot of individuals with associated colors for paternal treatments
-fviz_pca_ind(PCA_percAtDMS_imputed$res.PCA,  label="none", habillage=as.factor(PCA_percAtDMS_imputed$metadata$PAT)) +
-  scale_shape_manual(values=c(19,19))
-
-### PCA plot of individuals with associated colors for brother pair
-fviz_pca_ind(PCA_percAtDMS_imputed$res.PCA,  label="none", habillage=as.factor(PCA_percAtDMS_imputed$metadata$brotherPairID))
-
-# The function dimdesc() can be used to identify the most correlated variables with a given principal component.
-mydimdesc <- dimdesc(PCA_percAtDMS_imputed$res.PCA, axes = c(1,2), proba = 0.05)
-
-nrow(mydimdesc$Dim.1$quanti)# CpG sites most correlated (p < 0.05) with the first principal component 
-nrow(mydimdesc$Dim.2$quanti)# with the second principal component.
-
-formula(PCA_percAtDMS_imputed$modSel)
-# The first PCA axis is significant in BCI
+formula(resPCACpG_G2only$PCA_percAtDMS_imputed$modSel)
+# The FIRST PCA axis is significant in BCI
 # BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
 #   PCA1:PAT + No.Worms:PAT
 
 ### How much of the BCI variance is explained by each variables?
-mod_noworms = lmer(BCI ~ PCA1 + PAT + PCA1:PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
-mod_noPAT = lmer(BCI ~ PCA1 + No.Worms + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
-mod_noPCA1 = lmer(BCI ~ No.Worms + PAT + No.Worms:PAT + (1 | brotherPairID) + (1 | Sex), data = PCA_percAtDMS_imputed$metadata)
+mod_noworms = lmer(BCI ~ PCA1 + PAT + PCA1:PAT + (1 | brotherPairID) + (1 | Sex), 
+                   data = resPCACpG_G2only$PCA_percAtDMS_imputed$metadata)
+mod_noPAT = lmer(BCI ~ PCA1 + No.Worms + (1 | brotherPairID) + (1 | Sex), 
+                 data = resPCACpG_G2only$PCA_percAtDMS_imputed$metadata)
+mod_noPCA1 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
+                  data = resPCACpG_G2only$PCA_percAtDMS_imputed$metadata)
 
 # R2c conditional R2 value associated with fixed effects plus the random effects.
-A = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+A = (MuMIn::r.squaredGLMM(resPCACpG_G2only$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noworms)[2])*100
-B = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
+B = (MuMIn::r.squaredGLMM(resPCACpG_G2only$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
-C = (MuMIn::r.squaredGLMM(PCA_percAtDMS_imputed$modSel)[2] -
-       MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
-
+C = (MuMIn::r.squaredGLMM(resPCACpG_G2only$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPCA1)[2])*100
 round(A, 2) #% of the variance in associated with the parasite load (number of worms)
 round(B, 2) #% of the variance in associated with the paternal treatment
-round(C, 2) #% of the variance in associated with the second PCA axis
+round(C, 2) #% of the variance in associated with the PCA axis
 
 ### Plot of the model
-phenoMethPlotG2 <- plot(ggpredict(PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA1", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
+phenoMethPlot3 <- plot(ggpredict(resPCACpG_G2only$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA1", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
   scale_color_gradient(low = "blue", high = "red")+
   scale_fill_gradient(low = "blue", high = "red") +
-  ylab("Body Condition Index") + xlab("Number of worms") +
+  ylab("Body Condition Index") + xlab("Number of worms")+
   ggtitle("Predicted values of Body Condition Index in offspring")
 
-phenoMethPlotG2
+phenoMethPlot3
 
 # save
-pdf(file = "../../dataOut/phenoMethPlot_G2effectonly.pdf", width = 10, height = 5)
-phenoMethPlot
+pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_G2onlyeffect.pdf", width = 10, height = 5)
+phenoMethPlot3
 dev.off()
 ```
 
