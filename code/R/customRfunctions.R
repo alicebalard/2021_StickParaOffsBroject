@@ -287,7 +287,7 @@ myPCA <- function(x, incomplete){
     # estimate the number of components from incomplete data
     nb <- estim_ncpPCA(x, scale = T)
     # impute the table
-    res.comp <- imputePCA(x, ncp = nb$ncp, scale = T) 
+    res.comp <- imputePCA(x, ncp = nb$ncp, scale = T)
     x = res.comp$completeObs
   }
   # 2. run PCA
@@ -308,8 +308,36 @@ myPCA <- function(x, incomplete){
   return(list(res.PCA=res.PCA, modSel = modSel, metadata = metadata))
 }
 
-## II. Functions used in R04.2 explore differential methylations
+getPCACpG <- function(DMSvec=caseVennG1G2inter, effect="INTERACTION effect G1:G2"){
+  pos2keep = which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in%
+                     DMSvec)
+  uniteAtDMS = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, pos2keep)
+  percAtDMS = percMethylation(uniteAtDMS)
 
+  print(paste(nrow(percAtDMS), "DMS linked with", effect))
+
+  # We use missMDA and FactoMineR for imputation of missing data and
+  # performing of PCA: (see:
+  #
+  #                       -   <http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html>
+  #                       -   <https://www.youtube.com/watch?v=OOM8_FH6_8o>)
+
+  PCA_percAtDMS_imputed <- myPCA(x = t(percAtDMS), incomplete = TRUE)
+
+  # The function dimdesc() can be used to identify the most correlated variables with a given principal component.
+  mydimdesc = dimdesc(PCA_percAtDMS_imputed$res.PCA, axes = c(1,2), proba = 0.05)
+
+  print(paste(nrow(mydimdesc$Dim.1$quanti), "CpG sites most correlated (p < 0.05) with the first principal component"))
+  print(paste(nrow(mydimdesc$Dim.2$quanti), "CpG sites most correlated (p < 0.05) with the second principal component"))
+
+  # Extract the values for CpGs associated with the
+  CpGPCA1 = methylKit::select(uniteAtDMS, as.numeric(gsub("V","",rownames(mydimdesc$Dim.1$quanti))))
+  CpGPCA2 = methylKit::select(uniteAtDMS, as.numeric(gsub("V","",rownames(mydimdesc$Dim.2$quanti))))
+
+  return(list(PCA_percAtDMS_imputed=PCA_percAtDMS_imputed, CpGPCA1=CpGPCA1, CpGPCA2=CpGPCA2))
+}
+
+##########################
 ## Calculate beta values (methylation proportion per CpG site) for the 1001880 positions covered in half G1 and half G2
 getPMdataset <- function(uniteCov, MD, gener){
   PM = methylKit::percMethylation(uniteCov)
