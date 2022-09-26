@@ -1,7 +1,7 @@
 ---
 title: "Explore differential methylation"
 author: "Alice Balard"
-date: '2022-06-23'
+date: "`r Sys.Date()`"
 output: 
   html_document:
     number_sections: true
@@ -26,6 +26,7 @@ loadannot = TRUE # load genome annotations
 sourceDMS = TRUE # Load the calculated DMS
 sourceSubUnite = FALSE
 source("R02.3_DATALOAD.R")
+source("homebrewDMSannotation.R") # needed for annotation, slight modification of genomation
 
 ## So far, we don't use DMR (because RRBS single end, this is not super meaningful)
 rm(DMRBPlist, DMRlist)
@@ -613,6 +614,19 @@ vecCompaVerbose <- c("Control offspring in control vs infected parents", "Infect
 ## Extract DMS for all 4 comparisons (by position)
 myPosList = lapply(DMSBPlist, lapply, function(x){paste(x$chr, x$end)})
 
+## Subselect those DMS present in at least 4 out of 8 BP
+get2keep = function(Compa, NBP = 4){
+  x <- lapply(myPosList, function(x){unlist(x[[paste0("DMS_15pc_BP_", Compa)]])})
+  f <- table(unlist((x))) # each DMS present between 1 and 8 times
+  tokeep <- names(f)[f >= NBP]
+  # print(length(tokeep))
+  ## Keep the DMS present in 4 families minimum
+  DMSBPlist_INTER4 <- lapply(x, function(x){x[x %in% tokeep]})
+  ## Reorder by family:
+  DMSBPlist_INTER4 <- DMSBPlist_INTER4[names(DMSBPlist_INTER4)[order(names(DMSBPlist_INTER4))]]
+  return(DMSBPlist_INTER4)
+}
+
 ## Prepare df for complexUpset
 getUpsetDF = function(i, NBP){ # for a given comparison
   A = get2keep(vecCompa[i], NBP)
@@ -675,161 +689,269 @@ in the opposite direction in TC-TT, or inversely
 ### Identify the different DMS groups
 
 ```{r identEffectDMS}
-## Subselect those DMS present in at least 4 out of 8 BP
-get2keep = function(Compa, NBP = 4){
+## Creates a data frame with BP, DMS, effect and comparison, when the DMS is found in 4 BP or more
+get2keepFULLdfBP = function(Compa, NBP = 4, myeffect = "Paternal"){
   x <- lapply(myPosList, function(x){unlist(x[[paste0("DMS_15pc_BP_", Compa)]])})
-  f <- table(unlist((x))) # each DMS present between 1 and 8 times
-  tokeep <- names(f)[f >= NBP]
-  # print(length(tokeep))
-  ## Keep the DMS present in 4 families minimum
-  DMSBPlist_INTER4 <- lapply(x, function(x){x[x %in% tokeep]})
-  ## Reorder by family:
-  DMSBPlist_INTER4 <- DMSBPlist_INTER4[names(DMSBPlist_INTER4)[order(names(DMSBPlist_INTER4))]]
-  return(DMSBPlist_INTER4)
+  mylist = list() # empty list
+  for (i in 1:length(names(x))){
+    a=data.frame(BP=names(x)[i], DMS=x[[names(x)[i]]])
+    mylist[[i]] = a
+    names(mylist)[i] = names(x)[i]
+  } # fill full list with df containing BP and DMS
+  mydf = Reduce(function(...) merge(..., all=T), mylist) # concatenate in a df
+  # Add information
+  mydf$globalEffect = myeffect
+  mydf$comparison = Compa
+  # Keep the DMS present in 4 families minimum:
+  tokeep = names(table(mydf$DMS)[table(mydf$DMS)>=NBP])
+  mydf = mydf[mydf$DMS %in% tokeep,]
+  return(mydf)
 }
 
 # PARENTAL effect: DMS found in either CC-TC or CT-TT comparisons
-DMS_PaternalEffect_4BPmin = unique(c(unlist(get2keep(vecCompa[1], NBP = 4)), unlist(get2keep(vecCompa[2], NBP = 4))))
+df_PaternalEffect_4BPmin = unique(rbind(get2keepFULLdfBP(Compa = vecCompa[1], NBP = 4, myeffect = "G1all"),
+                 get2keepFULLdfBP(Compa = vecCompa[2], NBP = 4, myeffect = "G1all")))
+DMS_PaternalEffect_4BPmin = unique(df_PaternalEffect_4BPmin$DMS)
 
 # OFFSPRING effect: DMS found in either CC-CT or TC-TT comparisons
-DMS_OffspringEffect_4BPmin = unique(c(unlist(get2keep(vecCompa[3], NBP = 4)), unlist(get2keep(vecCompa[4], NBP = 4))))
+df_OffspringEffect_4BPmin = unique(rbind(get2keepFULLdfBP(Compa = vecCompa[3], NBP = 4, myeffect = "G2all"),
+                 get2keepFULLdfBP(Compa = vecCompa[4], NBP = 4, myeffect = "G2all")))
+DMS_OffspringEffect_4BPmin = unique(df_OffspringEffect_4BPmin$DMS)
 
-# INTERACTION effects: DMS found in CC-CT which show a differential methylation in the opposite direction in TC-TT, or inversely (reaction norm are inversed)
-setDMSInversionSlope = getInteractionDMS() # in customfunctions.R
+##########
+## OVERLAP=DMS found in G1 & G2
+# case 1 -> INTERACTION effects DMS found in CC-CT which show a differential methylation in the opposite direction in TC-TT, or inversely (reaction norm are inversed) in most of the brother pairs (5 or more)
+# case 2 -> ADDITIVE effect: no slope inversion (4 or more)
 
+# Get the raw methylation from the DMS which are in both Paternal and Offspring effects
+subUnite = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                             which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$end) %in%
+                                     intersect(DMS_OffspringEffect_4BPmin, DMS_PaternalEffect_4BPmin)))
+
+# Get mean methylation per brother pair, per treatment:
+getMeanMeth <- function(subUnite, BP, mytrt){
+  metadata = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP & fullMetadata_OFFS$trtG1G2 %in% mytrt, ]
+  myuniteCov = reorganize(methylObj = subUnite, treatment = metadata$trtG1G2_NUM, sample.ids = metadata$ID)
+  ## remove bases where NO fish in this BP has a coverage
+  myuniteCov = methylKit::select(myuniteCov, which(!is.na(rowSums(percMethylation(myuniteCov)))))
+  # calculate mean methylation
+  df = data.frame(DMS = paste(myuniteCov$chr, myuniteCov$end), meanMeth = rowMeans(percMethylation(myuniteCov)), trt = mytrt, BP = BP)
+  return(df)
+}
+
+# We will apply the following function to all BP and all trt:
+vecBP <- unique(fullMetadata_OFFS$brotherPairID)
+vectrt <- unique(fullMetadata_OFFS$trtG1G2)
+
+## Loop over all BP & trt
+df = data.frame(DMS=NULL, meanMeth=NULL, trt=NULL, BP=NULL) # empty df
+for (i in 1:length(vecBP)){
+  for (j in 1:length(vectrt)){
+    subdf = getMeanMeth(subUnite = subUnite, BP = vecBP[[i]], mytrt = vectrt[[j]])
+    df = rbind(df, subdf)
+  }
+}
+
+## Add G1 & G2 trt
+df$G1trt = ifelse(df$trt %in% c("NE_control", "NE_exposed"), "control", "infected")
+df$G2trt = ifelse(df$trt %in% c("NE_control", "E_control"), "control", "infected")
+
+## cut by G1 trt & merge
+dfcp = df[df$G1trt %in% "control"  ,]
+dfcpco = dfcp[dfcp$G2trt %in% "control",]; dfcpio = dfcp[dfcp$G2trt %in% "infected",]
+dfcp = merge(dfcpco, dfcpio, by = c("DMS", "BP")) %>%
+  mutate(meanDiffMeth=meanMeth.y - meanMeth.x) %>% dplyr::select(c("DMS", "BP", "meanDiffMeth"))
+dfip = df[df$G1trt %in% "infected",]
+dfipco = dfip[dfip$G2trt %in% "control",]; dfipio = dfip[dfip$G2trt %in% "infected",]
+dfip = merge(dfipco, dfipio, by = c("DMS", "BP")) %>%
+  mutate(meanDiffMeth=meanMeth.y - meanMeth.x) %>% dplyr::select(c("DMS", "BP", "meanDiffMeth"))
+df2=merge(dfcp,dfip, by=c("DMS", "BP"))
+
+## interaction if slope inversion/additive if not
+df2$inversionSlopeReactionNorms = FALSE
+df2[!sign(df2$meanDiffMeth.x) == sign(df2$meanDiffMeth.y),"inversionSlopeReactionNorms"] = TRUE
+names(df2)[names(df2) %in% "meanDiffMeth.x"] = "meanDiffMeth.controlG1"
+names(df2)[names(df2) %in% "meanDiffMeth.y"] = "meanDiffMeth.infectedG1"
+
+####################
+# Get a vector of DMS for each category:
+## A DMS is "interaction" if there are more often slope inversion than not
+DMS_G1G2interactionEffect_4BPmin = df2 %>% group_by(DMS) %>% dplyr::summarise(count=n(), inversionSlopeRate=sum(inversionSlopeReactionNorms)/count, 
+                                                                              effect=ifelse(inversionSlopeRate>0.5, "interaction", "additive")) %>%
+  dplyr::filter(effect=="interaction") %>% dplyr::select(DMS) %>% unlist()
+DMS_G1G2additiveEffect_4BPmin = df2 %>% group_by(DMS) %>% dplyr::summarise(count=n(), inversionSlopeRate=sum(inversionSlopeReactionNorms)/count, 
+                                                                              effect=ifelse(inversionSlopeRate>0.5, "interaction", "additive")) %>%
+  dplyr::filter(effect=="additive") %>% dplyr::select(DMS) %>% unlist()
+DMS_G1onlyEffect_4BPmin = DMS_PaternalEffect_4BPmin[!DMS_PaternalEffect_4BPmin %in% c(DMS_G1G2interactionEffect_4BPmin, DMS_G1G2additiveEffect_4BPmin)]
+DMS_G2onlyEffect_4BPmin = DMS_OffspringEffect_4BPmin[!DMS_OffspringEffect_4BPmin %in% c(DMS_G1G2interactionEffect_4BPmin, DMS_G1G2additiveEffect_4BPmin)]
+
+####################
+# Make a BIG df with all DMS, effects and BP (this time, the effects are DMS-BP specific, not global)
+df_effects_full = merge(unique(df_PaternalEffect_4BPmin[c("BP", "DMS","globalEffect")]),
+      unique(df_OffspringEffect_4BPmin[c("BP", "DMS","globalEffect")]), by=c("BP", "DMS"), all=T)
+
+df_effects_full = merge(df_effects_full, df2, all=T)
+df_effects_full$effectBPlevel[df_effects_full$globalEffect.x == "G1all"] = "G1"
+df_effects_full$effectBPlevel[df_effects_full$globalEffect.y == "G2all"] = "G2"
+df_effects_full$effectBPlevel[df_effects_full$inversionSlopeReactionNorms == TRUE & 
+                         df_effects_full$globalEffect.x == "G1all" & df_effects_full$globalEffect.y == "G2all"] = "G1:G2"
+df_effects_full$effectBPlevel[df_effects_full$inversionSlopeReactionNorms == FALSE & 
+                         df_effects_full$globalEffect.x == "G1all" & df_effects_full$globalEffect.y == "G2all"]= "G1+G2"
+
+#rm junk
+rm(subUnite, df, dfcp, dfcpco, dfcpio, dfip, dfipco, dfipio, df2)
+```
+
+```{r VENNEffectDMS}
 # Plot a Venn diagram
-ggVennDiagram(list("Paternal effect" = DMS_PaternalEffect_4BPmin, "Offspring effect" = DMS_OffspringEffect_4BPmin, "InversionSlope" = setDMSInversionSlope),
-              label_alpha = 0) +
-  scale_fill_gradient(low="white",high = "red") + theme(legend.position = "none")
+ggVennDiagram(list("Paternal effect" = DMS_PaternalEffect_4BPmin, "Offspring effect" = DMS_OffspringEffect_4BPmin, "InteractionEffects" = DMS_G1G2interactionEffect_4BPmin),
+              label_alpha = 0) + scale_color_manual(values = c(1,1,1))+
+  scale_fill_gradient(low="white",high = "yellow") + theme(legend.position = "none")
 
 # Save:
 pdf(file = "../../dataOut/DMS3groupsVenn.pdf", width = 7, height = 6)
-ggVennDiagram(list("Paternal effect" = DMS_PaternalEffect_4BPmin, "Offspring effect" = DMS_OffspringEffect_4BPmin, "InversionSlope" = setDMSInversionSlope),
-              label_alpha = 0) +
-  scale_fill_gradient(low="white",high = "red") + theme(legend.position = "none")
+ggVennDiagram(list("Paternal effect" = DMS_PaternalEffect_4BPmin, "Offspring effect" = DMS_OffspringEffect_4BPmin, "InteractionEffects" = DMS_G1G2interactionEffect_4BPmin),
+              label_alpha = 0) + scale_color_manual(values = c(1,1,1))+
+  scale_fill_gradient(low="white",high = "yellow") + theme(legend.position = "none")
 dev.off()
-
-# The five cases of Venn diagram:
-caseVennG1only = DMS_PaternalEffect_4BPmin[!DMS_PaternalEffect_4BPmin %in% DMS_OffspringEffect_4BPmin]
-caseVennG2only = DMS_OffspringEffect_4BPmin[!DMS_OffspringEffect_4BPmin %in% DMS_PaternalEffect_4BPmin & 
-                                              !DMS_OffspringEffect_4BPmin %in% setDMSInversionSlope]
-caseVennG1G2NOinter = DMS_OffspringEffect_4BPmin[DMS_OffspringEffect_4BPmin %in% DMS_PaternalEffect_4BPmin & 
-                                                   !DMS_OffspringEffect_4BPmin %in% setDMSInversionSlope]
-caseVennG1G2inter = DMS_OffspringEffect_4BPmin[DMS_OffspringEffect_4BPmin %in% DMS_PaternalEffect_4BPmin & 
-                                                 DMS_OffspringEffect_4BPmin %in% setDMSInversionSlope] 
-caseVennG2interNOG1 = DMS_OffspringEffect_4BPmin[!DMS_OffspringEffect_4BPmin %in% DMS_PaternalEffect_4BPmin &
-                                                   DMS_OffspringEffect_4BPmin %in% setDMSInversionSlope]
 ```
 
 The size of the different sections of the Venn diagram are as follows:
 
-- length(caseVennG1only): `r length(caseVennG1only)`
-- length(caseVennG2only): `r length(caseVennG2only)`
-- length(caseVennG1G2NOinter): `r length(caseVennG1G2NOinter)`
-- length(caseVennG1G2inter): `r length(caseVennG1G2inter)`
-- length(caseVennG2interNOG1): `r length(caseVennG2interNOG1)`
-
-Plot the reaction norms with real data as a validation of principle:
-
-```{r makePlotReacNorm}
-plots = makePlotsobservedReactionNorms()
-```
-
-```{r savePlotReacNorm, fig.height=10, fig.width=15}
-plots$plot1
-plots$plot2
-plots$plot3
-plots$plot4
-plots$plot5
-
-pdf("../../dataOut/reactionNorms/caseVennG1only.pdf", width = 15, height = 10)
-plots$plot1
-dev.off()
-pdf("../../dataOut/reactionNorms/caseVennG2only.pdf", width = 15, height = 10)
-plots$plot2
-dev.off()
-pdf("../../dataOut/reactionNorms/caseVennG1G2NOinter.pdf", width = 15, height = 10)
-plots$plot3
-dev.off()
-pdf("../../dataOut/reactionNorms/caseVennG1G2inter.pdf", width = 15, height = 10)
-plots$plot4
-dev.off()
-pdf("../../dataOut/reactionNorms/caseVennG2interNOG1.pdf", width = 15, height = 10)
-plots$plot5
-dev.off()
-```
+- length(DMS_G1onlyEffect_4BPmin): `r length(DMS_G1onlyEffect_4BPmin)`
+- length(DMS_G2onlyEffect_4BPmin): `r length(DMS_G2onlyEffect_4BPmin)`
+- length(DMS_G1G2additiveEffect_4BPmin): `r length(DMS_G1G2additiveEffect_4BPmin)`
+- length(DMS_G1G2interactionEffect_4BPmin): `r length(DMS_G1G2interactionEffect_4BPmin)`
 
 ### Annotate the different DMS groups
 
 ```{r annotateEffects}
-## Venn diagram by genes found in each comparisons
-# PARENTAL effect: DMS found in either CC-TC or CT-TT comparisons
-DMS_PaternalEffect_4BPmin_GENES = getAnnotationFun(DMSdf = DMS_PaternalEffect_4BPmin,
-                         annotBed12 = annotBed12, annotGff3 = annotGff3, isDMDaDataframeWithBP = FALSE)
+DMS_G1onlyEffect_4BPmin_ANNOT = myHomebrewDMSannotation(DMSvec = DMS_G1onlyEffect_4BPmin,
+                                                        myannotBed12 = annotBed12, myannotGff3 = annotGff3)
+DMS_G1onlyEffect_4BPmin_ANNOT=DMS_G1onlyEffect_4BPmin_ANNOT %>% mutate(effect = "G1")
+# "check that these features are identical:"
+# "gasAcul16628-RA" "gasAcul16627-RA" -> overlapping: Protein of unknown function & Tp63
+# "gasAcul15294-RA" "gasAcul15295-RA" -> overlapping: Cdh23 & Vsir (immune!)
+# "gasAcul19985-RA" "gasAcul19984-RA" -> overlapping: ST3GAL1 & ST3GAL1, all good for this one
+DMS_G2onlyEffect_4BPmin_ANNOT = myHomebrewDMSannotation(DMSvec = DMS_G2onlyEffect_4BPmin,
+                                                        myannotBed12 = annotBed12, myannotGff3 = annotGff3)
+DMS_G2onlyEffect_4BPmin_ANNOT=DMS_G2onlyEffect_4BPmin_ANNOT %>% mutate(effect = "G2")
 
-# OFFSPRING effect: DMS found in either CC-CT or TC-TT comparisons
-DMS_OffspringEffect_4BPmin_GENES = getAnnotationFun(DMSdf = DMS_OffspringEffect_4BPmin,
-                         annotBed12 = annotBed12, annotGff3 = annotGff3, isDMDaDataframeWithBP = FALSE)
+DMS_G1G2additiveEffect_4BPmin_ANNOT = myHomebrewDMSannotation(DMSvec = DMS_G1G2additiveEffect_4BPmin,
+                                                              myannotBed12 = annotBed12, myannotGff3 = annotGff3)
+DMS_G1G2additiveEffect_4BPmin_ANNOT=DMS_G1G2additiveEffect_4BPmin_ANNOT %>% mutate(effect = "G1+G2")
 
-# INTERACTION effects: DMS found in CC-CT which show a differential methylation in the opposite direction in TC-TT, or inversely (reaction norm are inversed)
-setDMSInversionSlope_GENES  = getAnnotationFun(DMSdf = setDMSInversionSlope,
-                         annotBed12 = annotBed12, annotGff3 = annotGff3, isDMDaDataframeWithBP = FALSE)
+DMS_G1G2interactionEffect_4BPmin_ANNOT = myHomebrewDMSannotation(DMSvec = DMS_G1G2interactionEffect_4BPmin,
+                                                                 myannotBed12 = annotBed12, myannotGff3 = annotGff3)
+DMS_G1G2interactionEffect_4BPmin_ANNOT=DMS_G1G2interactionEffect_4BPmin_ANNOT%>% mutate(effect = "G1:G2")
+# "check that these features are identical:"
+# "gasAcul04256-RA" "gasAcul04255-RA" -> overlapping: Protein if unknown function & Proteolipid protein DM beta
 
-# Plot a Venn diagram
-ggVennDiagram(list("Paternal effect" = DMS_PaternalEffect_4BPmin_GENES$Name, "Offspring effect" = DMS_OffspringEffect_4BPmin_GENES$Name,
-                   "InversionSlope" = setDMSInversionSlope_GENES$Name),
-              label_alpha = 0) +
-  scale_fill_gradient(low="white",high = "red") + theme(legend.position = "none") + ggtitle("Genes in each effect")
-# Save:
-pdf(file = "../../dataOut/DMS3groupsVenn_GENES.pdf", width = 7, height = 6)
-ggVennDiagram(list("Paternal effect" = DMS_PaternalEffect_4BPmin_GENES$Name, "Offspring effect" = DMS_OffspringEffect_4BPmin_GENES$Name,
-                   "InversionSlope" = setDMSInversionSlope_GENES$Name),
-              label_alpha = 0) +
-  scale_fill_gradient(low="white",high = "red") + theme(legend.position = "none") + ggtitle("Genes in each effect")
+# Plot a Venn diagram to see genes in common
+pdf(file = "../../dataOut/DMSgroupsVenn_geneLevel.pdf", width = 7, height = 6)
+ggVennDiagram(list("G1" = DMS_G1onlyEffect_4BPmin_ANNOT$feature.name, "G2" = DMS_G2onlyEffect_4BPmin_ANNOT$feature.name,
+                   "G1+G2" = DMS_G1G2additiveEffect_4BPmin_ANNOT$feature.name, "G1:G2" = DMS_G1G2interactionEffect_4BPmin_ANNOT$feature.name),
+              label_alpha = 0) + scale_color_manual(values = c(1,1,1,1))+
+  scale_fill_gradient(low="white",high = "yellow") + theme(legend.position = "none") + ggtitle("Genes in each effect")
 dev.off()
 
-# The five cases of Venn diagram:
-annot_caseVennG1only = DMS_PaternalEffect_4BPmin_GENES[!DMS_PaternalEffect_4BPmin_GENES$Name %in% DMS_OffspringEffect_4BPmin_GENES$Name,]
-annot_caseVennG2only = DMS_OffspringEffect_4BPmin_GENES[!DMS_OffspringEffect_4BPmin_GENES$Name %in% DMS_PaternalEffect_4BPmin_GENES$Name & 
-                                              !DMS_OffspringEffect_4BPmin_GENES$Name %in% setDMSInversionSlope_GENES$Name,]
-annot_caseVennG1G2NOinter = DMS_OffspringEffect_4BPmin_GENES[DMS_OffspringEffect_4BPmin_GENES$Name %in% DMS_PaternalEffect_4BPmin_GENES$Name & 
-                                                   !DMS_OffspringEffect_4BPmin_GENES$Name %in% setDMSInversionSlope_GENES$Name,]
-annot_caseVennG1G2inter = DMS_OffspringEffect_4BPmin_GENES[DMS_OffspringEffect_4BPmin_GENES$Name %in% DMS_PaternalEffect_4BPmin_GENES$Name & 
-                                                 DMS_OffspringEffect_4BPmin_GENES$Name %in% setDMSInversionSlope_GENES$Name,] 
-annot_caseVennG2interNOG1 = DMS_OffspringEffect_4BPmin_GENES[!DMS_OffspringEffect_4BPmin_GENES$Name %in% DMS_PaternalEffect_4BPmin_GENES$Name &
-                                                   DMS_OffspringEffect_4BPmin_GENES$Name %in% setDMSInversionSlope_GENES$Name,]
+## NB some genes have DMS in different effects!
+# A gene has DMSs in the 4 effects!
+geneAll4 = intersect(intersect(intersect(DMS_G1onlyEffect_4BPmin_ANNOT$feature.name, DMS_G2onlyEffect_4BPmin_ANNOT$feature.name),
+                               DMS_G1G2additiveEffect_4BPmin_ANNOT$feature.name), DMS_G1G2interactionEffect_4BPmin_ANNOT$feature.name)
+DMS_G1onlyEffect_4BPmin_ANNOT[DMS_G1onlyEffect_4BPmin_ANNOT$feature.name %in% geneAll4,]
+## FKBP3 & DPP6
+
 ```
 
-### Save annotated Manhattan plots
+#### Focus on gene FKBP3
 
-```{r manhattanCasesVenn,fig.height = 5, fig.width = 16}
-namesCases = c("G1", "G2", "G1+G2", "G1:G2", "G2noG1")
-casesVec=c("annot_caseVennG1only", "annot_caseVennG2only", "annot_caseVennG1G2NOinter", "annot_caseVennG1G2inter", "annot_caseVennG2interNOG1")
-
-plotAndsave <- function(i){
-  P=plotManhattanGenesDMS4BP(annotFile = get(casesVec[i]),
-                           GYgynogff = GYgynogff, isBPinfo = FALSE, 
-                           myxlab = paste0("Genes linked with the ", namesCases[[i]], " effect"))
-  print(P)
-  pdf(paste0("../../dataOut/ManhattanPlots/Manhattan", namesCases[[i]], ".pdf"), width = 16, height = 5)
-  P
+```{r focusFKBP3}
+plotGeneTarget <- function(myTargetGene, myannotBed12=annotBed12){
+  # plotdf
+  dfplot = rbind(DMS_G1onlyEffect_4BPmin_ANNOT[DMS_G1onlyEffect_4BPmin_ANNOT$GeneSymbol %in% myTargetGene,],
+                 DMS_G2onlyEffect_4BPmin_ANNOT[DMS_G2onlyEffect_4BPmin_ANNOT$GeneSymbol %in% myTargetGene,],
+                 DMS_G1G2additiveEffect_4BPmin_ANNOT[DMS_G1G2additiveEffect_4BPmin_ANNOT$GeneSymbol %in% myTargetGene,],
+                 DMS_G1G2interactionEffect_4BPmin_ANNOT[DMS_G1G2interactionEffect_4BPmin_ANNOT$GeneSymbol %in% myTargetGene,])
+  # Find TSS position of the gene
+  dfplot$TSSpos = myannotBed12$TSSes[myannotBed12$TSSes$name %in% dfplot$feature.name]@ranges@start
+  # Set TSS as origin
+  dfplot$start_distToTSS = dfplot$start - dfplot$TSSpos 
+  dfplot$end_distToTSS = dfplot$end - dfplot$TSSpos 
+  dfplot$start.gene_distToTSS = dfplot$start.gene - dfplot$TSSpos 
+  dfplot$end.gene_distToTSS = dfplot$end.gene - dfplot$TSSpos 
+  # Reorder effects factor for legend
+  dfplot$effect <- factor(dfplot$effect, levels = c("G1", "G2", "G1+G2", "G1:G2"))
+   # Prepare rectangles
+  mini=min(dfplot$start.gene_distToTSS, dfplot$start_distToTSS)
+  maxi=max(dfplot$end.gene_distToTSS, dfplot$end_distToTSS)+100
+  start.gene_distToTSS = unique(dfplot$start.gene_distToTSS)
+  end.gene_distToTSS = unique(dfplot$end.gene_distToTSS)
+  # Plot
+  plotGeneTarget= ggplot(dfplot) +
+    geom_rect(xmin=mini, xmax=maxi, ymin=0, ymax =.5, fill="#bfb6b6")+
+    geom_rect(aes(xmin=start.gene_distToTSS, xmax=end.gene_distToTSS, ymin=0, ymax =.5), fill = "black")+
+    geom_point(aes(x = start_distToTSS, y = .8, col = effect, pch=featureType), size = 5) +
+    geom_segment(aes(x = start_distToTSS, xend = start_distToTSS, y=0, yend=.8, col = effect)) +
+    geom_segment(aes(x = 0, xend = 0, y=0, yend=.5), col = "red", size = 3) + # TSS
+    theme_blank() +
+    theme(axis.title.x = element_blank(), axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+    labs(title = paste(unique(dfplot$GeneSymbol), ":", dfplot$description),
+         subtitle = str_wrap(dfplot$summary, width = 150))+
+  scale_color_manual(values = c("#E69F00", "#56B4E9", "#009E73", "#CC79A7"))#cb friendly palette
+  ####### And by brother pairs
+  dfplot_BP = merge(df_effects_full[df_effects_full$DMS %in% dfplot$DMS,c("BP", "DMS", "effectBPlevel")], dfplot)
+  # Rm potision with no effect in this BP
+  dfplot_BP=dfplot_BP[!is.na(dfplot_BP$effectBPlevel),]
+  # Same order of Father's family as in figure 1 (clusters)
+  dfplot_BP$BP = factor(dfplot_BP$BP, levels = c("BP05", "BP31", "BP04", "BP30", "BP16", "BP34", "BP49","BP46"))
+  # Plot
+  plotGeneTargetBP = ggplot(dfplot_BP) +
+    geom_rect(xmin=mini, xmax=maxi, ymin=0, ymax =.5, fill="#bfb6b6")+
+    geom_rect(aes(xmin=start.gene_distToTSS, xmax=end.gene_distToTSS, ymin=0, ymax =.5), fill = "black")+
+    geom_point(aes(x = start_distToTSS, y = .8, col = effectBPlevel, pch=featureType), size = 5) +
+    geom_segment(aes(x = start_distToTSS, xend = start_distToTSS, y=0, yend=.8, col = effectBPlevel)) +
+    geom_segment(aes(x = 0, xend = 0, y=0, yend=.5), col = "red", size = 3) + # TSS
+    theme_blank() +
+    facet_grid(BP~.)+ theme(panel.spacing = unit(1.5, "lines"))+
+    theme(axis.title.x = element_blank(), axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+    scale_y_continuous(expand=expansion(mult=c(0,0.15))) # increase space up
+    scale_color_manual(values = c("#E69F00", "#56B4E9", "#009E73", "#CC79A7"))#cb friendly palette
+  
+  return(list(myTargetGene_DMSdf=dfplot, plotGeneTarget=plotGeneTarget, plotGeneTargetBP=plotGeneTargetBP))
 }
 
-plotAndsave(1);  dev.off()
-plotAndsave(2);  dev.off()
-plotAndsave(3);  dev.off()
-plotAndsave(4);  dev.off()
-plotAndsave(5);  dev.off()
-rm(casesVec,namesCases, plotAndsave)
+## All 4 effects:
+P = plotGeneTarget(myTargetGene = "FKBP3")
+
+P$myTargetGene_DMSdf
+
+# Zoom in 1 
+P1 = P$plotGeneTarget + coord_cartesian(xlim=c(3588,3636)) + theme(legend.position = "none") +  
+  ggtitle("") + labs(subtitle = "")+ theme(plot.background = element_rect(colour = "black", fill=NA, size=1))
+# Zoom in 2
+P2 = P$plotGeneTarget + coord_cartesian(xlim=c(4890,5060)) + theme(legend.position = "none") +  
+  ggtitle("") + labs(subtitle = "")+ theme(plot.background = element_rect(colour = "black", fill=NA, size=1))
+
+## For all BP, zoomed
+Pbp1 = P$plotGeneTargetBP + theme(legend.position = "none") + coord_cartesian(xlim=c(3588,3636))+
+  theme(plot.background = element_rect(colour = "black", fill=NA, size=1))
+Pbp2 = P$plotGeneTargetBP + theme(legend.position = "none") + coord_cartesian(xlim=c(4890,5060))+ 
+  theme(plot.background = element_rect(colour = "black", fill=NA, size=1))
+
+fullplotFKBP3 = cowplot::plot_grid(P$plotGeneTarget,
+                                   cowplot::plot_grid(P1, P2, nrow = 1, ncol =2), 
+                                   cowplot::plot_grid(Pbp1, Pbp2, nrow = 1, ncol =2), 
+                                   nrow = 3, rel_heights = c(1,1,3), labels = c("A", "B", "C"))
+fullplotFKBP3
+
+# Plot gene and zooms
+pdf("../../dataOut/FKBP3_DMS.pdf", width = 15, height = 15)
+fullplotFKBP3
+dev.off()
 ```
 
-### Gene Ontology analysis:
-
--   Gene universe: all genes which are present in the dataset
--   Gene sub-universe: all genes in DMS in the GOterm universe we only
-want genes with (1) DMS between G2 exposed to parasites, by brother
-pair, present in AT LEAST 4 BP/8 for which (2) CpGs were covered,
-and (3) which have a GOterm attributed
+### Gene Ontology analysis OVERALL (all genes with G1, G2 or both effects):
 
 ```{r geneOnto_createUniverse}
 # create gene universe
@@ -854,13 +976,12 @@ gsc_universe <- GeneSetCollection(goAllFrame, setType = GOCollection())
 The conditional hypergeometric takes this into account, and only uses those terms that were not already significant when testing a higher order (parent) term.
 
 ```{r geneOnto_runGO}
-GO_G1only = makedfGO(annot_caseVennG1only, gene_universe, effect = "G1only")
-GO_G2only = makedfGO(annot_caseVennG2only, gene_universe, effect = "G2only")
-GO_G1G2NOinter = makedfGO(annot_caseVennG1G2NOinter, gene_universe, effect = "G1G2NOinter")
-GO_G1G2inter = makedfGO(annot_caseVennG1G2inter, gene_universe, effect = "G1G2inter")
-GO_G2interNOG1 = makedfGO(annot_caseVennG2interNOG1, gene_universe, effect = "G2interNOG1")
+GO_G1only = makedfGO(DMS_G1onlyEffect_4BPmin_ANNOT, gene_universe, effect = "G1only")
+GO_G2only = makedfGO(DMS_G2onlyEffect_4BPmin_ANNOT, gene_universe, effect = "G2only")
+GO_G1G2addit = makedfGO(DMS_G1G2additiveEffect_4BPmin_ANNOT, gene_universe, effect = "G1+G2")
+GO_G1G2inter = makedfGO(DMS_G1G2interactionEffect_4BPmin_ANNOT, gene_universe, effect = "G1:G2")
 
-dfGO = rbind(GO_G1only, GO_G2only, GO_G1G2NOinter, GO_G1G2inter, GO_G2interNOG1)
+dfGO = rbind(GO_G1only, GO_G2only, GO_G1G2addit, GO_G1G2inter)
 ```
 
 ### GO plot
@@ -877,223 +998,119 @@ GOplot <- dfGO %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
   facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")
 GOplot
 
-pdf(GOplot, file = "../../dataOut/GOplot5Venncat.pdf", width = 10, height = 25)
+pdf(GOplot, file = "../../dataOut/GOplot4Venncat.pdf", width = 10, height = 25)
 GOplot
 dev.off()
 ```
 
-## Correlation between methylation and phenotype (nbr worms, BCI)
+## Correlation between methylation (after PCA) and phenotype (nbr worms, BCI)
 
 Approach:
 
-1. Extract methylation values
+For each DMS G1 and/or G2 effects:
 
--   raw beta values at DMS shared by \>4 (or more) BP or
--   derive difference between individual and mean of the group
+1. Extract methylation values: raw beta values at DMS shared by \>4 (or more) BP
 
-2.  PCA
+2. PCA
 
-3.  extract axes 1 & 2
+3. Extract axes 1 & 2
 
-4.  Correlation with parasite load/BCI
+4. Correlation with parasite load/BCI
 
-### I. PCA based on all methylation values at DMS positions detected for INTERACTION effect, with imputation of missing values
+5. If result positive, annotate the CpG associated with significant axis
 
-```{r BCI_PCA_G1G2inter}
-# PARENTAL effect: DMS found in either CC-TC or CT-TT comparisons
-# DMS_PaternalEffect_4BPmin
-# 
-# OFFSPRING effect: DMS found in either CC-CT or TC-TT comparisons
-# DMS_OffspringEffect_4BPmin
-#
-# INTERACTION effect: DMS found in CC-CT which show a differential methylation (not necessarily significant) 
-# in the opposite direction in TC-TT, or inversely (reaction norm are inversed)
-# setDMSInversionSlope
-
-# The five cases of Venn diagram:
-# caseVennG1only
-# caseVennG2only              
-# caseVennG1G2NOinter
-# caseVennG1G2inter
-# caseVennG2interNOG1
-
-# Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
-resPCACpG_G1G2inter <- getPCACpG(DMSvec=caseVennG1G2inter, effect="INTERACTION effect G1:G2")
-
-# PCA plot of individuals with associated colors for paternal treatments
-fviz_pca_ind(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$res.PCA,  label="none", 
-             habillage=as.factor(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$metadata$PAT)) +
-  scale_shape_manual(values=c(19,19))
-
-# PCA plot of individuals with associated colors for brother pair
-fviz_pca_ind(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$res.PCA,  label="none",
-             habillage=as.factor(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$metadata$brotherPairID))
-
-formula(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$modSel)
-# The SECOND PCA axis is significant in BCI
-# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-#   PCA2:PAT + No.Worms:PAT
-
-### How much of the BCI variance is explained by each variables?
-mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
-                   data = resPCACpG_G1G2inter$PCA_percAtDMS_imputed$metadata)
-mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), 
-                 data = resPCACpG_G1G2inter$PCA_percAtDMS_imputed$metadata)
-mod_noPCA2 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
-                  data = resPCACpG_G1G2inter$PCA_percAtDMS_imputed$metadata)
-
-# R2c conditional R2 value associated with fixed effects plus the random effects.
-A = (MuMIn::r.squaredGLMM(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$modSel)[2] -
-       MuMIn::r.squaredGLMM(mod_noworms)[2])*100
-B = (MuMIn::r.squaredGLMM(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$modSel)[2] -
-       MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
-C = (MuMIn::r.squaredGLMM(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$modSel)[2] -
-       MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
-
-round(A, 2) #% of the variance in associated with the parasite load (number of worms)
-round(B, 2) #% of the variance in associated with the paternal treatment
-round(C, 2) #% of the variance in associated with the PCA axis
-
-### Plot of the model
-phenoMethPlot1 <- plot(ggpredict(resPCACpG_G1G2inter$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
-  scale_color_gradient(low = "blue", high = "red")+
-  scale_fill_gradient(low = "blue", high = "red") +
-  ylab("Body Condition Index") + xlab("Number of worms")+
-  ggtitle("Predicted values of Body Condition Index in offspring")
-
-phenoMethPlot1
-
-# save
-pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_G1:G2effect.pdf", width = 10, height = 5)
-phenoMethPlot1
-dev.off()
-
-# Run model CpG by CpG, for the CpG in the second PCA axis
-# myDF = data.frame()
-# for (i in 1:nrow(percMethylation(resPCACpG_G1G2inter$CpGPCA2))){
-#   print(i)
-#   metadata = fullMetadata_OFFS
-#   metadata$PCA2percMeth = percMethylation(resPCACpG_G1G2inter$CpGPCA2)[i,]
-#   # rm NA in PCA
-#   metadata=metadata[!is.na(metadata$PCA2percMeth),]
-#   mod = lmer(BCI ~ PCA2percMeth*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
-#   modNoMeth = lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
-#   print(lrtest(mod, modNoMeth))
-#   myDF <- rbind(myDF, data.frame(CpG=paste(resPCACpG_G1G2inter$CpGPCA2[i]$chr, resPCACpG_G1G2inter$CpGPCA2[i]$end),
-#                                  pvalue=lrtest(mod, modNoMeth)[["Pr(>Chisq)"]][2]))
-# }
-
-# FDR correction
-# myDF[myDF$pvalue<0.05,]
-# myDF[p.adjust(p = myDF$pvalue, method = "fdr")<0.05,] # No position
-```
-
-### II. PCA based on all methylation values at DMS positions detected for PATERNAL effect, with imputation of missing values
+### PCA based on all methylation values at DMS positions detected for PATERNAL effect, with imputation of missing values
 
 ```{r BCI_PCA_G1}
 # Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
-resPCACpG_G1only <- getPCACpG(DMSvec=caseVennG1only, effect="G1 only")
-
-formula(resPCACpG_G1only$PCA_percAtDMS_imputed$modSel)
-# The SECOND PCA axis is significant in BCI
+RESPCA <- getPCACpG(DMSvec=unique(c(DMS_PaternalEffect_4BPmin, DMS_OffspringEffect_4BPmin)), effect="all effects")
+# 2272 DMS linked with all effects
+# [1] "The chosen model is:"
 # BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-#   PCA2:PAT + No.Worms:PAT
+#     PCA2:PAT + No.Worms:PAT
+# <environment: 0x55fd9c8571e8>
+# [1] "1168 CpG sites most correlated (p < 0.05) with the first principal component"
+# [1] "1135 CpG sites most correlated (p < 0.05) with the second principal component"
+
+formula(RESPCA$PCA_percAtDMS_imputed$modSel)
+# The SECOND PCA axis is significant in BCI
+# [1] "The chosen model is:"
+BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
+    PCA2:PAT + No.Worms:PAT
 
 ### How much of the BCI variance is explained by each variables?
 mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
-                   data = resPCACpG_G1only$PCA_percAtDMS_imputed$metadata)
+                   data = RESPCA$PCA_percAtDMS_imputed$metadata)
 mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), 
-                 data = resPCACpG_G1only$PCA_percAtDMS_imputed$metadata)
+                 data = RESPCA$PCA_percAtDMS_imputed$metadata)
 mod_noPCA2 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
-                  data = resPCACpG_G1only$PCA_percAtDMS_imputed$metadata)
+                  data = RESPCA$PCA_percAtDMS_imputed$metadata)
 
 # R2c conditional R2 value associated with fixed effects plus the random effects.
-A = (MuMIn::r.squaredGLMM(resPCACpG_G1only$PCA_percAtDMS_imputed$modSel)[2] -
+A = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noworms)[2])*100
-B = (MuMIn::r.squaredGLMM(resPCACpG_G1only$PCA_percAtDMS_imputed$modSel)[2] -
+B = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
-C = (MuMIn::r.squaredGLMM(resPCACpG_G1only$PCA_percAtDMS_imputed$modSel)[2] -
+C = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
        MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
-round(A, 2) #% of the variance in associated with the parasite load (number of worms)
-round(B, 2) #% of the variance in associated with the paternal treatment
-round(C, 2) #% of the variance in associated with the PCA axis
+round(A, 2) #10.71% of the variance in associated with the parasite load (number of worms)
+round(B, 2) #22% of the variance in associated with the paternal treatment
+round(C, 2) #9.47% of the variance in associated with the second PCA axis
 
 ### Plot of the model
-phenoMethPlot2 <- plot(ggpredict(resPCACpG_G1only$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
-  scale_color_gradient(low = "blue", high = "red")+
-  scale_fill_gradient(low = "blue", high = "red") +
+phenoMethPlot <- plot(ggpredict(RESPCA$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) +
+  theme_bw() +
+  scale_color_gradient(low = "white", high = "red")+
+  scale_fill_gradient(low = "white", high = "red") +
   ylab("Body Condition Index") + xlab("Number of worms")+
   ggtitle("Predicted values of Body Condition Index in offspring")
-
-phenoMethPlot2
+phenoMethPlot
 
 # save
-pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_G1onlyeffect.pdf", width = 10, height = 5)
-phenoMethPlot2
+pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_alleffects.pdf", width = 7, height = 5)
+phenoMethPlot
 dev.off()
-
-# Run model CpG by CpG, for the CpG in the second PCA axis
-# myDF = data.frame()
-# for (i in 1:nrow(percMethylation(resPCACpG_G1only$CpGPCA2))){
-#   print(i)
-#   metadata = fullMetadata_OFFS
-#   metadata$PCA2percMeth = percMethylation(resPCACpG_G1only$CpGPCA2)[i,]
-#   # rm NA in PCA
-#   metadata=metadata[!is.na(metadata$PCA2percMeth),]
-#   mod = lmer(BCI ~ PCA2percMeth*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
-#   modNoMeth = lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
-#   print(lrtest(mod, modNoMeth))
-#   myDF <- rbind(myDF, data.frame(CpG=paste(resPCACpG_G1only$CpGPCA2[i]$chr, resPCACpG_G1only$CpGPCA2[i]$end),
-#                                  pvalue=lrtest(mod, modNoMeth)[["Pr(>Chisq)"]][2]))
-# }
-# 
-# # FDR correction
-# myDF[myDF$pvalue<0.05,]
-# myDF[p.adjust(p = myDF$pvalue, method = "fdr")<0.05,] # No position
 ```
 
-### III. PCA based on all methylation values at DMS positions detected for OFFSPRING effect, with imputation of missing values
+### Annotate the genes linked with axis 2 of the PCA
 
-```{r BCI_PCA_G2}
-# Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
-resPCACpG_G2only <- getPCACpG(DMSvec=caseVennG2only, effect="G2 only")
+```{r AnnotPCA2}
+annotPCAaxis <- myHomebrewDMSannotation(DMSvec = paste(RESPCA$CpGPCA2$chr, RESPCA$CpGPCA2$end),
+                                        myannotBed12 = annotBed12, myannotGff3 = annotGff3)
 
-formula(resPCACpG_G2only$PCA_percAtDMS_imputed$modSel)
-# The FIRST PCA axis is significant in BCI
-# BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-#   PCA1:PAT + No.Worms:PAT
+write.csv(annotPCAaxis %>% dplyr::select(c("GeneSymbol", "feature.name", "Note", "chrom", "nDMSperGenekb", "ENTREZID", "description", "summary"))%>% unique,
+          "../../dataOut/annotPCA2_1135DMS.csv", row.names = F)
+```
 
-### How much of the BCI variance is explained by each variables?
-mod_noworms = lmer(BCI ~ PCA1 + PAT + PCA1:PAT + (1 | brotherPairID) + (1 | Sex), 
-                   data = resPCACpG_G2only$PCA_percAtDMS_imputed$metadata)
-mod_noPAT = lmer(BCI ~ PCA1 + No.Worms + (1 | brotherPairID) + (1 | Sex), 
-                 data = resPCACpG_G2only$PCA_percAtDMS_imputed$metadata)
-mod_noPCA1 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
-                  data = resPCACpG_G2only$PCA_percAtDMS_imputed$metadata)
+### Plot annotated Manhattan plots TBC for those 1135 positions of PCA2!
 
-# R2c conditional R2 value associated with fixed effects plus the random effects.
-A = (MuMIn::r.squaredGLMM(resPCACpG_G2only$PCA_percAtDMS_imputed$modSel)[2] -
-       MuMIn::r.squaredGLMM(mod_noworms)[2])*100
-B = (MuMIn::r.squaredGLMM(resPCACpG_G2only$PCA_percAtDMS_imputed$modSel)[2] -
-       MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
-C = (MuMIn::r.squaredGLMM(resPCACpG_G2only$PCA_percAtDMS_imputed$modSel)[2] -
-       MuMIn::r.squaredGLMM(mod_noPCA1)[2])*100
-round(A, 2) #% of the variance in associated with the parasite load (number of worms)
-round(B, 2) #% of the variance in associated with the paternal treatment
-round(C, 2) #% of the variance in associated with the PCA axis
+```{r manhattanCasesVenn,fig.height = 5, fig.width = 16}
+P=plotManhattanGenesDMS(annotFile = annotPCAaxis, GYgynogff = GYgynogff)
+P
 
-### Plot of the model
-phenoMethPlot3 <- plot(ggpredict(resPCACpG_G2only$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA1", "PAT")), add.data = TRUE, alpha = .08) + theme_bw() +
-  scale_color_gradient(low = "blue", high = "red")+
-  scale_fill_gradient(low = "blue", high = "red") +
-  ylab("Body Condition Index") + xlab("Number of worms")+
-  ggtitle("Predicted values of Body Condition Index in offspring")
+pdf("../../dataOut/ManhattanPlots1135DMS.pdf", width = 10, height = 3)
+P
+dev.off()
+```
 
-phenoMethPlot3
+### GO term for these CpGs
 
-# save
-pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_G2onlyeffect.pdf", width = 10, height = 5)
-phenoMethPlot3
+```{r geneOnto_runGO_1135DMS_axis2}
+GO_PCA2_1135DMS = makedfGO(annotPCAaxis, gene_universe, effect = "PCAaxis2")
+
+GOplot <- GO_PCA2_1135DMS %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
+  geom_point(aes(color = p.value.adjusted, size = genePercent)) +
+  scale_color_gradient(name="adjusted\np-value", low = "red", high = "blue") +
+  scale_size_continuous(name = "% of genes")+
+  theme_bw() + ylab("") + xlab("") +
+  theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
+        legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
+        legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
+  facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")
+GOplot
+
+pdf(GOplot, file = "../../dataOut/GOplotPCA2.pdf", width = 6, height = 7)
+GOplot
 dev.off()
 ```
 
@@ -1586,38 +1603,38 @@ myfun <- function(X){
   # Calculate residuals of nbr of methCpG by nbr of covered CpG
   X$res_Nbr_methCpG_Nbr_coveredCpG_HYPO = residuals(lm(X$hypoMeth ~ X$ncov))
   X$res_Nbr_methCpG_Nbr_coveredCpG_HYPER = residuals(lm(X$hyperMeth ~ X$ncov))
-
+  
   ## Statistical model: is it different in each offspring trt group?
   mod1 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPO ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
                data = X, REML = F)
   mod0 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPO ~ 1 + (1|brotherPairID/clutch.ID) + (1|Sex),
                data = X, REML = F)
   print(lrtest(mod1, mod0))
-
+  
   ## Post-hoc test:
   modhypo <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPO ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
                   data = X)
   ## pairwise posthoc test
   print(emmeans(modhypo, list(pairwise ~ Treatment), adjust = "tukey"))
-
+  
   mod3 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPER ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
                data = X, REML = F)
   mod4 <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPER ~ 1 + (1|brotherPairID/clutch.ID) + (1|Sex),
                data = X, REML = F)
   print(lrtest(mod3, mod4))
-
+  
   ## Post-hoc test:
   modhyper <- lmer(res_Nbr_methCpG_Nbr_coveredCpG_HYPER ~ Treatment + (1|brotherPairID/clutch.ID) + (1|Sex),
                    data = X)
   ## pairwise posthoc test
   print(emmeans(modhyper, list(pairwise ~ Treatment), adjust = "tukey"))
-
+  
   ## Plot
   phypo <- plot(ggpredict(modhypo, terms = c("Treatment")), add.data = TRUE)+
     scale_y_continuous("Residuals of number of hypomethylated methylated \ncytosines on number of cytosines covered") +
     ggtitle("Predicted residuals nbr of hypomethylated CpG")+
     theme_bw()
-
+  
   phyper <- plot(ggpredict(modhyper, terms = c("Treatment")), add.data = TRUE)+
     scale_y_continuous("Residuals of number of hypermethylated methylated \n cytosines on number of cytosines covered") +
     ggtitle("Predicted residuals nbr of hypermethylated CpG")+

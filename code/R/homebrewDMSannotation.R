@@ -91,8 +91,15 @@ myHomebrewDMSannotation <- function(DMSvec, myannotBed12, myannotGff3){
   ENTREZIDlist = mapIds(org.Hs.eg.db, keys = annotDF$GeneSymbol, column = "ENTREZID", keytype = "SYMBOL")
   
   # Retrieve gene summary & description IN HUMANS (more annotation)
+  
+  # Throw in an error if too toooo big (needs then a bigger fix e.g. rollaply)
+  if (length(ENTREZIDlist) > 1200){print("ERROR nCpG too numerous, please keep it below ~1200 genes")}
   ## Fix if DB too big:
-  if (length(ENTREZIDlist) > 300){
+  if (length(ENTREZIDlist) > 300 & length(ENTREZIDlist) < 800){
+    SummaENTREZ1 = entrez_summary(db="gene", id=ENTREZIDlist[1:400])
+    SummaENTREZ2 = entrez_summary(db="gene", id=ENTREZIDlist[401:length(ENTREZIDlist)])
+    SummaENTREZ = c(SummaENTREZ1, SummaENTREZ2)
+  } else if (length(ENTREZIDlist) > 300 & length(ENTREZIDlist) > 800){
     SummaENTREZ1 = entrez_summary(db="gene", id=ENTREZIDlist[1:400])
     SummaENTREZ2 = entrez_summary(db="gene", id=ENTREZIDlist[401:800])
     SummaENTREZ3 = entrez_summary(db="gene", id=ENTREZIDlist[801:length(ENTREZIDlist)])
