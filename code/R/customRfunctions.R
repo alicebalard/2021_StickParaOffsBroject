@@ -281,7 +281,6 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
 #########
 ## PCA ## 
 #########
-
 myPCA <- function(x, incomplete){
   if (incomplete==TRUE){
     # estimate the number of components from incomplete data
@@ -301,39 +300,39 @@ myPCA <- function(x, incomplete){
   # 4. Correlation with parasite load/BCI
   mod = lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
   ## Model selection:
-  modSel = lmer(formula = attr(attr(step(mod, reduce.random = F), "drop1"), "heading")[3],
+  modSel = lmer(formula = attr(attr(lmerTest::step(mod, reduce.random = F), "drop1"), "heading")[3],
                 data=metadata, REML = F)
   print("The chosen model is:")
   print(formula(modSel))
   return(list(res.PCA=res.PCA, modSel = modSel, metadata = metadata))
 }
 
-getPCACpG <- function(DMSvec=caseVennG1G2inter, effect="INTERACTION effect G1:G2"){
+getPCACpG <- function(DMSvec, effect){
   pos2keep = which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in%
                      DMSvec)
   uniteAtDMS = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, pos2keep)
   percAtDMS = percMethylation(uniteAtDMS)
-
+  
   print(paste(nrow(percAtDMS), "DMS linked with", effect))
-
+  
   # We use missMDA and FactoMineR for imputation of missing data and
   # performing of PCA: (see:
   #
   #                       -   <http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html>
   #                       -   <https://www.youtube.com/watch?v=OOM8_FH6_8o>)
-
+  
   PCA_percAtDMS_imputed <- myPCA(x = t(percAtDMS), incomplete = TRUE)
-
+  
   # The function dimdesc() can be used to identify the most correlated variables with a given principal component.
   mydimdesc = dimdesc(PCA_percAtDMS_imputed$res.PCA, axes = c(1,2), proba = 0.05)
-
+  
   print(paste(nrow(mydimdesc$Dim.1$quanti), "CpG sites most correlated (p < 0.05) with the first principal component"))
   print(paste(nrow(mydimdesc$Dim.2$quanti), "CpG sites most correlated (p < 0.05) with the second principal component"))
-
+  
   # Extract the values for CpGs associated with the
   CpGPCA1 = methylKit::select(uniteAtDMS, as.numeric(gsub("V","",rownames(mydimdesc$Dim.1$quanti))))
   CpGPCA2 = methylKit::select(uniteAtDMS, as.numeric(gsub("V","",rownames(mydimdesc$Dim.2$quanti))))
-
+  
   return(list(PCA_percAtDMS_imputed=PCA_percAtDMS_imputed, CpGPCA1=CpGPCA1, CpGPCA2=CpGPCA2))
 }
 
@@ -415,22 +414,22 @@ query_by_degree = function(data, groups, params_by_degree, ...) {
 ## Differential methylation functions ##
 ########################################
 getDiffMeth <- function(myuniteCov, myMetadata, mccores=10, mydif = 15){
-    if (length(table(myMetadata$Sex)) == 1 & length(table(myMetadata$brotherPairID)) == 1){ # 1 sex, 1 BP -> no covariate
-        myDiffMeth=calculateDiffMeth(myuniteCov, mc.cores = mccores)#10 on Apocrita
-    } else { # if more than 1 sex or 1 BP, we add a covariate
-        if (length(table(myMetadata$Sex)) == 1 & length(table(myMetadata$brotherPairID)) > 1){
-            cov = data.frame(brotherPairID = myMetadata$brotherPairID)
-        } else if (length(table(myMetadata$Sex)) == 2 & length(table(myMetadata$brotherPairID)) > 1){
-            cov = data.frame(brotherPairID = myMetadata$brotherPairID, Sex = myMetadata$Sex)
-        } else if (length(table(myMetadata$Sex)) == 2){ # this is for within brother pairs
-            cov = data.frame(Sex = myMetadata$Sex)
-        } 
-        myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = mccores)#10 on Apocrita
-    }
-    ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
-    ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
-    myDMS_15pc = getMethylDiff(myDiffMeth, difference=mydif, qvalue=0.01)
-    return(myDMS_15pc)
+  if (length(table(myMetadata$Sex)) == 1 & length(table(myMetadata$brotherPairID)) == 1){ # 1 sex, 1 BP -> no covariate
+    myDiffMeth=calculateDiffMeth(myuniteCov, mc.cores = mccores)#10 on Apocrita
+  } else { # if more than 1 sex or 1 BP, we add a covariate
+    if (length(table(myMetadata$Sex)) == 1 & length(table(myMetadata$brotherPairID)) > 1){
+      cov = data.frame(brotherPairID = myMetadata$brotherPairID)
+    } else if (length(table(myMetadata$Sex)) == 2 & length(table(myMetadata$brotherPairID)) > 1){
+      cov = data.frame(brotherPairID = myMetadata$brotherPairID, Sex = myMetadata$Sex)
+    } else if (length(table(myMetadata$Sex)) == 2){ # this is for within brother pairs
+      cov = data.frame(Sex = myMetadata$Sex)
+    } 
+    myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = mccores)#10 on Apocrita
+  }
+  ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
+  ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
+  myDMS_15pc = getMethylDiff(myDiffMeth, difference=mydif, qvalue=0.01)
+  return(myDMS_15pc)
 }
 
 getDiffMethSimple <- function(myuniteCov, myMetadata){
@@ -449,64 +448,64 @@ getDiffMethSimple <- function(myuniteCov, myMetadata){
 
 ## Per brother pair:
 getDMperBP <- function(BP){
-    ## Unite object for one Brother Pair:
-    metadataBP_CC_TC = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
+  ## Unite object for one Brother Pair:
+  metadataBP_CC_TC = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
                                          fullMetadata_OFFS$trtG1G2 %in% c("NE_control", "E_control"), ]
-    metadataBP_CT_TT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
+  metadataBP_CT_TT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
                                          fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"), ]
-    metadataBP_CC_CT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
+  metadataBP_CC_CT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
                                          fullMetadata_OFFS$trtG1G2 %in% c("NE_control", "NE_exposed"), ]
-    metadataBP_TC_TT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
+  metadataBP_TC_TT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
                                          fullMetadata_OFFS$trtG1G2 %in% c("E_control", "E_exposed"), ]
-    
-    ## Make 4 separate uniteCov:
-    myuniteCovBP_CC_TC = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
-                                    treatment = metadataBP_CC_TC$trtG1G2_NUM, sample.ids = metadataBP_CC_TC$ID)
-    myuniteCovBP_CT_TT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
-                                    treatment = metadataBP_CT_TT$trtG1G2_NUM, sample.ids = metadataBP_CT_TT$ID)
-    myuniteCovBP_CC_CT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
-                                    treatment = metadataBP_CC_CT$trtG1G2_NUM, sample.ids = metadataBP_CC_CT$ID)
-    myuniteCovBP_TC_TT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
-                                    treatment = metadataBP_TC_TT$trtG1G2_NUM, sample.ids = metadataBP_TC_TT$ID)
-    
-    ## remove bases where NO fish in this BP has a coverage
-    myuniteCovBP_CC_TC = methylKit::select(myuniteCovBP_CC_TC, which(!is.na(rowSums(percMethylation(myuniteCovBP_CC_TC)))))
-    myuniteCovBP_CT_TT = methylKit::select(myuniteCovBP_CT_TT, which(!is.na(rowSums(percMethylation(myuniteCovBP_CT_TT)))))
-    myuniteCovBP_CC_CT = methylKit::select(myuniteCovBP_CC_CT, which(!is.na(rowSums(percMethylation(myuniteCovBP_CC_CT)))))
-    myuniteCovBP_TC_TT = methylKit::select(myuniteCovBP_TC_TT, which(!is.na(rowSums(percMethylation(myuniteCovBP_TC_TT)))))
-    
-    ## Calculate differential methylation:
-    ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%, sex as covariate
-    DMS_15pc_BP_CC_TC = getDiffMeth(myuniteCov = myuniteCovBP_CC_TC, myMetadata = metadataBP_CC_TC, mccores = 10, mydif = 15)
-    DMS_15pc_BP_CT_TT = getDiffMeth(myuniteCov = myuniteCovBP_CT_TT, myMetadata = metadataBP_CT_TT, mccores = 10, mydif = 15)
-    DMS_15pc_BP_CC_CT = getDiffMeth(myuniteCov = myuniteCovBP_CC_CT, myMetadata = metadataBP_CC_CT, mccores = 10, mydif = 15)
-    DMS_15pc_BP_TC_TT = getDiffMeth(myuniteCov = myuniteCovBP_TC_TT, myMetadata = metadataBP_TC_TT, mccores = 10, mydif = 15)
-
-    ## tile for Differentially methylated REGIONS
-    tilesBP_CC_TC = tileMethylCounts(myuniteCovBP_CC_TC,win.size=100,step.size=100,cov.bases = 10)
-    DMR_15pc_BP_CC_TC = getDiffMeth(tilesBP_CC_TC, metadataBP_CC_TC)
-    tilesBP_CT_TT = tileMethylCounts(myuniteCovBP_CT_TT,win.size=100,step.size=100,cov.bases = 10)
-    DMR_15pc_BP_CT_TT = getDiffMeth(tilesBP_CT_TT, metadataBP_CT_TT)
-    tilesBP_CC_CT = tileMethylCounts(myuniteCovBP_CC_CT,win.size=100,step.size=100,cov.bases = 10)
-    DMR_15pc_BP_CC_CT = getDiffMeth(tilesBP_CC_CT, metadataBP_CC_CT)
-    tilesBP_TC_TT = tileMethylCounts(myuniteCovBP_TC_TT,win.size=100,step.size=100,cov.bases = 10)
-    DMR_15pc_BP_TC_TT = getDiffMeth(tilesBP_TC_TT, metadataBP_TC_TT)
-
-    return(list(DMSlist = list(DMS_15pc_BP_CC_TC = DMS_15pc_BP_CC_TC, DMS_15pc_BP_CT_TT = DMS_15pc_BP_CT_TT, DMS_15pc_BP_CC_CT = DMS_15pc_BP_CC_CT, DMS_15pc_BP_TC_TT = DMS_15pc_BP_TC_TT),
-                DMRlist = list(DMR_15pc_BP_CC_TC = DMR_15pc_BP_CC_TC, DMR_15pc_BP_CT_TT = DMR_15pc_BP_CT_TT, DMR_15pc_BP_CC_CT = DMR_15pc_BP_CC_CT, DMR_15pc_BP_TC_TT = DMR_15pc_BP_TC_TT)))
+  
+  ## Make 4 separate uniteCov:
+  myuniteCovBP_CC_TC = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                  treatment = metadataBP_CC_TC$trtG1G2_NUM, sample.ids = metadataBP_CC_TC$ID)
+  myuniteCovBP_CT_TT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                  treatment = metadataBP_CT_TT$trtG1G2_NUM, sample.ids = metadataBP_CT_TT$ID)
+  myuniteCovBP_CC_CT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                  treatment = metadataBP_CC_CT$trtG1G2_NUM, sample.ids = metadataBP_CC_CT$ID)
+  myuniteCovBP_TC_TT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                  treatment = metadataBP_TC_TT$trtG1G2_NUM, sample.ids = metadataBP_TC_TT$ID)
+  
+  ## remove bases where NO fish in this BP has a coverage
+  myuniteCovBP_CC_TC = methylKit::select(myuniteCovBP_CC_TC, which(!is.na(rowSums(percMethylation(myuniteCovBP_CC_TC)))))
+  myuniteCovBP_CT_TT = methylKit::select(myuniteCovBP_CT_TT, which(!is.na(rowSums(percMethylation(myuniteCovBP_CT_TT)))))
+  myuniteCovBP_CC_CT = methylKit::select(myuniteCovBP_CC_CT, which(!is.na(rowSums(percMethylation(myuniteCovBP_CC_CT)))))
+  myuniteCovBP_TC_TT = methylKit::select(myuniteCovBP_TC_TT, which(!is.na(rowSums(percMethylation(myuniteCovBP_TC_TT)))))
+  
+  ## Calculate differential methylation:
+  ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%, sex as covariate
+  DMS_15pc_BP_CC_TC = getDiffMeth(myuniteCov = myuniteCovBP_CC_TC, myMetadata = metadataBP_CC_TC, mccores = 10, mydif = 15)
+  DMS_15pc_BP_CT_TT = getDiffMeth(myuniteCov = myuniteCovBP_CT_TT, myMetadata = metadataBP_CT_TT, mccores = 10, mydif = 15)
+  DMS_15pc_BP_CC_CT = getDiffMeth(myuniteCov = myuniteCovBP_CC_CT, myMetadata = metadataBP_CC_CT, mccores = 10, mydif = 15)
+  DMS_15pc_BP_TC_TT = getDiffMeth(myuniteCov = myuniteCovBP_TC_TT, myMetadata = metadataBP_TC_TT, mccores = 10, mydif = 15)
+  
+  ## tile for Differentially methylated REGIONS
+  tilesBP_CC_TC = tileMethylCounts(myuniteCovBP_CC_TC,win.size=100,step.size=100,cov.bases = 10)
+  DMR_15pc_BP_CC_TC = getDiffMeth(tilesBP_CC_TC, metadataBP_CC_TC)
+  tilesBP_CT_TT = tileMethylCounts(myuniteCovBP_CT_TT,win.size=100,step.size=100,cov.bases = 10)
+  DMR_15pc_BP_CT_TT = getDiffMeth(tilesBP_CT_TT, metadataBP_CT_TT)
+  tilesBP_CC_CT = tileMethylCounts(myuniteCovBP_CC_CT,win.size=100,step.size=100,cov.bases = 10)
+  DMR_15pc_BP_CC_CT = getDiffMeth(tilesBP_CC_CT, metadataBP_CC_CT)
+  tilesBP_TC_TT = tileMethylCounts(myuniteCovBP_TC_TT,win.size=100,step.size=100,cov.bases = 10)
+  DMR_15pc_BP_TC_TT = getDiffMeth(tilesBP_TC_TT, metadataBP_TC_TT)
+  
+  return(list(DMSlist = list(DMS_15pc_BP_CC_TC = DMS_15pc_BP_CC_TC, DMS_15pc_BP_CT_TT = DMS_15pc_BP_CT_TT, DMS_15pc_BP_CC_CT = DMS_15pc_BP_CC_CT, DMS_15pc_BP_TC_TT = DMS_15pc_BP_TC_TT),
+              DMRlist = list(DMR_15pc_BP_CC_TC = DMR_15pc_BP_CC_TC, DMR_15pc_BP_CT_TT = DMR_15pc_BP_CT_TT, DMR_15pc_BP_CC_CT = DMR_15pc_BP_CC_CT, DMR_15pc_BP_TC_TT = DMR_15pc_BP_TC_TT)))
 }
 
 ## And for positions covered in ALL FISH
 getDMperBP2 <- function(BP){
   ## Unite object for one Brother Pair:
   metadataBP_CC_TC = fullMetadata[fullMetadata$brotherPairID %in% BP &
-                                         fullMetadata$trtG1G2 %in% c("NE_control", "E_control"), ]
+                                    fullMetadata$trtG1G2 %in% c("NE_control", "E_control"), ]
   metadataBP_CT_TT = fullMetadata[fullMetadata$brotherPairID %in% BP &
-                                         fullMetadata$trtG1G2 %in% c("NE_exposed", "E_exposed"), ]
+                                    fullMetadata$trtG1G2 %in% c("NE_exposed", "E_exposed"), ]
   metadataBP_CC_CT = fullMetadata[fullMetadata$brotherPairID %in% BP &
-                                         fullMetadata$trtG1G2 %in% c("NE_control", "NE_exposed"), ]
+                                    fullMetadata$trtG1G2 %in% c("NE_control", "NE_exposed"), ]
   metadataBP_TC_TT = fullMetadata[fullMetadata$brotherPairID %in% BP &
-                                         fullMetadata$trtG1G2 %in% c("E_control", "E_exposed"), ]
+                                    fullMetadata$trtG1G2 %in% c("E_control", "E_exposed"), ]
   
   ## Make 4 separate uniteCov:
   myuniteCovBP_CC_TC = reorganize(methylObj = uniteCovALL_woSexAndUnknowChr,
@@ -582,133 +581,50 @@ calcAveMeth <- function(perc_uniteObj){
   perc_uniteObj = perc_uniteObj[grep("ave", names(perc_uniteObj))]
 }
 
-################
-## Annotation ## 
-################
-#######################################
-## Get full annotation from NCBI ENTREZ
-## This function return a complete table adding to the previous annotation a longer summary
-## of functions for corresponding human genes
-## Input format: myGeneSet=get(paste0("annotComp",i))
-getGeneSummary <- function(myGeneSet){
-  # Extract gene symbol from the "Note" attribute
-  myGeneSet$Note = unlist(myGeneSet$Note)
-  myGeneSet$GeneSymbol = str_extract(myGeneSet$Note, "(?<=Similar to )(\\w+)")
-  
-  # MANUAL CURATION!! All the genes that are weirdly named, with "-" or so
-  #check = myGeneSet[c("Note", "GeneSymbol")]
-  listOfWeirdos = c("Type-4 ice-structuring protein LS-12", "MNCb-2990", "Trypsin-3", "anxa2-b", "unc5b-b", "QtsA-11015", # comp1
-                    "Type-4 ice-structuring protein LS-12", "MNCb-2990", "en2-a", "draxin-B", "Trypsin-3", " Protein C1orf43 homolog", "Uncharacterized protein FLJ43738", "tlcd4-b", #comp2
-                    "tlcd4-b", # comp3
-                    "anxa2-b", "QtsA-11015", "unc5b-b") # comp4
-  for (i in 1:length(listOfWeirdos)){ 
-    myGeneSet[grepl(listOfWeirdos[i],myGeneSet$Note),"GeneSymbol"] = listOfWeirdos[i]
-  }
-  myGeneSet$GeneSymbol = myGeneSet$GeneSymbol %>% toupper # upper case all gene symbols to fit human DB
-  
-  # Convert the uniprot gene names to entrez ids
-  ENTREZIDlist = mapIds(org.Hs.eg.db, keys = myGeneSet$GeneSymbol, column = "ENTREZID", keytype = "SYMBOL")
-  
-  # Retrieve gene summary & description IN HUMANS (more annotation)
-  ## Fix if DB too big:
-  if (length(ENTREZIDlist) > 400){
-    SummaENTREZ1 = entrez_summary(db="gene", id=ENTREZIDlist[1:400])
-    SummaENTREZ2 = entrez_summary(db="gene", id=ENTREZIDlist[400:length(ENTREZIDlist)])
-    SummaENTREZ = c(SummaENTREZ1, SummaENTREZ2)
-  } else {   
-    SummaENTREZ = entrez_summary(db="gene", id=ENTREZIDlist)
-  }
-  SummaDF = data.frame(GeneSymbol=sapply(SummaENTREZ, function(x) x[["name"]]) %>% unlist(),
-                       ENTREZID = names(SummaENTREZ),
-                       description=sapply(SummaENTREZ, function(x) x[["description"]]) %>% unlist(),
-                       summary=sapply(SummaENTREZ, function(x) x[["summary"]]) %>% unlist())
-  
-  # merge with Notes from uniprot (contained in the gff3)
-  SummaDF = unique(merge(myGeneSet, SummaDF, all=T))
-  
-  # Order by nCpGperGenekb
-  SummaDF = SummaDF[order(SummaDF$nCpGperGenekb, decreasing = T),]
-  
-  rownames(SummaDF) = NULL
-  return(SummaDF)
-}
-
-########################### 
-## Function to annotate DMS
-## It needs (1) a df of DMS (2) annotations in bed12  and (3) annotation in gff3 
-## Precision: the bed12 needs the "good" type of bed12, 12 columns
-## The df of DMS must be this format (freq can be just 1, or different numbers if found in different brother pairs):
-# DMSdf = data.frame(table(unlist(get2keep(vecCompa[1]))))
-#                    Var1 Freq
-# 1      Gy_chrI 10264570    4
-# 2      Gy_chrI 10416684    4
-
-getAnnotationFun <- function(DMSdf, annotBed12, annotGff3, isDMDaDataframeWithBP=TRUE){
-  if (isDMDaDataframeWithBP==TRUE){
-    DMSvec = as.character(DMSdf[[1]]) # vector of DMS
-  } else {
-    DMSvec = DMSdf
-  }
-  # Change the vector into a GRange:
-  GRangeOBJ = makeGRangesFromDataFrame(data.frame(chr=sapply(strsplit(DMSvec, " "), `[`, 1), 
-                                                  start=sapply(strsplit(DMSvec, " "), `[`, 2),
-                                                  end=sapply(strsplit(DMSvec, " "), `[`, 2),
-                                                  nbrBP=DMSdf[[2]]), keep.extra.columns = T) # add brother pairs number
-  A = annotateWithGeneParts(target = as(GRangeOBJ,"GRanges"), feature = annotBed12)
-  # Heckwolf 2020: To be associated to a gene, the DMS had to be either inside the gene or,
-  # if intergenic, not further than 10 kb away from the TSS.
-  rows2rm = which((A@dist.to.TSS$dist.to.feature>10000 | A@dist.to.TSS$dist.to.feature< -10000) &
-                    rowSums(A@members) %in% 0)
-  if (is_empty(rows2rm)){
-    GRangeOBJ = GRangeOBJ
-  } else {
-    GRangeOBJ = GRangeOBJ[-rows2rm,]
-  }
-  ## Re-annotate the subsetted object
-  B = annotateWithGeneParts(as(GRangeOBJ,"GRanges"),annotBed12)
-  ## Get genes associated with these
-  C = getAssociationWithTSS(B)
-  
-  ## Get annotations for these genes
-  subAnnot = data.frame(subset(annotGff3, Name %in% C$feature.name))
-  
-  if (isDMDaDataframeWithBP==TRUE){
-    #########################
-    ## Add nbr brother pairs
-    dfBP=data.frame(Name=C$feature.name, nbrBP=GRangeOBJ$nbrBP)
-    # How many brother pairs max have at least a DMS in a given gene?
-    dfBP=dfBP %>%
-      group_by(Name) %>%  dplyr::filter(nbrBP == max(nbrBP)) %>% unique() %>% data.frame()  
-    ## Add brother pair info:
-    subAnnot=merge(subAnnot, dfBP)
-  }
-  
-  ## How many CpG per gene?
-  nCpGdf = data.frame(table(C$feature.name))
-  names(nCpGdf) = c("Name", "nCpG")
-  # Merge both by Name
-  subAnnot = merge(subAnnot, nCpGdf)
-  
-  # Add extra info (nbr CpG per gene length, gene length, chrom name)
-  subAnnot = subAnnot  %>% 
-    mutate(geneLengthkb = (end - start)/1000, nCpGperGenekb = round(nCpG/geneLengthkb,2), chrom = seqid)
-  
-  # Add full genes descriptions whenever possible
-  subAnnot=getGeneSummary(subAnnot)
-  
-  # Order by nCpGperGenekb
-  subAnnot = subAnnot[order(subAnnot$nCpGperGenekb, decreasing = T),]
-  
-  # unlist "Note"
-  subAnnot$Note=unlist(subAnnot$Note)
-  
-  # remove NA and character(0) columns
-  subAnnot = subAnnot[apply(subAnnot, 2, function(x) length(unlist(x)))!=0]
-  subAnnot = subAnnot[apply(subAnnot, 2, function(x) sum(!is.na(x))!=0)]
-  return(subAnnot)
-}
-
 ## Manhattan plots function:
+# GYgynogff a data frame with a "chrom" and a "length" columns 
+# (NB: here "genome4Manhattan" is specific to my stickleback file)
+plotManhattanGenesDMS <- function(annotFile, GYgynogff){
+  annotFile=annotFile %>% 
+    dplyr::select(c("start.gene", "end.gene", "GeneSymbol", "feature.name", "Note", "chrom",
+                    "nDMSperGenekb", "ENTREZID", "description", "summary"))%>% unique
+  
+  ## Prepare genome for Manhattan plots:
+  genome4Manhattan = GYgynogff %>%
+    #genome without chrXIX and unknown re-type:
+    filter(chrom!="Gy_chrXIX" & chrom!= "Gy_chrUn")%>%
+    mutate(chrom_nr=chrom %>% deroman(), 
+           chrom_order=factor(chrom_nr) %>% as.numeric()) %>% arrange(chrom_order) %>%
+    mutate(gstart=lag(length,default=0) %>% cumsum(), 
+           gend=gstart+length, 
+           typeBG=LETTERS[2-(chrom_order%%2)],   
+           gmid=(gstart+gend)/2)
+  
+  # Prepare data and change gene position to start at the good chromosome
+  data4Manhattan = dplyr::left_join(annotFile, genome4Manhattan) %>% 
+    dplyr::mutate(posInPlot=((end.gene+start.gene)/2)+gstart)
+  
+  # Short name of the gene if we want to plot these as labels:
+  data4Manhattan$Note = unlist(data4Manhattan$Note)
+  data4Manhattan$Note = str_extract(data4Manhattan$Note, "(?<=Similar to )(\\w+)")
+  
+  # Manhattan plot
+  plot = ggplot()+
+    # add grey background every second chromosome
+    geom_rect(data=genome4Manhattan,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=typeBG), alpha=.2)+
+    scale_x_continuous(breaks=genome4Manhattan$gmid,labels=genome4Manhattan$chrom %>% str_remove(.,"Gy_chr"),
+                       position = "top",expand = c(0,0))+
+    scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none") +
+    # geom_hline(yintercept = 1)+ # if want to add line break
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=1))+ # add frame
+    # scale_y_continuous(breaks = seq(0, 20), expand = expansion(mult = 0.5)) + # increase size under plot for labels
+    ylab("Number of differentially methylated CpG per gene kb")+ 
+    geom_point(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGenekb)) +
+    geom_label_repel(data = data4Manhattan[data4Manhattan$nDMSperGenekb > 1,],
+                     aes(x=posInPlot, y = nDMSperGenekb, label = Note), max.overlaps = Inf)
+  return(plot)
+}
+
 # GYgynogff a data frame with a "chrom" and a "length" columns (NB: here "genome4Manhattan" is specific to my stickleback file)
 plotManhattanGenesDMS4BP <- function(annotFile, i = 0, GYgynogff, myxlab = NULL, isBPinfo=TRUE){
   ## Prepare genome for Manhattan plots:
@@ -744,14 +660,14 @@ plotManhattanGenesDMS4BP <- function(annotFile, i = 0, GYgynogff, myxlab = NULL,
   # add points
   if (isBPinfo==TRUE){
     plot = plot + 
-      geom_point(data = data4Manhattan, aes(x=posInPlot, y = nCpGperGenekb, col=as.factor(nbrBP)), size = 2) +
+      geom_point(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGenekb, col=as.factor(nbrBP)), size = 2) +
       scale_color_manual(values = c('grey', 'red', 'purple', 'blue', 'green'),
                          name = "Genes found differentially methylated in N brother pairs:") +
       xlab(paste0("Genes with DMS present in at least 4 brother pairs\nComparison: ", vecCompa[i]))
   } else {
     plot = plot + 
-      geom_point(data = data4Manhattan, aes(x=posInPlot, y = nCpGperGenekb), size = 2) +
-      geom_label_repel(data = data4Manhattan, aes(x=posInPlot, y = nCpGperGenekb, label = Note), max.overlaps = Inf)+
+      geom_point(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGenekb), size = 2) +
+      geom_label_repel(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGenekb, label = Note), max.overlaps = Inf)+
       xlab(myxlab)
   }
   return(plot)
@@ -870,150 +786,171 @@ get_dms.diffmeth.per1compa_4BPmin <- function(Compa){
 #   b=get_dms.diffmeth.per1compa_4BPmin(Compa = vecCompa[i])$df.dms.methdiff$DMS
 #   print(table(a%in%b)); print(table(b%in%a))
 # }
+# 
+# makePlotsobservedReactionNorms <- function(){
+#   ### Extract differential methylation per comparison AND raw methylation values
+#   ## G1 effect
+#   A = get_dms.diffmeth.per1compa_4BPmin(Compa = vecCompa[1]) 
+#   B = get_dms.diffmeth.per1compa_4BPmin(Compa = vecCompa[2])
+#   ## G2 effect
+#   C = get_dms.diffmeth.per1compa_4BPmin(Compa = vecCompa[3])
+#   D = get_dms.diffmeth.per1compa_4BPmin(Compa = vecCompa[4])
+#   
+#   # Subselect the original unite object for all our DMS of interest
+#   DMSofInterest = unique(c(A$df.dms.methdiff$DMS, B$df.dms.methdiff$DMS, C$df.dms.methdiff$DMS, D$df.dms.methdiff$DMS))
+#   subUniteofInterest = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, 
+#                                          which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, 
+#                                                      uniteCov14_G2_woSexAndUnknowChrOVERLAP$end) %in% DMSofInterest))
+#   
+#   getObservedReacNorm <- function(DF, mytitle){
+#     # Extract the top 5 more differentially methylated sites in this group
+#     top5 = DF[apply(DF[2:ncol(DF)],1, mean, na.rm=T) %>% abs() %>% order(decreasing = T) %>% head(5),]
+#     
+#     # Get raw methylation values at these positions:
+#     meth=methylKit::select(subUniteofInterest, which(paste(subUniteofInterest$chr, subUniteofInterest$end) %in% top5$DMS))
+#     
+#     if (nrow(meth) !=5){
+#       print("ERROR!! Some top DMS found in several comparisons")
+#     }
+#     
+#     dfmeth = meth%>% percMethylation()%>% data.frame()
+#     dfmeth$DMS = paste(meth$chr, meth$end)
+#     dfmeth=melt(dfmeth)
+#     dfmeth$SampleID = as.character(dfmeth$variable)
+#     
+#     # Add brother pair and treatment info
+#     dfmeth=merge(dfmeth, fullMetadata_OFFS[c("SampleID", "brotherPairID", "outcome", "patTrt")])
+#     
+#     # Make reaction norms plot per brother pair (expected: flat)
+#     mean_data <- dfmeth %>% group_by(patTrt, outcome, brotherPairID, DMS) %>%
+#       dplyr::summarize(value = mean(value, na.rm = TRUE)) %>% 
+#       # Add bands of grey per chromosome for plot:
+#       mutate(type=ifelse(as.numeric(as.factor(DMS))%%2, "A" , "B")) %>%  
+#       data.frame()
+#     
+#     ggplot(mean_data, aes(x=outcome, y=value))+
+#       facet_grid(DMS~brotherPairID) +
+#       geom_rect(aes(xmin=-Inf,xmax=Inf,ymin=-Inf,ymax=Inf,fill=type), alpha=.2)+
+#       scale_fill_manual(values = c("white", "grey"),guide="none")+
+#       geom_point(aes(colour=patTrt))+
+#       geom_line(aes(group=patTrt, colour=patTrt))+
+#       scale_color_manual("Paternal (G1) treatment", values = c("black", "red"))+
+#       xlab("Offspring (G2) treatment")+
+#       ylab("Methylation value")+
+#       ggtitle(mytitle)
+#   }
+#   
+#   ##################
+#   ## 1. Paternal effect only
+#   G1dfonly = rbind(A$df.dms.methdiff[A$df.dms.methdiff$DMS %in% caseVennG1only,],
+#                    B$df.dms.methdiff[B$df.dms.methdiff$DMS %in% caseVennG1only,])
+#   plot1 = getObservedReacNorm(G1dfonly, mytitle = "Paternal effect only")
+#   
+#   ## 2. Offspring effect only
+#   G2dfonly = rbind(C$df.dms.methdiff[C$df.dms.methdiff$DMS %in% caseVennG2only,],
+#                    D$df.dms.methdiff[D$df.dms.methdiff$DMS %in% caseVennG2only,])
+#   plot2 = getObservedReacNorm(G2dfonly, mytitle = "Offspring effect only")
+#   
+#   ## 3. G1 G2 NO interactions
+#   G1G2NOinter_df = rbind(C$df.dms.methdiff[C$df.dms.methdiff$DMS %in% caseVennG1G2NOinter,],
+#                          D$df.dms.methdiff[D$df.dms.methdiff$DMS %in% caseVennG1G2NOinter,])
+#   plot3 = getObservedReacNorm(G1G2NOinter_df, mytitle = "G1 + G2 effect only")
+#   
+#   ## 4. G1 G2 WITH interactions
+#   G1G2inter_df = rbind(C$df.dms.methdiff[C$df.dms.methdiff$DMS %in% caseVennG1G2inter,],
+#                        D$df.dms.methdiff[D$df.dms.methdiff$DMS %in% caseVennG1G2inter,])
+#   plot4 = getObservedReacNorm(G1G2inter_df, mytitle = "G1 : G2 effect only")
+#   
+#   ## 5. caseVennG2interNOG1s
+#   G2interNOG1_df = rbind(C$df.dms.methdiff[C$df.dms.methdiff$DMS %in% caseVennG2interNOG1,],
+#                          D$df.dms.methdiff[D$df.dms.methdiff$DMS %in% caseVennG2interNOG1,])
+#   plot5 = getObservedReacNorm(G2interNOG1_df, mytitle = "G2 inter NO G1 effect only")
+#   return(list(plot1=plot1, plot2=plot2, plot3=plot3, plot4=plot4, plot5=plot5))
+# }
 
-## Get DMS in offspring treatment that are inverted in the other offspring treatment group
-getInteractionDMS <- function(){
-  ## 1. Get the raw methylation from the DMS from 2 offspring treatment comparisons
-  subUnite = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, 
-                               which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$end) %in% 
-                                       DMS_OffspringEffect_4BPmin))
-  
-  # 2. Get mean methylation per brother pair, per treatment:
-  getMeanMeth <- function(subUnite, BP, mytrt){
-    metadata = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP & fullMetadata_OFFS$trtG1G2 %in% mytrt, ]
-    myuniteCov = reorganize(methylObj = subUnite, treatment = metadata$trtG1G2_NUM, sample.ids = metadata$ID)
-    ## remove bases where NO fish in this BP has a coverage
-    myuniteCov = methylKit::select(myuniteCov, which(!is.na(rowSums(percMethylation(myuniteCov)))))
-    # calculate mean methylation
-    df = data.frame(DMS = paste(myuniteCov$chr, myuniteCov$end), meanMeth = rowMeans(percMethylation(myuniteCov)), trt = mytrt, BP = BP)
-    return(df)
+###########################
+# Get association between DMS and gene
+getAnnotDMS <- function(DMSvec, pasted=FALSE){
+  if (pasted == FALSE){
+    DMSvec =  paste(DMSvec$chr, DMSvec$end)
   }
+  # Change the vector into a GRange:
+  GRangeOBJ = makeGRangesFromDataFrame(data.frame(chr=sapply(strsplit(DMSvec, " "), `[`, 1), 
+                                                  start=sapply(strsplit(DMSvec, " "), `[`, 2),
+                                                  end=sapply(strsplit(DMSvec, " "), `[`, 2)))
+  # nbrBP=DMSdf[[2]]), keep.extra.columns = T) # add brother pairs number
+  A = annotateWithGeneParts(target = as(GRangeOBJ,"GRanges"), feature = annotBed12)
+  # Heckwolf 2020: To be associated to a gene, the DMS had to be either inside the gene or,
+  # if intergenic, not further than 10 kb away from the TSS.
+  rows2rm = which((A@dist.to.TSS$dist.to.feature>10000 | A@dist.to.TSS$dist.to.feature< -10000) &
+                    rowSums(A@members) %in% 0)
+  if (is_empty(rows2rm)){
+    GRangeOBJ = GRangeOBJ
+  } else {
+    GRangeOBJ = GRangeOBJ[-rows2rm,]
+  }
+  ## Re-annotate the subsetted object
+  B = annotateWithGeneParts(as(GRangeOBJ,"GRanges"),annotBed12)
+  ## Get genes associated with these
+  C = getAssociationWithTSS(B)
+  # In which gene is the DMS?
+  dmsdf = data.frame(DMS = paste(GRangeOBJ@seqnames, GRangeOBJ@ranges),
+                     feature.name = C$feature.name)
+  ## Get annotations for these genes
+  subAnnot = data.frame(subset(annotGff3, Name %in% C$feature.name))
   
-  # We will apply the following function to all BP and all trt:
-  vecBP <- unique(fullMetadata_OFFS$brotherPairID)
-  vectrt <- unique(fullMetadata_OFFS$trtG1G2)
+  # Extract gene symbol from the "Note" attribute
+  subAnnot$Note = unlist(subAnnot$Note)
+  subAnnot$GeneSymbol = str_extract(subAnnot$Note, "(?<=Similar to )(\\w+)")
   
-  ## Loop over all BP & trt
-  df = data.frame(DMS=NULL, meanMeth=NULL, trt=NULL, BP=NULL) # empty df
-  for (i in 1:length(vecBP)){
-    for (j in 1:length(vectrt)){
-      subdf = getMeanMeth(subUnite = subUnite, BP = vecBP[[i]], mytrt = vectrt[[j]])
-      df = rbind(df, subdf)
-    }
-  } 
+  ## Associate DMS and gene
+  featuredf = data.frame(feature.name = subAnnot$ID,
+                         Note = subAnnot$Note,
+                         GeneSymbol = subAnnot$GeneSymbol)
   
-  ## Add G1 & G2 trt
-  df$G1trt = ifelse(df$trt %in% c("NE_control", "NE_exposed"), "control", "infected")
-  df$G2trt = ifelse(df$trt %in% c("NE_control", "E_control"), "control", "infected")
-  
-  ## cut by G1 trt & merge
-  dfcp = df[df$G1trt %in% "control"  ,]
-  dfcpco = dfcp[dfcp$G2trt %in% "control",]; dfcpio = dfcp[dfcp$G2trt %in% "infected",]
-  dfcp = merge(dfcpco, dfcpio, by = c("DMS", "BP")) %>% 
-    mutate(meanDiffMeth=meanMeth.y - meanMeth.x) %>% dplyr::select(c("DMS", "BP", "meanDiffMeth"))
-  
-  dfip = df[df$G1trt %in% "infected",]
-  dfipco = dfip[dfip$G2trt %in% "control",]; dfipio = dfip[dfip$G2trt %in% "infected",]
-  dfip = merge(dfipco, dfipio, by = c("DMS", "BP")) %>% 
-    mutate(meanDiffMeth=meanMeth.y - meanMeth.x) %>% dplyr::select(c("DMS", "BP", "meanDiffMeth"))
-  
-  df2=merge(dfcp,dfip, by=c("DMS", "BP"))
-  # Keep rows for which there is an inversion of sign  
-  df2=df2[!sign(df2$meanDiffMeth.x) == sign(df2$meanDiffMeth.y),] %>% mutate(keep=paste(DMS, BP))
-  
-  which(rowSums(table(df2$DMS, df2$BP)) >= 4)
-  
-  df = df[paste(df$DMS, df$BP) %in% df2$keep,]
-  # paste(df$DMS, df$BP) %>% unique %>% length
-  # paste(df2$DMS, df2$BP) %>% unique %>% length
-  
-  # length(df$DMS[df$trt %in% "NE_control"])
-  # length(df$DMS[df$trt %in% "E_control"])
-  # length(df$DMS[df$trt %in% "NE_exposed"])
-  # length(df$DMS[df$trt %in% "E_exposed"])
-  
-  setDMSInteractions = names(table(df[df$trt %in% "NE_control","DMS"])[table(df[df$trt %in% "NE_control","DMS"]) >=4])
-  
-  return(setDMSInteractions)
+  return(merge(dmsdf, featuredf))
 }
 
-makePlotsobservedReactionNorms <- function(){
-  ### Extract differential methylation per comparison AND raw methylation values
-  ## G1 effect
-  A = get_dms.diffmeth.per1compa_4BPmin(Compa = vecCompa[1]) 
-  B = get_dms.diffmeth.per1compa_4BPmin(Compa = vecCompa[2])
-  ## G2 effect
-  C = get_dms.diffmeth.per1compa_4BPmin(Compa = vecCompa[3])
-  D = get_dms.diffmeth.per1compa_4BPmin(Compa = vecCompa[4])
-  
-  # Subselect the original unite object for all our DMS of interest
-  DMSofInterest = unique(c(A$df.dms.methdiff$DMS, B$df.dms.methdiff$DMS, C$df.dms.methdiff$DMS, D$df.dms.methdiff$DMS))
-  subUniteofInterest = methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, 
-                                         which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, 
-                                                     uniteCov14_G2_woSexAndUnknowChrOVERLAP$end) %in% DMSofInterest))
-  
-  getObservedReacNorm <- function(DF, mytitle){
-    # Extract the top 5 more differentially methylated sites in this group
-    top5 = DF[apply(DF[2:ncol(DF)],1, mean, na.rm=T) %>% abs() %>% order(decreasing = T) %>% head(5),]
-    
-    # Get raw methylation values at these positions:
-    meth=methylKit::select(subUniteofInterest, which(paste(subUniteofInterest$chr, subUniteofInterest$end) %in% top5$DMS))
-    
-    if (nrow(meth) !=5){
-      print("ERROR!! Some top DMS found in several comparisons")
-    }
-    
-    dfmeth = meth%>% percMethylation()%>% data.frame()
-    dfmeth$DMS = paste(meth$chr, meth$end)
-    dfmeth=melt(dfmeth)
-    dfmeth$SampleID = as.character(dfmeth$variable)
-    
-    # Add brother pair and treatment info
-    dfmeth=merge(dfmeth, fullMetadata_OFFS[c("SampleID", "brotherPairID", "outcome", "patTrt")])
-    
-    # Make reaction norms plot per brother pair (expected: flat)
-    mean_data <- dfmeth %>% group_by(patTrt, outcome, brotherPairID, DMS) %>%
-      dplyr::summarize(value = mean(value, na.rm = TRUE)) %>% 
-      # Add bands of grey per chromosome for plot:
-      mutate(type=ifelse(as.numeric(as.factor(DMS))%%2, "A" , "B")) %>%  
-      data.frame()
-    
-    ggplot(mean_data, aes(x=outcome, y=value))+
-      facet_grid(DMS~brotherPairID) +
-      geom_rect(aes(xmin=-Inf,xmax=Inf,ymin=-Inf,ymax=Inf,fill=type), alpha=.2)+
-      scale_fill_manual(values = c("white", "grey"),guide="none")+
-      geom_point(aes(colour=patTrt))+
-      geom_line(aes(group=patTrt, colour=patTrt))+
-      scale_color_manual("Paternal (G1) treatment", values = c("black", "red"))+
-      xlab("Offspring (G2) treatment")+
-      ylab("Methylation value")+
-      ggtitle(mytitle)
-  }
-  
-  ##################
-  ## 1. Paternal effect only
-  G1dfonly = rbind(A$df.dms.methdiff[A$df.dms.methdiff$DMS %in% caseVennG1only,],
-                   B$df.dms.methdiff[B$df.dms.methdiff$DMS %in% caseVennG1only,])
-  plot1 = getObservedReacNorm(G1dfonly, mytitle = "Paternal effect only")
-  
-  ## 2. Offspring effect only
-  G2dfonly = rbind(C$df.dms.methdiff[C$df.dms.methdiff$DMS %in% caseVennG2only,],
-                   D$df.dms.methdiff[D$df.dms.methdiff$DMS %in% caseVennG2only,])
-  plot2 = getObservedReacNorm(G2dfonly, mytitle = "Offspring effect only")
-  
-  ## 3. G1 G2 NO interactions
-  G1G2NOinter_df = rbind(C$df.dms.methdiff[C$df.dms.methdiff$DMS %in% caseVennG1G2NOinter,],
-                         D$df.dms.methdiff[D$df.dms.methdiff$DMS %in% caseVennG1G2NOinter,])
-  plot3 = getObservedReacNorm(G1G2NOinter_df, mytitle = "G1 + G2 effect only")
-  
-  ## 4. G1 G2 WITH interactions
-  G1G2inter_df = rbind(C$df.dms.methdiff[C$df.dms.methdiff$DMS %in% caseVennG1G2inter,],
-                       D$df.dms.methdiff[D$df.dms.methdiff$DMS %in% caseVennG1G2inter,])
-  plot4 = getObservedReacNorm(G1G2inter_df, mytitle = "G1 : G2 effect only")
-  
-  ## 5. caseVennG2interNOG1s
-  G2interNOG1_df = rbind(C$df.dms.methdiff[C$df.dms.methdiff$DMS %in% caseVennG2interNOG1,],
-                         D$df.dms.methdiff[D$df.dms.methdiff$DMS %in% caseVennG2interNOG1,])
-  plot5 = getObservedReacNorm(G2interNOG1_df, mytitle = "G2 inter NO G1 effect only")
-  return(list(plot1=plot1, plot2=plot2, plot3=plot3, plot4=plot4, plot5=plot5))
-}
+# ## Plot the most important CpG associated with significant axis 
+# plotCpGexample_PCAsignif = function(DMSvec, mygene){
+#   
+#   # Get association between DMS and gene
+#   DMSvsGene = getAnnotDMS(DMSvec)
+#   
+#   # Annotate the DMS
+#   annotPCA <- getAnnotationFun(DMSdf = paste(DMSvec$chr, DMSvec$end), annotBed12 = annotBed12,
+#                                annotGff3 = annotGff3, isDMDaDataframeWithBP = FALSE)
+#   
+#   # Check that all sequences with no name are "Protein of unknown function"
+#   table(annotPCA$Note[is.na(annotPCA$GeneSymbol)] %in% "Protein of unknown function") ## all true if ok
+#   
+#   # Find DMS associated with a gene linked with PCA axis
+#   dfDMS1gene = merge(annotPCA[annotPCA$GeneSymbol %in% mygene,],DMSvsGene) 
+#   
+#   raw=methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+#                         which(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr %in% dfDMS1gene$chrom & 
+#                                 uniteCov14_G2_woSexAndUnknowChrOVERLAP$start %in% sapply(strsplit(dfDMS1gene$DMS," "), `[`, 2)))
+#   
+#   dfPlot = data.frame(chr=raw$chr, pos=raw$end)
+#   dfPlot = cbind(dfPlot, data.frame(percMethylation(raw)))
+#   dfPlot = melt(dfPlot, id.vars = c("chr", "pos")) %>% dplyr::rename("SampleID" = "variable")
+#   
+#   # Add sample group
+#   dfPlot = merge(dfPlot, fullMetadata_OFFS[c("SampleID", "trtG1G2", "outcome", "patTrt", "brotherPairID")])
+#   
+#   # Plot
+#   dfPlotSum = dfPlot %>% group_by(pos, outcome, patTrt, brotherPairID) %>%
+#     dplyr::summarise(meanMeth=mean(value, na.rm=T)) %>% data.frame()
+#   
+#   ## All BP
+#   ggplot(dfPlotSum)+
+#     geom_point(aes(x=outcome, y=meanMeth, col=patTrt, group=patTrt), size = 3) +
+#     geom_line(aes(x=outcome, y=meanMeth, col=patTrt, group=patTrt))+
+#     scale_color_manual("Paternal treatment", values = c("black", "red"))+
+#     # all data:
+#     geom_point(data = dfPlot, aes(x=outcome, y=value, col=patTrt, group=patTrt), alpha=.5) +
+#     facet_grid(pos~brotherPairID) +
+#     ggtitle(paste("DMS in gene", annotPCA[annotPCA$GeneSymbol %in% mygene,"GeneSymbol"], ":", annotPCA[annotPCA$GeneSymbol %in% mygene,"description"]))+
+#     xlab("Offspring treatment")+
+#     ylab("Mean methylation")
+# }
