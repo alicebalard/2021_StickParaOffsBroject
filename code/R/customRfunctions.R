@@ -302,6 +302,7 @@ myPCA <- function(x, incomplete){
   ## Model selection:
   modSel = lmer(formula = attr(attr(lmerTest::step(mod, reduce.random = F), "drop1"), "heading")[3],
                 data=metadata, REML = F)
+  print(lmerTest::step(mod, reduce.random = F))
   print("The chosen model is:")
   print(formula(modSel))
   return(list(res.PCA=res.PCA, modSel = modSel, metadata = metadata))
