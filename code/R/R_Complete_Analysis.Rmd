@@ -794,9 +794,9 @@ df_effects_full = merge(df_effects_full, df2, all=T)
 df_effects_full$effectBPlevel[df_effects_full$globalEffect.x == "G1all"] = "G1"
 df_effects_full$effectBPlevel[df_effects_full$globalEffect.y == "G2all"] = "G2"
 df_effects_full$effectBPlevel[df_effects_full$inversionSlopeReactionNorms == TRUE & 
-                         df_effects_full$globalEffect.x == "G1all" & df_effects_full$globalEffect.y == "G2all"] = "G1:G2"
+                         df_effects_full$globalEffect.x == "G1all" & df_effects_full$globalEffect.y == "G2all"] = "inter"
 df_effects_full$effectBPlevel[df_effects_full$inversionSlopeReactionNorms == FALSE & 
-                         df_effects_full$globalEffect.x == "G1all" & df_effects_full$globalEffect.y == "G2all"]= "G1+G2"
+                         df_effects_full$globalEffect.x == "G1all" & df_effects_full$globalEffect.y == "G2all"]= "addit"
 
 #rm junk
 rm(subUnite, df, dfcp, dfcpco, dfcpio, dfip, dfipco, dfipio, df2)
@@ -839,18 +839,18 @@ DMS_G2onlyEffect_4BPmin_ANNOT=DMS_G2onlyEffect_4BPmin_ANNOT %>% mutate(effect = 
 
 DMS_G1G2additiveEffect_4BPmin_ANNOT = myHomebrewDMSannotation(DMSvec = DMS_G1G2additiveEffect_4BPmin,
                                                               myannotBed12 = annotBed12, myannotGff3 = annotGff3)
-DMS_G1G2additiveEffect_4BPmin_ANNOT=DMS_G1G2additiveEffect_4BPmin_ANNOT %>% mutate(effect = "G1+G2")
+DMS_G1G2additiveEffect_4BPmin_ANNOT=DMS_G1G2additiveEffect_4BPmin_ANNOT %>% mutate(effect = "addit")
 
 DMS_G1G2interactionEffect_4BPmin_ANNOT = myHomebrewDMSannotation(DMSvec = DMS_G1G2interactionEffect_4BPmin,
                                                                  myannotBed12 = annotBed12, myannotGff3 = annotGff3)
-DMS_G1G2interactionEffect_4BPmin_ANNOT=DMS_G1G2interactionEffect_4BPmin_ANNOT%>% mutate(effect = "G1:G2")
+DMS_G1G2interactionEffect_4BPmin_ANNOT=DMS_G1G2interactionEffect_4BPmin_ANNOT%>% mutate(effect = "inter")
 # "check that these features are identical:"
 # "gasAcul04256-RA" "gasAcul04255-RA" -> overlapping: Protein if unknown function & Proteolipid protein DM beta
 
 # Plot a Venn diagram to see genes in common
 pdf(file = "../../dataOut/DMSgroupsVenn_geneLevel.pdf", width = 7, height = 6)
 ggVennDiagram(list("G1" = DMS_G1onlyEffect_4BPmin_ANNOT$feature.name, "G2" = DMS_G2onlyEffect_4BPmin_ANNOT$feature.name,
-                   "G1+G2" = DMS_G1G2additiveEffect_4BPmin_ANNOT$feature.name, "G1:G2" = DMS_G1G2interactionEffect_4BPmin_ANNOT$feature.name),
+                   "addit" = DMS_G1G2additiveEffect_4BPmin_ANNOT$feature.name, "inter" = DMS_G1G2interactionEffect_4BPmin_ANNOT$feature.name),
               label_alpha = 0) + scale_color_manual(values = c(1,1,1,1))+
   scale_fill_gradient(low="white",high = "yellow") + theme(legend.position = "none") + ggtitle("Genes in each effect")
 dev.off()
@@ -862,6 +862,33 @@ geneAll4 = intersect(intersect(intersect(DMS_G1onlyEffect_4BPmin_ANNOT$feature.n
 DMS_G1onlyEffect_4BPmin_ANNOT[DMS_G1onlyEffect_4BPmin_ANNOT$feature.name %in% geneAll4,]
 ## FKBP3 & DPP6
 
+## Make a summary table with genes and to which effect they belong:
+allDMSAnnot = rbind(DMS_G1onlyEffect_4BPmin_ANNOT,
+      DMS_G2onlyEffect_4BPmin_ANNOT,
+      DMS_G1G2additiveEffect_4BPmin_ANNOT,
+      DMS_G1G2interactionEffect_4BPmin_ANNOT)
+
+# add summary in select
+allDMSAnnot = allDMSAnnot %>% 
+  dplyr::select(GeneSymbol, feature.name, chrom, start.gene, end.gene, geneLengthkb, nDMSperGene, effect, summary) %>%
+  unique %>% tidyr::spread(key = effect, value = nDMSperGene) %>% 
+  dplyr::mutate(nDMS = rowSums(across(c(G1, G2, 'addit', 'inter')), na.rm = T),
+                nDMSperGeneKb=round(nDMS/geneLengthkb, 2)) %>%
+ rowwise() %>% dplyr::mutate(effect = paste0(c("G1", "G2", "addit", "inter")[
+    !is.na(c_across(all_of(c("G1", "G2", "addit", "inter"))))], collapse = ' ')) %>% # add effect
+  data.frame() %>%
+  arrange(desc(nDMSperGeneKb))#arrange in descending order
+# reorder columns with summary at the end
+allDMSAnnot = allDMSAnnot %>% 
+  dplyr::select(c(names(allDMSAnnot)[!names(allDMSAnnot) %in% "summary"], "summary"))
+
+# Get the first gene for each effect, i.e. the one with the most DMS/kb
+allDMSAnnot_top = allDMSAnnot %>% arrange(effect)
+allDMSAnnot_top = allDMSAnnot_top[!duplicated(allDMSAnnot_top$effect),]%>% arrange(desc(nDMSperGeneKb))
+
+# Write out
+write.csv(allDMSAnnot, file = "../../dataOut/allDMSAnnot.csv", row.names = F)
+write.csv(allDMSAnnot_top, file = "../../dataOut/allDMSAnnot_top.csv", row.names = F)
 ```
 
 #### Focus on gene FKBP3
@@ -881,7 +908,7 @@ plotGeneTarget <- function(myTargetGene, myannotBed12=annotBed12){
   dfplot$start.gene_distToTSS = dfplot$start.gene - dfplot$TSSpos 
   dfplot$end.gene_distToTSS = dfplot$end.gene - dfplot$TSSpos 
   # Reorder effects factor for legend
-  dfplot$effect <- factor(dfplot$effect, levels = c("G1", "G2", "G1+G2", "G1:G2"))
+  dfplot$effect <- factor(dfplot$effect, levels = c("G1", "G2", "addit", "inter"))
    # Prepare rectangles
   mini=min(dfplot$start.gene_distToTSS, dfplot$start_distToTSS)
   maxi=max(dfplot$end.gene_distToTSS, dfplot$end_distToTSS)+100
@@ -978,8 +1005,8 @@ The conditional hypergeometric takes this into account, and only uses those term
 ```{r geneOnto_runGO}
 GO_G1only = makedfGO(DMS_G1onlyEffect_4BPmin_ANNOT, gene_universe, effect = "G1only")
 GO_G2only = makedfGO(DMS_G2onlyEffect_4BPmin_ANNOT, gene_universe, effect = "G2only")
-GO_G1G2addit = makedfGO(DMS_G1G2additiveEffect_4BPmin_ANNOT, gene_universe, effect = "G1+G2")
-GO_G1G2inter = makedfGO(DMS_G1G2interactionEffect_4BPmin_ANNOT, gene_universe, effect = "G1:G2")
+GO_G1G2addit = makedfGO(DMS_G1G2additiveEffect_4BPmin_ANNOT, gene_universe, effect = "addit")
+GO_G1G2inter = makedfGO(DMS_G1G2interactionEffect_4BPmin_ANNOT, gene_universe, effect = "inter")
 
 dfGO = rbind(GO_G1only, GO_G2only, GO_G1G2addit, GO_G1G2inter)
 ```
@@ -1075,28 +1102,34 @@ dev.off()
 ### Annotate the genes linked with axis 2 of the PCA
 
 ```{r AnnotPCA2}
-annotPCAaxis <- myHomebrewDMSannotation(DMSvec = paste(RESPCA$CpGPCA2$chr, RESPCA$CpGPCA2$end),
+annotPCAaxisFull <- myHomebrewDMSannotation(DMSvec = paste(RESPCA$CpGPCA2$chr, RESPCA$CpGPCA2$end),
                                         myannotBed12 = annotBed12, myannotGff3 = annotGff3)
 
-write.csv(annotPCAaxis %>% dplyr::select(c("GeneSymbol", "feature.name", "Note", "chrom", "nDMSperGenekb", "ENTREZID", "description", "summary"))%>% unique,
-          "../../dataOut/annotPCA2_1135DMS.csv", row.names = F)
+# merge with full table to add effect
+annotPCAaxisFull = merge(annotPCAaxisFull, allDMSAnnot)
+
+annotPCAaxis = annotPCAaxisFull %>% 
+  dplyr::select(c("GeneSymbol", "feature.name", "Note", "chrom", "nDMSperGenekb", "ENTREZID", "description", "summary", "effect"))%>% 
+  unique
+
+write.csv(annotPCAaxis, "../../dataOut/annotPCA2_1135DMS_435genes.csv", row.names = F)
 ```
 
-### Plot annotated Manhattan plots TBC for those 1135 positions of PCA2!
+### Plot annotated Manhattan plots TBC for those 435 positions of PCA2!
 
 ```{r manhattanCasesVenn,fig.height = 5, fig.width = 16}
-P=plotManhattanGenesDMS(annotFile = annotPCAaxis, GYgynogff = GYgynogff)
+P=plotManhattanGenesDMS(annotFile = annotPCAaxisFull, GYgynogff = GYgynogff)
 P
 
-pdf("../../dataOut/ManhattanPlots1135DMS.pdf", width = 10, height = 3)
+pdf("../../dataOut/ManhattanPlots1135DMS435genes.pdf", width = 10, height = 3)
 P
 dev.off()
 ```
 
 ### GO term for these CpGs
 
-```{r geneOnto_runGO_1135DMS_axis2}
-GO_PCA2_1135DMS = makedfGO(annotPCAaxis, gene_universe, effect = "PCAaxis2")
+```{r geneOnto_runGO_435genes_axis2}
+GO_PCA2_1135DMS = makedfGO(annotPCAaxisFull, gene_universe, effect = "PCAaxis2")
 
 GOplot <- GO_PCA2_1135DMS %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
   geom_point(aes(color = p.value.adjusted, size = genePercent)) +
@@ -1111,6 +1144,34 @@ GOplot
 
 pdf(GOplot, file = "../../dataOut/GOplotPCA2.pdf", width = 6, height = 7)
 GOplot
+dev.off()
+```
+
+```{r geneOnto_runGO_435genes_axis2_SPLITBYEFFECT}
+# GO of 435 genes linked with the 1135 DMS PCA2, split by effect (NB some genes in different effects; genes with at least 1 CpG in one effect)
+
+# ```{r geneOnto_runGO_1135DMS_axis2_SPLITBYEFFECT}
+GO_G1_sub = makedfGO(annotPCAaxisFull[!is.na(annotPCAaxisFull$G1),], gene_universe, effect = "G1")
+GO_G2_sub = makedfGO(annotPCAaxisFull[!is.na(annotPCAaxisFull$G2),], gene_universe, effect = "G2")
+GO_addit_sub = makedfGO(annotPCAaxisFull[!is.na(annotPCAaxisFull$addit),], gene_universe, effect = "addit")
+GO_inter_sub = makedfGO(annotPCAaxisFull[!is.na(annotPCAaxisFull$inter),], gene_universe, effect = "inter")
+
+dfGO_sub = rbind(GO_G1_sub, GO_G2_sub, GO_addit_sub, GO_inter_sub)
+
+### GO plot
+GOplot_sub <- dfGO_sub %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
+  geom_point(aes(color = p.value.adjusted, size = genePercent)) +
+  scale_color_gradient(name="adjusted\np-value", low = "red", high = "blue") +
+  scale_size_continuous(name = "% of genes")+
+  theme_bw() + ylab("") + xlab("Treatments comparison") +
+  theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
+        legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
+        legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
+  facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")
+GOplot_sub
+
+pdf(GOplot_sub, file = "../../dataOut/GOplot4Venncat_split.pdf", width = 8, height = 12)
+GOplot_sub
 dev.off()
 ```
 
