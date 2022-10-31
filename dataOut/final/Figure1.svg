@@ -8,9 +8,9 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="393.40286mm"
+   width="385.97339mm"
    height="206.82292mm"
-   viewBox="0 0 393.40287 206.82292"
+   viewBox="0 0 385.9734 206.82292"
    version="1.1"
    id="svg8"
    inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
@@ -3063,9 +3063,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.0729879"
-     inkscape:cx="834.52172"
-     inkscape:cy="377.37528"
+     inkscape:zoom="0.53649395"
+     inkscape:cx="714.44052"
+     inkscape:cy="645.48782"
      inkscape:document-units="mm"
      inkscape:current-layer="g3478"
      inkscape:document-rotation="0"
@@ -3074,10 +3074,10 @@
      fit-margin-left="5"
      fit-margin-right="5"
      fit-margin-bottom="5"
-     inkscape:window-width="1920"
-     inkscape:window-height="1051"
-     inkscape:window-x="1600"
-     inkscape:window-y="0"
+     inkscape:window-width="1680"
+     inkscape:window-height="1021"
+     inkscape:window-x="0"
+     inkscape:window-y="15"
      inkscape:window-maximized="1"
      showguides="true" />
   <metadata
@@ -3096,7 +3096,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(402.31679,-438.41909)">
+     transform="translate(394.88733,-438.41909)">
     <g
        id="g11857">
       <path
@@ -3816,19 +3816,14 @@
         <text
            xml:space="preserve"
            style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-           x="112.35744"
+           x="92.653305"
            y="448.31552"
            id="text14670-8"><tspan
              sodipodi:role="line"
-             x="112.35744"
+             x="92.653305"
              y="448.31552"
              style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:7.05556px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan14672-3">A. Classification of CpG sites based on the</tspan><tspan
-             sodipodi:role="line"
-             x="112.35744"
-             y="455.37109"
-             style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:7.05556px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan20265">patterns of reaction norms</tspan></text>
+             id="tspan20265">A. Classification of CpG sites</tspan></text>
         <g
            id="g1426"
            transform="matrix(1.4811345,0,0,1.4811345,-44.108989,-450.6116)">

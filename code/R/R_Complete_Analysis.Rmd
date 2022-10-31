@@ -1022,6 +1022,7 @@ GOplot <- dfGO %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
   theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
         legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
         legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
+  # scale_y_discrete(labels = function(x) str_wrap(x, width = 10))+ # split too long GO names in half
   facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")
 GOplot
 
@@ -1046,9 +1047,9 @@ For each DMS G1 and/or G2 effects:
 
 5. If result positive, annotate the CpG associated with significant axis
 
-### PCA based on all methylation values at DMS positions detected for PATERNAL effect, with imputation of missing values
+### PCA based on all methylation values at DMS positions detected for all effects, with imputation of missing values
 
-```{r BCI_PCA_G1}
+```{r BCI_PCA_all}
 # Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
 RESPCA <- getPCACpG(DMSvec=unique(c(DMS_PaternalEffect_4BPmin, DMS_OffspringEffect_4BPmin)), effect="all effects")
 # 2272 DMS linked with all effects
@@ -1099,6 +1100,215 @@ phenoMethPlot
 dev.off()
 ```
 
+### PCA based on all methylation values at DMS positions detected for each effects separately, with imputation of missing values
+
+```{r BCI_PCA_G1}
+# Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+RESPCA <- getPCACpG(DMSvec=DMS_G1onlyEffect_4BPmin, effect="G1")
+# 1639 DMS linked with G1
+# [1] "The chosen model is:"
+# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
+#     PCA2:PAT + No.Worms:PAT
+# PCA2:PAT                        0  39444   39444     1   105 12.4623 0.000618 ***
+# No.Worms:PAT                    0  20484   20484     1   105  6.4719 0.012415 *  
+# [1] "860 CpG sites most correlated (p < 0.05) with the first principal component"
+# [1] "827 CpG sites most correlated (p < 0.05) with the second principal component"
+
+formula(RESPCA$PCA_percAtDMS_imputed$modSel)
+# The SECOND PCA axis is significant in BCI
+# [1] "The chosen model is:"
+# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
+#     PCA2:PAT + No.Worms:PAT
+
+### How much of the BCI variance is explained by each variables?
+mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
+                   data = RESPCA$PCA_percAtDMS_imputed$metadata)
+mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), 
+                 data = RESPCA$PCA_percAtDMS_imputed$metadata)
+mod_noPCA2 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
+                  data = RESPCA$PCA_percAtDMS_imputed$metadata)
+
+# R2c conditional R2 value associated with fixed effects plus the random effects.
+A = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noworms)[2])*100
+B = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
+C = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
+round(A, 2) #10.4% of the variance in associated with the parasite load (number of worms)
+round(B, 2) #22.01% of the variance in associated with the paternal treatment
+round(C, 2) #9.6% of the variance in associated with the second PCA axis
+
+### Plot of the model
+phenoMethPlotG1 <- plot(ggpredict(RESPCA$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) +
+  theme_bw() +
+  scale_color_gradient(low = "white", high = "red")+
+  scale_fill_gradient(low = "white", high = "red") +
+  ylab("Body Condition Index") + xlab("Number of worms")+
+  ggtitle("Predicted values of Body Condition Index in offspring: G1")
+phenoMethPlotG1
+
+# save
+pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_G1.pdf", width = 7, height = 5)
+phenoMethPlotG1
+dev.off()
+```
+
+```{r BCI_PCA_G2}
+# Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+RESPCA <- getPCACpG(DMSvec=DMS_G2onlyEffect_4BPmin, effect="G2")
+# 1639 DMS linked with G2
+# [1] "The chosen model is:"
+# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
+#     PCA2:PAT + No.Worms:PAT
+# PCA2:PAT                        0 24737.6 24737.6     1   105  7.4498 0.007441 **
+# No.Worms:PAT                    0 23505.5 23505.5     1   105  7.0787 0.009025 **
+# [1] "181 CpG sites most correlated (p < 0.05) with the first principal component"
+# [1] "178 CpG sites most correlated (p < 0.05) with the second principal component"
+
+formula(RESPCA$PCA_percAtDMS_imputed$modSel)
+# The SECOND PCA axis is significant in BCI
+# [1] "The chosen model is:"
+# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
+#     PCA2:PAT + No.Worms:PAT
+
+### How much of the BCI variance is explained by each variables?
+mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
+                   data = RESPCA$PCA_percAtDMS_imputed$metadata)
+mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), 
+                 data = RESPCA$PCA_percAtDMS_imputed$metadata)
+mod_noPCA2 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
+                  data = RESPCA$PCA_percAtDMS_imputed$metadata)
+
+# R2c conditional R2 value associated with fixed effects plus the random effects.
+A = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noworms)[2])*100
+B = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
+C = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
+round(A, 2) #10.4% of the variance in associated with the parasite load (number of worms)
+round(B, 2) #18.88% of the variance in associated with the paternal treatment
+round(C, 2) #6.08% of the variance in associated with the second PCA axis
+
+### Plot of the model
+phenoMethPlotG2 <- plot(ggpredict(RESPCA$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) +
+  theme_bw() +
+  scale_color_gradient(low = "white", high = "red")+
+  scale_fill_gradient(low = "white", high = "red") +
+  ylab("Body Condition Index") + xlab("Number of worms")+
+  ggtitle("Predicted values of Body Condition Index in offspring: G2")
+phenoMethPlotG2
+
+# save
+pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_G2.pdf", width = 7, height = 5)
+phenoMethPlotG2
+dev.off()
+```
+
+```{r BCI_PCA_additive}
+# Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+RESPCA <- getPCACpG(DMSvec=DMS_G1G2additiveEffect_4BPmin, effect="additive")
+# 173 DMS linked with additive
+# [1] "The chosen model is:"
+# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
+#     PCA2:PAT + No.Worms:PAT
+# PCA2:PAT                        0 28518.0 28518.0     1 105.000  8.9750 0.003415 **
+# No.Worms:PAT                    0 26923.2 26923.2     1 105.000  8.4731 0.004402 **
+# [1] "76 CpG sites most correlated (p < 0.05) with the first principal component"
+# [1] "81 CpG sites most correlated (p < 0.05) with the second principal component"
+
+formula(RESPCA$PCA_percAtDMS_imputed$modSel)
+# The SECOND PCA axis is significant in BCI
+# [1] "The chosen model is:"
+# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
+#     PCA2:PAT + No.Worms:PAT
+
+### How much of the BCI variance is explained by each variables?
+mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
+                   data = RESPCA$PCA_percAtDMS_imputed$metadata)
+mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), 
+                 data = RESPCA$PCA_percAtDMS_imputed$metadata)
+mod_noPCA2 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
+                  data = RESPCA$PCA_percAtDMS_imputed$metadata)
+
+# R2c conditional R2 value associated with fixed effects plus the random effects.
+A = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noworms)[2])*100
+B = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
+C = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
+round(A, 2) #10.92% of the variance in associated with the parasite load (number of worms)
+round(B, 2) #22.11% of the variance in associated with the paternal treatment
+round(C, 2) #9.32% of the variance in associated with the second PCA axis
+
+### Plot of the model
+phenoMethPlotadditive <- plot(ggpredict(RESPCA$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) +
+  theme_bw() +
+  scale_color_gradient(low = "white", high = "red")+
+  scale_fill_gradient(low = "white", high = "red") +
+  ylab("Body Condition Index") + xlab("Number of worms")+
+  ggtitle("Predicted values of Body Condition Index in offspring: additive")
+phenoMethPlotadditive
+
+# save
+pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_additive.pdf", width = 7, height = 5)
+phenoMethPlotadditive
+dev.off()
+```
+
+```{r BCI_PCA_interaction}
+# Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+RESPCA <- getPCACpG(DMSvec=DMS_G1G2interactionEffect_4BPmin, effect="interaction")
+# 151 DMS linked with interaction
+# [1] "The chosen model is:"
+# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
+#     PCA2:No.Worms + PCA2:PAT + No.Worms:PAT + PCA2:No.Worms:PAT
+# PCA2:No.Worms:PAT               0 16347.7 16347.7     1   103  4.8922 0.02919 *
+# [1] "72 CpG sites most correlated (p < 0.05) with the first principal component"
+# [1] "54 CpG sites most correlated (p < 0.05) with the second principal component"
+
+formula(RESPCA$PCA_percAtDMS_imputed$modSel)
+# The SECOND PCA axis is significant in BCI
+# [1] "The chosen model is:"
+BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) +
+    PCA2:No.Worms + PCA2:PAT + No.Worms:PAT + PCA2:No.Worms:PAT
+
+### How much of the BCI variance is explained by each variables?
+mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
+                   data = RESPCA$PCA_percAtDMS_imputed$metadata)
+mod_noPAT = lmer(BCI ~ PCA2 + No.Worms +  PCA2:No.Worms +(1 | brotherPairID) + (1 | Sex), 
+                 data = RESPCA$PCA_percAtDMS_imputed$metadata)
+mod_noPCA2 = lmer(BCI ~ No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
+                  data = RESPCA$PCA_percAtDMS_imputed$metadata)
+
+# R2c conditional R2 value associated with fixed effects plus the random effects.
+A = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noworms)[2])*100
+B = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPAT)[2])*100
+C = (MuMIn::r.squaredGLMM(RESPCA$PCA_percAtDMS_imputed$modSel)[2] -
+       MuMIn::r.squaredGLMM(mod_noPCA2)[2])*100
+round(A, 2) #14.75% of the variance in associated with the parasite load (number of worms)
+round(B, 2) #19.02% of the variance in associated with the paternal treatment
+round(C, 2) #7.05% of the variance in associated with the second PCA axis
+
+### Plot of the model
+phenoMethPlotinteraction <- plot(ggpredict(RESPCA$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) +
+  theme_bw() +
+  scale_color_gradient(low = "white", high = "red")+
+  scale_fill_gradient(low = "white", high = "red") +
+  ylab("Body Condition Index") + xlab("Number of worms")+
+  ggtitle("Predicted values of Body Condition Index in offspring: interaction")
+phenoMethPlotinteraction
+
+# save
+pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_interaction.pdf", width = 7, height = 5)
+phenoMethPlotinteraction
+dev.off()
+```
+
 ### Annotate the genes linked with axis 2 of the PCA
 
 ```{r AnnotPCA2}
@@ -1115,7 +1325,7 @@ annotPCAaxis = annotPCAaxisFull %>%
 write.csv(annotPCAaxis, "../../dataOut/annotPCA2_1135DMS_435genes.csv", row.names = F)
 ```
 
-### Plot annotated Manhattan plots TBC for those 435 positions of PCA2!
+### Plot annotated Manhattan plots for those 435 genes associated with PCA2!
 
 ```{r manhattanCasesVenn,fig.height = 5, fig.width = 16}
 P=plotManhattanGenesDMS(annotFile = annotPCAaxisFull, GYgynogff = GYgynogff)
@@ -1139,7 +1349,9 @@ GOplot <- GO_PCA2_1135DMS %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
   theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
         legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
         legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
-  facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")
+  facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")+
+  scale_y_discrete(labels = function(x) str_wrap(x, width = 20)) # split too long GO names in half
+
 GOplot
 
 pdf(GOplot, file = "../../dataOut/GOplotPCA2.pdf", width = 6, height = 7)
@@ -1149,8 +1361,6 @@ dev.off()
 
 ```{r geneOnto_runGO_435genes_axis2_SPLITBYEFFECT}
 # GO of 435 genes linked with the 1135 DMS PCA2, split by effect (NB some genes in different effects; genes with at least 1 CpG in one effect)
-
-# ```{r geneOnto_runGO_1135DMS_axis2_SPLITBYEFFECT}
 GO_G1_sub = makedfGO(annotPCAaxisFull[!is.na(annotPCAaxisFull$G1),], gene_universe, effect = "G1")
 GO_G2_sub = makedfGO(annotPCAaxisFull[!is.na(annotPCAaxisFull$G2),], gene_universe, effect = "G2")
 GO_addit_sub = makedfGO(annotPCAaxisFull[!is.na(annotPCAaxisFull$addit),], gene_universe, effect = "addit")
@@ -1167,10 +1377,11 @@ GOplot_sub <- dfGO_sub %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
   theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
         legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
         legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
-  facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")
+  facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")+
+  scale_y_discrete(labels = function(x) str_wrap(x, width = 40)) # split too long GO names in half
 GOplot_sub
 
-pdf(GOplot_sub, file = "../../dataOut/GOplot4Venncat_split.pdf", width = 8, height = 12)
+pdf(GOplot_sub, file = "../../dataOut/GOplot4Venncat_split.pdf", width = 6, height = 15)
 GOplot_sub
 dev.off()
 ```
