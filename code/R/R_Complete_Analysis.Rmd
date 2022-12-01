@@ -912,6 +912,13 @@ df_effects_full$effectBPlevel[df_effects_full$inversionSlopeReactionNorms == FAL
 rm(subUnite, df, dfcp, dfcpco, dfcpio, dfip, dfipco, dfipio, df2)
 ```
 
+## What are the only paternal effect?? [dead end so far, to explore if needed]
+Case 1: methylation is dependant of genetic background. Brothers are not clone.
+Case 2: methylation in fathers at ANOTHER position affected the methylation of G2!
+Test: r=(G1i-G1c)/(mean(G2fromG1i)-mean(G2fromG1c))
+r=1 means that Case 1
+r close to zero means Case 2
+
 ```{r VENNEffectDMS}
 # Plot a Venn diagram
 ggVennDiagram(list("Paternal effect" = DMS_PaternalEffect_4BPmin, "Offspring effect" = DMS_OffspringEffect_4BPmin, "InteractionEffects" = DMS_G1G2interactionEffect_4BPmin),
@@ -1001,6 +1008,59 @@ write.csv(allDMSAnnot, file = "../../dataOut/allDMSAnnot.csv", row.names = F)
 write.csv(allDMSAnnot_top, file = "../../dataOut/allDMSAnnot_top.csv", row.names = F)
 ```
 
+#### Manhattan plot of the genes in the four main effects
+
+```{r}
+makeManFig3 <- function(annotFile){
+  ## Prepare annotation
+  annotFile=annotFile %>% dplyr::select(c("start.gene", "end.gene", "nDMSperGeneKb", "effect", "chrom", "GeneSymbol"))
+  
+  ## Prepare genome for Manhattan plots:
+  genome4Manhattan = GYgynogff %>%
+    #genome without chrXIX and unknown re-type:
+    filter(chrom!="Gy_chrXIX" & chrom!= "Gy_chrUn")%>%
+    mutate(chrom_nr=chrom %>% deroman(),
+           chrom_order=factor(chrom_nr) %>% as.numeric()) %>% arrange(chrom_order) %>%
+    mutate(gstart=lag(length,default=0) %>% cumsum(),
+           gend=gstart+length,
+           typeBG=LETTERS[2-(chrom_order%%2)],
+           gmid=(gstart+gend)/2)
+
+  # Prepare data and change gene position to start at the good chromosome
+  data4Manhattan = dplyr::left_join(annotFile, genome4Manhattan) %>%
+    dplyr::mutate(posInPlot=((end.gene+start.gene)/2)+gstart)
+
+  # Manhattan plot
+  ggplot()+
+    # add grey background every second chromosome
+    geom_rect(data=genome4Manhattan,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=typeBG), alpha=.2)+
+    xlab(NULL)+
+    scale_x_continuous(breaks=genome4Manhattan$gmid,labels=genome4Manhattan$chrom %>% str_remove(.,"Gy_chr"),
+                       position = "bottom",expand = c(0,0))+
+    scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none") +
+    # geom_hline(yintercept = 1)+ # if want to add line break
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=1))+ # add frame
+    # scale_y_continuous(breaks = seq(0, 20), expand = expansion(mult = 0.5)) + # increase size under plot for labels
+    ylab(NULL)+
+    geom_point(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGeneKb)) +
+    geom_label_repel(data = data4Manhattan[data4Manhattan$nDMSperGeneKb > 2,],
+                     aes(x=posInPlot, y = nDMSperGeneKb, label = GeneSymbol), max.overlaps = Inf)
+}
+
+A=makeManFig3(annotFile = allDMSAnnot[grep("G1", allDMSAnnot$effect),])
+B=makeManFig3(annotFile = allDMSAnnot[grep("G2", allDMSAnnot$effect),])
+C=makeManFig3(annotFile = allDMSAnnot[grep("addit", allDMSAnnot$effect),])
+D=makeManFig3(annotFile = allDMSAnnot[grep("inter", allDMSAnnot$effect),])
+
+plot=ggarrange(A, B, C, D, nrow = 4, label.y = 1.1,
+          labels = c("Genes containing DMS associated with paternal effect only", "Genes containing DMS associated with offspring effect only", "Genes containing DMS associated with additive effect","Genes containing DMS associated with interaction effect"))
+plot=annotate_figure(plot, left = textGrob("Number of differentially methylated CpG per gene kb", rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
+                bottom = textGrob("Position of genes in chromosomes", gp = gpar(cex = 1.3)))
+pdf(file = "../../dataOut/ManhattanFig3.pdf", width = 10, height = 8)
+plot
+dev.off()
+rm(A,B,C,D,plot)
+```
 #### Focus on gene FKBP3
 
 ```{r focusFKBP3}
@@ -1087,6 +1147,7 @@ pdf("../../dataOut/FKBP3_DMS.pdf", width = 15, height = 15)
 fullplotFKBP3
 dev.off()
 ```
+
 ### Gene Ontology analysis OVERALL (all genes with G1, G2 or both effects):
 
 ```{r geneOnto_createUniverse}
@@ -1112,28 +1173,17 @@ gsc_universe <- GeneSetCollection(goAllFrame, setType = GOCollection())
 The conditional hypergeometric takes this into account, and only uses those terms that were not already significant when testing a higher order (parent) term.
 
 ```{r geneOnto_runGO}
-# rm intersecting genes = genes with DMS belonging to several effects
-temp=table(c(unique(DMS_G1onlyEffect_4BPmin_ANNOT$feature.name),
-        unique(DMS_G2onlyEffect_4BPmin_ANNOT$feature.name),
-        unique(DMS_G1G2additiveEffect_4BPmin_ANNOT$feature.name),
-        unique(DMS_G1G2interactionEffect_4BPmin_ANNOT$feature.name)))
-temp2rm=names(temp[temp>1])
-
 GO_G1only = makedfGO(DMS_G1onlyEffect_4BPmin_ANNOT %>%
-                       dplyr::filter(!feature.name %in% temp2rm)%>%
-                       distinct(feature.name,.keep_all = TRUE), gene_universe, effect = "528 genes with G1 effect only")
+                       distinct(feature.name,.keep_all = TRUE), gene_universe, effect = "598 genes with DMS associated with G1 effect only")
 
 GO_G2only = makedfGO(DMS_G2onlyEffect_4BPmin_ANNOT %>%
-                       dplyr::filter(!feature.name %in% temp2rm)%>%
-                       distinct(feature.name,.keep_all = TRUE) , gene_universe, effect = "101 genes with G2 effect only")
+                       distinct(feature.name,.keep_all = TRUE) , gene_universe, effect = "143 genes with DMS associated with G2 effect only")
 
 GO_G1G2addit = makedfGO(DMS_G1G2additiveEffect_4BPmin_ANNOT %>%
-                          dplyr::filter(!feature.name %in% temp2rm)%>%
-                          distinct(feature.name,.keep_all = TRUE), gene_universe, effect = "45 genes with additive effect only")
+                          distinct(feature.name,.keep_all = TRUE), gene_universe, effect = "80 genes with DMS associated with additive effect")
 
 GO_G1G2inter = makedfGO(DMS_G1G2interactionEffect_4BPmin_ANNOT %>%
-                          dplyr::filter(!feature.name %in% temp2rm)%>%
-                          distinct(feature.name,.keep_all = TRUE), gene_universe, effect = "44 genes with interaction effect only")
+                          distinct(feature.name,.keep_all = TRUE), gene_universe, effect = "72 genes with DMS associated with interaction effect")
 
 dfGO = rbind(GO_G1only, GO_G2only, GO_G1G2addit, GO_G1G2inter)
 ```
@@ -1155,8 +1205,168 @@ GOplot <- dfGO %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
                      labels = function(x) str_wrap(x, width = 40)) # split too long GO names in half
 GOplot
 
-pdf(GOplot, file = "../../dataOut/GOplot_fig3VennGenes_uniqueeffect.pdf", width = 6, height = 16)
+pdf(GOplot, file = "../../dataOut/Supplementary_GOplot_fig3VennGenes.pdf", width = 6, height = 18)
 GOplot
+dev.off()
+```
+
+## Hyp: PATERNAL EFFECT ONLY CpG persist despite G2 trt
+Test: is the correlation between G1 and G2 methylation at these CpG stronger than for the other effects?
+
+```{r}
+length(DMS_G1onlyEffect_4BPmin) # 1639 positions different ONLY following paternal treatments
+length(DMS_G2onlyEffect_4BPmin) # 309 positions different ONLY following offspring treatments
+length(DMS_G1G2additiveEffect_4BPmin) # 173 positions
+length(DMS_G1G2interactionEffect_4BPmin) # 151 positions 
+
+getCorG1G2methByEffect <- function(myeffect){
+  # G1
+  A=methylKit::select(uniteCov6_G1_woSexAndUnknowChrOVERLAP, 
+                      which(paste(uniteCov6_G1_woSexAndUnknowChrOVERLAP$chr, uniteCov6_G1_woSexAndUnknowChrOVERLAP$start) %in% 
+                              myeffect))
+  # G2
+  B=methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, 
+                      which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start) %in% 
+                              myeffect))
+  
+  # Methylation values:
+  DMS=paste(A$chr, A$start)
+  
+  A=percMethylation(A) %>% data.frame 
+  A$DMS = DMS
+  B=percMethylation(B) %>% data.frame 
+  B$DMS = DMS
+  
+  # Prep G1 df
+  A=melt(A)
+  names(A)[names(A)%in% "variable"]="SampleID"
+  names(A)[names(A)%in% "value"]="G1methylation"
+  A=merge(A, fullMetadata_PAR[c("SampleID", "brotherPairID", "trtG1G2")])
+  names(A)[names(A)%in% "trtG1G2"]="patTrt"
+  A=A[!names(A)%in% "SampleID"] # rm sample ID for fathers, as only one per BP
+  
+  # Prep G2 df
+  B=melt(B)
+  names(B)[names(B)%in% "variable"]="SampleID"
+  names(B)[names(B)%in% "value"]="G2methylation"
+  B=merge(B, fullMetadata_OFFS[c("SampleID", "brotherPairID", "trtG1G2", "patTrt")])
+  B$patTrt[B$patTrt %in% "controlP"]="Control"
+  B$patTrt[B$patTrt %in% "infectedP"]="Exposed"
+  
+  AB=merge(A, B)
+  
+  # When the variables are not continuous but could be ranked then we do not use pearson correlation 
+  # coefficient to find the linear relationship, in this case spearman correlation coefficient comes 
+  # into the scene. Since the spearman correlation coefficient considers the rank of values, the 
+  # correlation test ignores the same ranks to find the p-values as a result we get the warning
+  # “Cannot compute exact p-value with ties”. This can be avoided by using exact = FALSE inside the cor.test function.
+  return(cor.test(x = AB$G1methylation, AB$G2methylation, method = "spearman", exact = FALSE ))
+}
+
+getCorG1G2methByEffect(myeffect = DMS_G1onlyEffect_4BPmin)
+# Spearman's rank correlation rho
+# S = 4.2188e+14, p-value < 2.2e-16
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+#       rho 
+# 0.4809644 
+
+getCorG1G2methByEffect(myeffect = DMS_G2onlyEffect_4BPmin)
+# Spearman's rank correlation rho
+# S = 3.0929e+12, p-value < 2.2e-16
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+#       rho 
+# 0.4071759 
+
+getCorG1G2methByEffect(myeffect = DMS_G1G2additiveEffect_4BPmin)
+# Spearman's rank correlation rho
+# S = 6.8356e+11, p-value < 2.2e-16
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+#       rho 
+# 0.3668305 
+
+getCorG1G2methByEffect(myeffect = DMS_G1G2interactionEffect_4BPmin)
+# Spearman's rank correlation rho
+# S = 4.2648e+11, p-value < 2.2e-16
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+#       rho 
+# 0.3908235 
+
+## And as a regression?
+DMSalleffectsDF = data.frame(DMS=c(DMS_G1onlyEffect_4BPmin, DMS_G2onlyEffect_4BPmin, DMS_G1G2additiveEffect_4BPmin, DMS_G1G2interactionEffect_4BPmin),
+                             effect=c(rep("G1", length(DMS_G1onlyEffect_4BPmin)),
+                                      rep("G2", length(DMS_G2onlyEffect_4BPmin)),
+                                      rep("addit", length(DMS_G1G2additiveEffect_4BPmin)),
+                                      rep("inter", length(DMS_G1G2interactionEffect_4BPmin))))
+
+A=methylKit::select(uniteCov6_G1_woSexAndUnknowChrOVERLAP, 
+                    which(paste(uniteCov6_G1_woSexAndUnknowChrOVERLAP$chr, uniteCov6_G1_woSexAndUnknowChrOVERLAP$start) %in% 
+                            DMSalleffectsDF$DMS))
+# G2
+B=methylKit::select(uniteCov14_G2_woSexAndUnknowChrOVERLAP, 
+                    which(paste(uniteCov14_G2_woSexAndUnknowChrOVERLAP$chr, uniteCov14_G2_woSexAndUnknowChrOVERLAP$start) %in% 
+                            DMSalleffectsDF$DMS))
+# Methylation values:
+DMS=paste(A$chr, A$start)
+
+A=percMethylation(A) %>% data.frame 
+A$DMS = DMS
+B=percMethylation(B) %>% data.frame 
+B$DMS = DMS
+
+# Prep G1 df
+A=melt(A)
+names(A)[names(A)%in% "variable"]="SampleID"
+names(A)[names(A)%in% "value"]="G1methylation"
+A=merge(A, fullMetadata_PAR[c("SampleID", "brotherPairID", "trtG1G2")])
+names(A)[names(A)%in% "trtG1G2"]="patTrt"
+A=A[!names(A)%in% "SampleID"] # rm sample ID for fathers, as only one per BP
+
+# Prep G2 df
+B=melt(B)
+names(B)[names(B)%in% "variable"]="SampleID"
+names(B)[names(B)%in% "value"]="G2methylation"
+B=merge(B, fullMetadata_OFFS[c("SampleID", "brotherPairID", "trtG1G2", "patTrt")])
+B$patTrt[B$patTrt %in% "controlP"]="Control"
+B$patTrt[B$patTrt %in% "infectedP"]="Exposed"
+
+AB=merge(A, B)
+
+AB=merge(AB, DMSalleffectsDF)
+AB$SampleID=as.character(AB$SampleID)
+
+# level effects
+AB$effect <- factor(AB$effect,levels = c("G1", "G2", "addit", "inter"))
+
+mod1=lme4::lmer(G1methylation~G2methylation * effect + (1|brotherPairID/SampleID), data=AB)
+mod2=lme4::lmer(G1methylation~G2methylation + effect + (1|brotherPairID/SampleID), data=AB)
+mod3=lme4::lmer(G1methylation~G2methylation + (1|brotherPairID/SampleID), data=AB)
+
+lmtest::lrtest(mod1, mod2)
+# Likelihood ratio test
+# 
+# Model 1: G1methylation ~ G2methylation * effect + (1 | brotherPairID/SampleID)
+# Model 2: G1methylation ~ G2methylation + effect + (1 | brotherPairID/SampleID)
+# #Df   LogLik Df  Chisq Pr(>Chisq)    
+# 1  11 -1114988                         
+# 2   8 -1115328 -3 680.09  < 2.2e-16 ***
+
+lmtest::lrtest(mod1, mod3)
+```
+
+
+```{r}
+pdf(file = "../../dataOut/plotmodelG1methG2meth.pdf", width = 8, height = 8)
+plot_model(mod1, type = "pred", terms = c("G2methylation", "effect"))+
+  geom_abline(y=1)+
+  theme_bw()+
+  xlab("Methylation value of offspring (%)")+
+  ylab("Methylation value of father (%)")+
+  scale_color_manual(values = c("#e69f00", "#56b4e9", "#009e73", "#cc79a7"))+
+  scale_fill_manual(values = c("#e69f00", "#56b4e9", "#009e73", "#cc79a7"))
 dev.off()
 ```
 
