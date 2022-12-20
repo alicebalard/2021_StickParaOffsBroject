@@ -3064,20 +3064,20 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.53649395"
-     inkscape:cx="883.74535"
-     inkscape:cy="642.69189"
+     inkscape:cx="905.58962"
+     inkscape:cy="359.03742"
      inkscape:document-units="mm"
-     inkscape:current-layer="g11857"
+     inkscape:current-layer="g3367"
      inkscape:document-rotation="0"
      showgrid="false"
      fit-margin-top="5"
      fit-margin-left="5"
      fit-margin-right="5"
      fit-margin-bottom="5"
-     inkscape:window-width="1680"
-     inkscape:window-height="1021"
-     inkscape:window-x="0"
-     inkscape:window-y="15"
+     inkscape:window-width="1920"
+     inkscape:window-height="1051"
+     inkscape:window-x="1920"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      showguides="true" />
   <metadata
@@ -3461,7 +3461,7 @@
            style="font-size:7.05556px;text-align:center;text-anchor:middle;stroke-width:0.264583"
            id="tspan11334"><tspan
    style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'"
-   id="tspan3094">infection</tspan> effect</tspan></text>
+   id="tspan3523">offspring</tspan> effect</tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;white-space:pre;inline-size:131.442;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
@@ -3541,26 +3541,26 @@
            id="g3367"
            transform="translate(395)">
           <rect
-             style="fill:#ececec;fill-opacity:1;stroke:none;stroke-width:3.67322;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+             style="fill:#ececec;fill-opacity:1;stroke:none;stroke-width:3.75907;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
              id="rect4256-5-6-2-5"
              width="146.63976"
-             height="56.684608"
+             height="59.365211"
              x="45.566105"
-             y="583.00684"
+             y="580.32623"
              rx="0"
              ry="0" />
           <rect
-             style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:1.33197;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+             style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:1.312;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
              id="rect4256-5-7"
              width="8.6826706"
-             height="125.91119"
+             height="122.16467"
              x="36.215076"
-             y="513.20068"
+             y="516.9472"
              rx="0"
              ry="0" />
           <g
              id="g1368"
-             transform="matrix(1.4609939,0,0,1.4609939,42.679249,-371.67772)">
+             transform="matrix(1.4609939,0,0,1.4609939,42.679249,-377.49859)">
             <path
                style="fill:none;stroke:#000000;stroke-width:0.321617;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow2Mstart-7-1-9-8-2);marker-end:url(#Arrow2Mend-2-9-3-0-2)"
                d="m 40.790357,659.38092 v 24.24232 h 29.114538"
@@ -3725,35 +3725,35 @@
                d="m 63.347038,672.48541 a 1.264282,1.2642765 0 0 1 -1.255543,1.26425 1.264282,1.2642765 0 0 1 -1.2729,-1.24677 1.264282,1.2642765 0 0 1 1.237946,-1.28148 1.264282,1.2642765 0 0 1 1.290014,1.22905" />
           </g>
           <rect
-             style="fill:#ececec;fill-opacity:1;stroke:none;stroke-width:3.67322;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+             style="fill:#ececec;fill-opacity:1;stroke:none;stroke-width:3.79329;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
              id="rect4256-5-6-2-9-8"
              width="146.63976"
-             height="56.684608"
+             height="60.45084"
              x="45.427326"
              y="456.36835"
              rx="0"
              ry="0" />
           <rect
-             style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:1.31466;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+             style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:1.3017;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
              id="rect4256-9"
-             width="8.48246"
-             height="125.55453"
-             x="45.912434"
-             y="457.07208"
+             width="8.4954157"
+             height="122.90437"
+             x="45.905956"
+             y="457.06561"
              rx="0"
              ry="0" />
           <text
              xml:space="preserve"
              style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-             x="-547.47559"
+             x="-541.65466"
              y="52.10014"
              id="text3856-6"
              transform="rotate(-90)"><tspan
                sodipodi:role="line"
                id="tspan3854-2"
-               x="-547.47559"
+               x="-541.65466"
                y="52.10014"
-               style="font-size:7.05556px;stroke-width:0.264583">Infection effect</tspan></text>
+               style="font-size:7.05556px;stroke-width:0.264583">Offspring effect</tspan></text>
           <text
              xml:space="preserve"
              style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
@@ -4161,7 +4161,7 @@
           </g>
           <g
              id="g1455"
-             transform="matrix(1.6041416,0,0,1.6041416,-158.77364,-593.40065)">
+             transform="matrix(1.6041416,0,0,1.6041416,-158.77364,-598.16318)">
             <path
                style="fill:#000000;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker1893-2-1-0-1-3-0);marker-end:url(#marker1913-7-9-6-6-7-3)"
                d="m 168.5294,673.96309 13.41715,-8.18832"
@@ -4324,6 +4324,63 @@
                sodipodi:open="true"
                sodipodi:arc-type="arc"
                d="m 169.39169,673.31158 a 1.1673359,1.1673309 0 0 1 -1.15927,1.16731 1.1673359,1.1673309 0 0 1 -1.17529,-1.15117 1.1673359,1.1673309 0 0 1 1.14301,-1.18322 1.1673359,1.1673309 0 0 1 1.1911,1.13481" />
+          </g>
+          <g
+             id="g2740-3"
+             transform="translate(37.337012,60.174011)">
+            <g
+               id="g3489"
+               transform="translate(-20.637507)">
+              <rect
+                 style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:1.09879;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+                 id="rect4256-5-7-3-6-6"
+                 width="8.7366352"
+                 height="85.155701"
+                 x="570.10352"
+                 y="-147.03098"
+                 rx="0"
+                 ry="0"
+                 transform="rotate(90)" />
+              <text
+                 xml:space="preserve"
+                 style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+                 x="62.450497"
+                 y="577.10217"
+                 id="text3672-7-7"><tspan
+                   sodipodi:role="line"
+                   id="tspan3670-4-5"
+                   x="62.450497"
+                   y="577.10217"
+                   style="font-size:7.05556px;stroke-width:0.264583">intergenerational effect</tspan></text>
+            </g>
+            <g
+               id="g3489-3"
+               transform="translate(-5.4773508,-122.50989)">
+              <g
+                 id="g3816">
+                <rect
+                   style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:0.879775;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+                   id="rect4256-5-7-3-6-6-5"
+                   width="8.7366352"
+                   height="54.591797"
+                   x="570.10352"
+                   y="-116.58887"
+                   rx="0"
+                   ry="0"
+                   transform="rotate(90)" />
+                <text
+                   xml:space="preserve"
+                   style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+                   x="62.450497"
+                   y="577.10217"
+                   id="text3672-7-7-6"><tspan
+                     sodipodi:role="line"
+                     id="tspan3670-4-5-2"
+                     x="62.450497"
+                     y="577.10217"
+                     style="font-size:7.05556px;stroke-width:0.264583">infection effect</tspan></text>
+              </g>
+            </g>
           </g>
         </g>
       </g>
