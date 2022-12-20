@@ -3088,7 +3088,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -3434,16 +3434,16 @@
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-         x="-70.110229"
+         x="-71.533051"
          y="626.18756"
          id="text2075-5"><tspan
            sodipodi:role="line"
-           x="-70.110229"
+           x="-71.533051"
            y="626.18756"
            style="font-size:7.05556px;text-align:center;text-anchor:middle;stroke-width:0.264583"
            id="tspan11312"><tspan
    style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:7.05556px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'"
-   id="tspan11338">paternal</tspan> treatment</tspan></text>
+   id="tspan11338">paternal</tspan> effect</tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
@@ -3460,8 +3460,8 @@
            y="594.79297"
            style="font-size:7.05556px;text-align:center;text-anchor:middle;stroke-width:0.264583"
            id="tspan11334"><tspan
-   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:7.05556px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'"
-   id="tspan11336">offspring</tspan> treatment</tspan></text>
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'"
+   id="tspan3094">infection</tspan> effect</tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;white-space:pre;inline-size:131.442;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
@@ -3753,7 +3753,7 @@
                id="tspan3854-2"
                x="-547.47559"
                y="52.10014"
-               style="font-size:7.05556px;stroke-width:0.264583">Offspring effect</tspan></text>
+               style="font-size:7.05556px;stroke-width:0.264583">Infection effect</tspan></text>
           <text
              xml:space="preserve"
              style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
