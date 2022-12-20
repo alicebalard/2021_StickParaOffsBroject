@@ -51,7 +51,7 @@ if (rerun==TRUE){
   fullMetadata <- fullMetadata[!names(fullMetadata) %in% c("Sample.Name", "Sample")]
   names(fullMetadata)[names(fullMetadata) %in% "MappingEfficiency"] <- "MappingEfficiency%BSBoldvsGynogen"
   
-  ## After exploration of raw data, we decide to remove 7 samples from (1) fam 12 (N=4, only in parents) and (2) with bad quality ("S12", "S22", "S110", "S118", "S142")
+  ## After exploration of raw data, we decide to remove 9 samples from (1) fam 12 (N=4, only in parents) and (2) with bad quality ("S12", "S22", "S110", "S118", "S142")
   fullMetadata <- fullMetadata[!fullMetadata$Family %in% "Fam12",]
   fullMetadata <- fullMetadata[!fullMetadata$ID %in% c("S12", "S22", "S110", "S118", "S142"),]
   

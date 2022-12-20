@@ -43,6 +43,62 @@ parental ones
 shared by half the offspring in each trt group, overlapping with the
 offspring ones
 
+# Sampling and sequencing info
+```{r}
+## raw data (before filtering)
+rawData <- read.csv("../../data/cleanedRawData144fishG1G2.csv")
+
+## Family 12 removed from the start (irrelevant)
+rawData <- rawData[!rawData$FamilyOfFather %in% "Fam12",]
+
+## Removing the BP with no offspring:
+rawData <- rawData[rawData$clutch.ID %in% (rawData$clutch.ID[rawData$Generat %in% "O"] %>% unique),]
+
+sum(table(rawData$Generat))
+table(rawData$Generat)
+
+# Mapping stats:
+## Raw reads quality check
+file <- read.csv("../../data/multiqc_general_stats_rawReads.txt") 
+file$SampleID = gsub("_L00.*","", gsub(".*-L1_","", file$Sample.Name))
+names(file) <- c("Sample.Name", "percent_duplicates_rawReads", "percent_GC_rawReads", "M.Seqs_rawReads", "SampleID")
+file <- file[file$SampleID %in% rawData$ID,]
+
+# Number of raw reads:
+mean(file$M.Seqs_rawReads) # 11.02M reads
+qnorm(0.975)*sd(file$M.Seqs_rawReads)/sqrt(nrow(file)) # +/-0.38
+
+# Mapping efficiency with BSBolt:
+mappBSBolt <- read.table(file = "../../data/Report_mapping_efficiency_BSBolt.txt")
+mappDatBSB <- data.frame(SampleID = gsub("_L00*.","", gsub(".*-L1_","", gsub("_R1_001_trimmed_cutadapt.fastq.gz", "", mappBSBolt$V1))),
+                         MappingEfficiency = as.numeric(mappBSBolt$V3))
+mappDatBSB <- mappDatBSB[mappDatBSB$SampleID %in% rawData$ID,]
+mean(mappDatBSB$MappingEfficiency)
+qnorm(0.975)*sd(mappDatBSB$MappingEfficiency)/sqrt(nrow(mappDatBSB))
+## 85.6 +/- 0.51 for BSBolt
+
+nrow(uniteCovALL_woSexAndUnknowChr)
+# 55530 CpG positions shared by all fish
+
+nrow(uniteCov6_G1_woSexAndUnknowChrOVERLAP)
+# 1001880 CpG positions shared by half the parents in each trt group, overlapping with the offspring ones
+
+nrow(uniteCov14_G2_woSexAndUnknowChrOVERLAP)
+# 1001880 CpG positions shared by half the offspring in each trt group, overlapping with the paternal ones
+
+table(fullMetadata$Generat)
+# 111 offspring, 24 parents
+
+table(fullMetadata$Generat, fullMetadata$brotherPairID) %>% unclass %>% data.frame()
+# 12 BP in total, but only 8 have offspring
+
+fullMetadata_reduced <- fullMetadata[fullMetadata$brotherPairID %in% (fullMetadata$brotherPairID[fullMetadata$Generat %in% "O"] %>% unique),]
+
+sum(table(fullMetadata_reduced$Generat))
+table(fullMetadata_reduced$Generat)
+# N=127: 111 offspring + 16 parents
+```
+
 # Global methylation and fitness
 
 Compare fitness traits between the different offsprings groups. Follow up of Sagonas 2020 & Ferre Ortega's master's dissertation
@@ -711,19 +767,19 @@ get2keepFULLdfBP = function(Compa, NBP = 4, myeffect = "Paternal"){
 
 Identify DMS in N BP or more (if needed to justify):
 
-```{r, eval=FALSE, echo=FALSE}
+```{r}
 ## Creates a data frame with BP, DMS, effect and comparison, when the DMS is found in N BP or more
 ## run over 1 to 8 BP
 
 getDMS_runOver1to8BP <- function(NBP){
   # PARENTAL effect: DMS found in either CC-TC or CT-TT comparisons
   df_PaternalEffect = unique(rbind(get2keepFULLdfBP(Compa = vecCompa[1], NBP = NBP, myeffect = "G1all"),
-                                          get2keepFULLdfBP(Compa = vecCompa[2], NBP = NBP, myeffect = "G1all")))
+                                   get2keepFULLdfBP(Compa = vecCompa[2], NBP = NBP, myeffect = "G1all")))
   DMS_PaternalEffect = unique(df_PaternalEffect$DMS)
   
   # OFFSPRING effect: DMS found in either CC-CT or TC-TT comparisons
   df_OffspringEffect = unique(rbind(get2keepFULLdfBP(Compa = vecCompa[3], NBP = NBP, myeffect = "G2all"),
-                                           get2keepFULLdfBP(Compa = vecCompa[4], NBP = NBP, myeffect = "G2all")))
+                                    get2keepFULLdfBP(Compa = vecCompa[4], NBP = NBP, myeffect = "G2all")))
   DMS_OffspringEffect = unique(df_OffspringEffect$DMS)
   
   ##########
@@ -785,7 +841,7 @@ getDMS_runOver1to8BP <- function(NBP){
   # Get a vector of DMS for each category:
   ## A DMS is "interaction" if there are more often slope inversion than not
   DMS_G1G2interactionEffect = df2 %>% group_by(DMS) %>% dplyr::summarise(count=n(), inversionSlopeRate=sum(inversionSlopeReactionNorms)/count,                                                                 
-                                                                                effect=ifelse(inversionSlopeRate>0.5, "interaction", "additive")) %>%
+                                                                         effect=ifelse(inversionSlopeRate>0.5, "interaction", "additive")) %>%
     dplyr::filter(effect=="interaction") %>% dplyr::select(DMS) %>% unlist()
   
   DMS_G1G2additiveEffect = df2 %>% group_by(DMS) %>%
@@ -810,7 +866,7 @@ ggplot(A, aes(fill=DMSgroup, y=NbrDMS, x=NbrBP)) +
   geom_bar(position="stack", stat="identity")+
   scale_y_log10()
 
-A
+A %>% head
 ```
 
 Identify DMS in 4 BP or more:
@@ -912,13 +968,6 @@ df_effects_full$effectBPlevel[df_effects_full$inversionSlopeReactionNorms == FAL
 rm(subUnite, df, dfcp, dfcpco, dfcpio, dfip, dfipco, dfipio, df2)
 ```
 
-## What are the only paternal effect?? [dead end so far, to explore if needed]
-Case 1: methylation is dependant of genetic background. Brothers are not clone.
-Case 2: methylation in fathers at ANOTHER position affected the methylation of G2!
-Test: r=(G1i-G1c)/(mean(G2fromG1i)-mean(G2fromG1c))
-r=1 means that Case 1
-r close to zero means Case 2
-
 ```{r VENNEffectDMS}
 # Plot a Venn diagram
 ggVennDiagram(list("Paternal effect" = DMS_PaternalEffect_4BPmin, "Offspring effect" = DMS_OffspringEffect_4BPmin, "InteractionEffects" = DMS_G1G2interactionEffect_4BPmin),
@@ -1008,59 +1057,6 @@ write.csv(allDMSAnnot, file = "../../dataOut/allDMSAnnot.csv", row.names = F)
 write.csv(allDMSAnnot_top, file = "../../dataOut/allDMSAnnot_top.csv", row.names = F)
 ```
 
-#### Manhattan plot of the genes in the four main effects
-
-```{r}
-makeManFig3 <- function(annotFile){
-  ## Prepare annotation
-  annotFile=annotFile %>% dplyr::select(c("start.gene", "end.gene", "nDMSperGeneKb", "effect", "chrom", "GeneSymbol"))
-  
-  ## Prepare genome for Manhattan plots:
-  genome4Manhattan = GYgynogff %>%
-    #genome without chrXIX and unknown re-type:
-    filter(chrom!="Gy_chrXIX" & chrom!= "Gy_chrUn")%>%
-    mutate(chrom_nr=chrom %>% deroman(),
-           chrom_order=factor(chrom_nr) %>% as.numeric()) %>% arrange(chrom_order) %>%
-    mutate(gstart=lag(length,default=0) %>% cumsum(),
-           gend=gstart+length,
-           typeBG=LETTERS[2-(chrom_order%%2)],
-           gmid=(gstart+gend)/2)
-
-  # Prepare data and change gene position to start at the good chromosome
-  data4Manhattan = dplyr::left_join(annotFile, genome4Manhattan) %>%
-    dplyr::mutate(posInPlot=((end.gene+start.gene)/2)+gstart)
-
-  # Manhattan plot
-  ggplot()+
-    # add grey background every second chromosome
-    geom_rect(data=genome4Manhattan,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=typeBG), alpha=.2)+
-    xlab(NULL)+
-    scale_x_continuous(breaks=genome4Manhattan$gmid,labels=genome4Manhattan$chrom %>% str_remove(.,"Gy_chr"),
-                       position = "bottom",expand = c(0,0))+
-    scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none") +
-    # geom_hline(yintercept = 1)+ # if want to add line break
-    theme(panel.border = element_rect(colour = "black", fill=NA, size=1))+ # add frame
-    # scale_y_continuous(breaks = seq(0, 20), expand = expansion(mult = 0.5)) + # increase size under plot for labels
-    ylab(NULL)+
-    geom_point(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGeneKb)) +
-    geom_label_repel(data = data4Manhattan[data4Manhattan$nDMSperGeneKb > 2,],
-                     aes(x=posInPlot, y = nDMSperGeneKb, label = GeneSymbol), max.overlaps = Inf)
-}
-
-A=makeManFig3(annotFile = allDMSAnnot[grep("G1", allDMSAnnot$effect),])
-B=makeManFig3(annotFile = allDMSAnnot[grep("G2", allDMSAnnot$effect),])
-C=makeManFig3(annotFile = allDMSAnnot[grep("addit", allDMSAnnot$effect),])
-D=makeManFig3(annotFile = allDMSAnnot[grep("inter", allDMSAnnot$effect),])
-
-plot=ggarrange(A, B, C, D, nrow = 4, label.y = 1.1,
-          labels = c("Genes containing DMS associated with paternal effect only", "Genes containing DMS associated with offspring effect only", "Genes containing DMS associated with additive effect","Genes containing DMS associated with interaction effect"))
-plot=annotate_figure(plot, left = textGrob("Number of differentially methylated CpG per gene kb", rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
-                bottom = textGrob("Position of genes in chromosomes", gp = gpar(cex = 1.3)))
-pdf(file = "../../dataOut/ManhattanFig3.pdf", width = 10, height = 8)
-plot
-dev.off()
-rm(A,B,C,D,plot)
-```
 #### Focus on gene FKBP3
 
 ```{r focusFKBP3}
@@ -1148,6 +1144,65 @@ fullplotFKBP3
 dev.off()
 ```
 
+#### Manhattan plot of the genes in the four main effects
+
+```{r}
+# select genes which contains DMS only associated with ONE effect:
+allDMSAnnot_uniqueEffect <- allDMSAnnot[rowSums(is.na(allDMSAnnot[c("G1", "G2", "addit", "inter")])) %in% 3,]
+
+## Prepare annotation
+annotFile=allDMSAnnot_uniqueEffect %>% dplyr::select(c("start.gene", "end.gene", "nDMSperGeneKb", "effect", "chrom", "GeneSymbol", "effect"))
+
+## Select top 5 genes per effect:
+top5perEffect <- annotFile[!is.na(annotFile$GeneSymbol),] %>% 
+  arrange(desc(nDMSperGeneKb)) %>% 
+  group_by(effect) %>%
+  slice(1:5) %>%
+  dplyr::pull(GeneSymbol)
+annotFile$isTop = ifelse(test = annotFile$GeneSymbol %in% top5perEffect, "top", NA)
+
+## Prepare genome for Manhattan plots:
+genome4Manhattan = GYgynogff %>%
+  #genome without chrXIX and unknown re-type:
+  filter(chrom!="Gy_chrXIX" & chrom!= "Gy_chrUn")%>%
+  mutate(chrom_nr=chrom %>% deroman(),
+         chrom_order=factor(chrom_nr) %>% as.numeric()) %>% arrange(chrom_order) %>%
+  mutate(gstart=lag(length,default=0) %>% cumsum(),
+         gend=gstart+length,
+         typeBG=LETTERS[2-(chrom_order%%2)],
+         gmid=(gstart+gend)/2)
+
+# Prepare data and change gene position to start at the good chromosome
+data4Manhattan = dplyr::left_join(annotFile, genome4Manhattan) %>%
+  dplyr::mutate(posInPlot=((end.gene+start.gene)/2)+gstart)
+
+# level effects in order
+data4Manhattan$effect <- factor(data4Manhattan$effect,levels = c("G1", "G2", "addit", "inter"))
+
+pdf(file = "../../dataOut/ManhattanFig3.pdf", width = 8, height = 5)
+# Manhattan plot
+ggplot()+
+  # add grey background every second chromosome
+  geom_rect(data=genome4Manhattan[genome4Manhattan$typeBG %in% "B",],
+            aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf), fill=rgb(.9,.9,.9))+  xlab(NULL)+
+  scale_x_continuous(name = "Chromosomes", breaks=genome4Manhattan$gmid,labels=genome4Manhattan$chrom %>% str_remove(.,"Gy_chr"),
+                     position = "bottom",expand = c(0,0))+
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1))+ # add frame
+  # scale_y_continuous(breaks = seq(0, 20), expand = expansion(mult = 0.5)) + # increase size under plot for labels
+  ylab("Number of differentially methylated CpG per gene kb")+
+  scale_y_continuous(breaks = 0:5)+
+  geom_point(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGeneKb)) +
+  geom_label_repel(data = data4Manhattan[data4Manhattan$isTop %in% "top",], 
+                   aes(x=posInPlot, y = nDMSperGeneKb, label = GeneSymbol, fill = factor(effect)),
+                   color="white",max.overlaps = Inf, box.padding = 0.6, segment.color = "grey")+
+  scale_fill_manual(values=c("#e69f00", "#56b4e9", "#009e73", "#cc79a7"))
+dev.off()
+```
+
+
+
+
+
 ### Gene Ontology analysis OVERALL (all genes with G1, G2 or both effects):
 
 ```{r geneOnto_createUniverse}
@@ -1173,6 +1228,7 @@ gsc_universe <- GeneSetCollection(goAllFrame, setType = GOCollection())
 The conditional hypergeometric takes this into account, and only uses those terms that were not already significant when testing a higher order (parent) term.
 
 ```{r geneOnto_runGO}
+# select genes which contains DMS only associated with ONE effect:
 GO_G1only = makedfGO(DMS_G1onlyEffect_4BPmin_ANNOT %>%
                        distinct(feature.name,.keep_all = TRUE), gene_universe, effect = "598 genes with DMS associated with G1 effect only")
 
@@ -1201,8 +1257,8 @@ GOplot <- dfGO %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
         legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
   # scale_y_discrete(labels = function(x) str_wrap(x, width = 10))+ # split too long GO names in half
   facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")+
-    scale_y_discrete(limits=rev, # revers axis to have alphabetical order
-                     labels = function(x) str_wrap(x, width = 40)) # split too long GO names in half
+  scale_y_discrete(limits=rev, # revers axis to have alphabetical order
+                   labels = function(x) str_wrap(x, width = 40)) # split too long GO names in half
 GOplot
 
 pdf(GOplot, file = "../../dataOut/Supplementary_GOplot_fig3VennGenes.pdf", width = 6, height = 18)
@@ -1334,39 +1390,95 @@ B$patTrt[B$patTrt %in% "controlP"]="Control"
 B$patTrt[B$patTrt %in% "infectedP"]="Exposed"
 
 AB=merge(A, B)
-
 AB=merge(AB, DMSalleffectsDF)
 AB$SampleID=as.character(AB$SampleID)
 
 # level effects
 AB$effect <- factor(AB$effect,levels = c("G1", "G2", "addit", "inter"))
 
-mod1=lme4::lmer(G1methylation~G2methylation * effect + (1|brotherPairID/SampleID), data=AB)
-mod2=lme4::lmer(G1methylation~G2methylation + effect + (1|brotherPairID/SampleID), data=AB)
-mod3=lme4::lmer(G1methylation~G2methylation + (1|brotherPairID/SampleID), data=AB)
+mod1=lme4::lmer(G2methylation~G1methylation * effect + (1|brotherPairID/SampleID), data=AB)
+mod2=lme4::lmer(G2methylation~G1methylation + effect + (1|brotherPairID/SampleID), data=AB)
+mod3=lme4::lmer(G2methylation~G1methylation + (1|brotherPairID/SampleID), data=AB)
 
 lmtest::lrtest(mod1, mod2)
 # Likelihood ratio test
 # 
-# Model 1: G1methylation ~ G2methylation * effect + (1 | brotherPairID/SampleID)
-# Model 2: G1methylation ~ G2methylation + effect + (1 | brotherPairID/SampleID)
+# Model 1: G2methylation ~ G1methylation * effect + (1 | brotherPairID/SampleID)
+# Model 2: G2methylation ~ G1methylation + effect + (1 | brotherPairID/SampleID)
 # #Df   LogLik Df  Chisq Pr(>Chisq)    
-# 1  11 -1114988                         
-# 2   8 -1115328 -3 680.09  < 2.2e-16 ***
+# 1  11 -1122773                         
+# 2   8 -1122943 -3 339.03  < 2.2e-16 ***
 
 lmtest::lrtest(mod1, mod3)
+# Likelihood ratio test
+# 
+# Model 1: G2methylation ~ G1methylation * effect + (1 | brotherPairID/SampleID)
+# Model 2: G2methylation ~ G1methylation + (1 | brotherPairID/SampleID)
+# #Df   LogLik Df  Chisq Pr(>Chisq)    
+# 1  11 -1122773                         
+# 2   5 -1123044 -6 541.39  < 2.2e-16 ***
+
+# Set up modelplot
+modelPlot <- plot_model(mod1, type = "pred", terms = c("G1methylation", "effect"))+
+  geom_abline(y=1)+
+  theme_bw()+
+  xlim(1,100)+
+  ylim(0,100)+
+  xlab("Methylation value of father (%)")+
+  ylab("Methylation value of offspring (%)")+
+  ggtitle(NULL)+
+  guides(color = "none") +
+  # ggtitle("Predicted values of offspring CpG methylation\n associated with each effect versus their father's")+
+  scale_color_manual(values = c("#e69f00", "#56b4e9", "#009e73", "#cc79a7"))+
+  scale_fill_manual(values = c("#e69f00", "#56b4e9", "#009e73", "#cc79a7"))+
+  theme(plot.margin = margin()) + theme_bw() +
+  theme(legend.position = "none")
+
+# Define marginal histogram
+marginal_distribution2 <- function(x, var, group) {
+  ggplot(x, aes_string(x = var, fill = group)) +
+    geom_density(adjust=1.5, alpha=.3) +
+    # geom_density(adjust=1.5, alpha=.7, aes(y=..count..))+
+    # geom_histogram(col="black")+
+    guides(fill = "none") +
+    scale_fill_manual(values = c("#e69f00", "#56b4e9", "#009e73", "#cc79a7")) +
+    # theme_void() +
+    theme(plot.margin = margin())
+}
+
+marginal_distribution3 <- function(x, var, group) {
+  ggplot(x, aes_string(x = var, fill = group)) +
+    geom_histogram(col="black")+
+    guides(fill = "none") +
+    scale_fill_manual(values = c("#e69f00", "#56b4e9", "#009e73", "#cc79a7")) +
+    # theme_void() +
+    theme(plot.margin = margin())
+}
+
+# Set up marginal histograms & density
+x_dens <- marginal_distribution2(AB, "G1methylation", "effect")
+x_hist <- marginal_distribution3(AB, "G1methylation", "effect")
+y_dens <- marginal_distribution2(AB, "G2methylation", "effect")+coord_flip()
+y_hist <- marginal_distribution3(AB, "G2methylation", "effect")+coord_flip()
+
+# Align histograms with scatterplot
+aligned_x_hist <- align_plots(x_hist, modelPlot, align = "v")[[1]]
+aligned_y_hist <- align_plots(y_hist, modelPlot, align = "h")[[1]]
+
+# Align density with scatterplot
+aligned_x_dens <- align_plots(x_dens, modelPlot, align = "v")[[1]]
+aligned_y_dens <- align_plots(y_dens, modelPlot, align = "h")[[1]]
 ```
 
 
 ```{r}
-pdf(file = "../../dataOut/plotmodelG1methG2meth.pdf", width = 8, height = 8)
-plot_model(mod1, type = "pred", terms = c("G2methylation", "effect"))+
-  geom_abline(y=1)+
-  theme_bw()+
-  xlab("Methylation value of offspring (%)")+
-  ylab("Methylation value of father (%)")+
-  scale_color_manual(values = c("#e69f00", "#56b4e9", "#009e73", "#cc79a7"))+
-  scale_fill_manual(values = c("#e69f00", "#56b4e9", "#009e73", "#cc79a7"))
+pdf(file = "../../dataOut/plotmodelG1methG2meth.pdf", width = 12, height = 6)
+# Arrange plots
+cowplot::plot_grid(cowplot::plot_grid(
+  aligned_x_hist, NULL, modelPlot, aligned_y_hist, ncol = 2, nrow = 2, rel_heights = c(0.3, 1), rel_widths = c(1, 0.3)),
+  cowplot::plot_grid(
+    aligned_x_dens, NULL, modelPlot, aligned_y_dens, ncol = 2, nrow = 2, rel_heights = c(0.3, 1), rel_widths = c(1, 0.3)
+  ), ncol=2)
 dev.off()
 ```
 
