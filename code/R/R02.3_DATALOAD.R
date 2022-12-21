@@ -34,57 +34,50 @@ if (loadannot == TRUE){
 ## That can only be done AFTER these have been calculated of course. Only for later scripts.
 if (sourceDMS == TRUE){
   ## Source the previously calculated DMS/DMR
-  ## Parents (brotherPairID as covariates)
-  ### DM from CpG positions shared by half the fish per trt
-  DMS15pc_G1_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_half.RDS"); nrow(DMS15pc_G1_half) # 3648
-  DMR15pc_G1_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_half.RDS"); nrow(DMR15pc_G1_half) # 23
-  ### DM from CpG positions shared by all the fish
-  # DMS15pc_G1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G1_ALL.RDS"); nrow(DMS15pc_G1_ALL) # 125
-  # DMR15pc_G1_ALL returned 0 DMR
+  DMSlist <- readRDS("../../data/DiffMeth/DMSlist.RDS")
+  DMRlist <- readRDS("../../data/DiffMeth/DMRlist.RDS")
+  ## By BP
+  DMBPlist <- readRDS("../../data/DiffMeth/DMperBP_list.RDS")
+  DMSBPlist <- lapply(DMBPlist, "[[", 1)
+  DMRBPlist <- lapply(DMBPlist, "[[", 2)
+}
+
+if (sourceSubUnite == TRUE){
+  ######################################
+  ## For DMR: tile the methylation data:
+  ## Kostas MBE 2020: "To identify DMRs, we used the tileMethylCounts() function in MethylKit
+  # v.1.5.0 with a sliding window size of 100 bases and step size of 100 bases."
+  # Summarize methylation information over tiling windows with a sliding window size of 100 bases and step size of 100 bases
   
-  ## Offspring (brotherPairID & Sex as covariates)
-  ## Control G1 - G2(trt vs control)
-  ### DM from CpG positions shared by half the fish per trt
-  DMS15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_half.RDS")
-  nrow(DMS15pc_G2_controlG1_half) # 1197
-  DMR15pc_G2_controlG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_controlG1_half.RDS")
-  nrow(DMR15pc_G2_controlG1_half) # 6
-  ### DM from CpG positions shared by all the fish
-  # DMS15pc_G2_controlG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_controlG1_ALL.RDS")
-  # nrow(DMS15pc_G2_controlG1_ALL) # 38
-  # DMR15pc_G2_controlG1_ALL returned 0 DMR
+  # 0. PARENTS trt-ctrl (CpG covered in half trt group)
+  tiles_G1_half = tileMethylCounts(uniteCov6_G1_woSexAndUnknowChrOVERLAP, win.size=100,step.size=100,cov.bases = 10)
+  nrow(tiles_G1_half) # methylBase object with 20348 rows
   
-  ## Infected G1 - G2(trt vs control)
-  ### DM from CpG positions shared by half the fish per trt
-  DMS15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_half.RDS")
-  nrow(DMS15pc_G2_infectedG1_half) # 690
-  DMR15pc_G2_infectedG1_half <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_half.RDS")
-  nrow(DMR15pc_G2_infectedG1_half) # 8
-  ### DM from CpG positions shared by all the fish
-  # DMS15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMS15pc_G2_infectedG1_ALL.RDS")
-  # nrow(DMS15pc_G2_infectedG1_ALL) # 22
-  # DMR15pc_G2_infectedG1_ALL <- readRDS("../../data/DiffMeth/DMR15pc_G2_infectedG1_ALL.RDS")
-  # nrow(DMR15pc_G2_infectedG1_ALL) # 1
+  # 1. CC-TC = CONTROL fish (parent CvsT) (CpG covered in half trt group)
+  uniteCov14_G1bothTrt_G2control_woSexAndUnknowChr <- reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                                                 treatment = fullMetadata_OFFS$trtG1G2_NUM[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,5)],
+                                                                 sample.ids = fullMetadata_OFFS$ID[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,5)])
+  tiles_G1bothTrt_G2control_half = tileMethylCounts(uniteCov14_G1bothTrt_G2control_woSexAndUnknowChr,win.size=100,step.size=100,cov.bases = 10)
+  nrow(tiles_G1bothTrt_G2control_half) # methylBase object with 20348 rows
   
-  ## Both trt G1 - Control G2
-  ### DM from CpG positions shared by half the fish per trt
-  DMS15pc_G1_controlG2_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_controlG2_half.RDS")
-  nrow(DMS15pc_G1_controlG2_half) # 1569
-  DMR15pc_G1_controlG2_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_controlG2_half.RDS")
-  nrow(DMR15pc_G1_controlG2_half) # 14
+  # 2. CT-TT = TREATMENT fish (parent CvsT) (CpG covered in half trt group)
+  uniteCov14_G1bothTrt_G2infected_woSexAndUnknowChr <- reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                                                  treatment = fullMetadata_OFFS$trtG1G2_NUM[fullMetadata_OFFS$trtG1G2_NUM %in% c(3,6)],
+                                                                  sample.ids = fullMetadata_OFFS$ID[fullMetadata_OFFS$trtG1G2_NUM %in% c(3,6)])
+  tiles_G1bothTrt_G2infected_half = tileMethylCounts(uniteCov14_G1bothTrt_G2infected_woSexAndUnknowChr,win.size=100,step.size=100,cov.bases = 10)
+  nrow(tiles_G1bothTrt_G2infected_half) # methylBase object with 20348 rows
   
-  ## Both trt G1 - Infected G2
-  ### DM from CpG positions shared by half the fish per trt
-  DMS15pc_G1_infectedG2_half <- readRDS("../../data/DiffMeth/DMS15pc_G1_infectedG2_half.RDS")
-  nrow(DMS15pc_G1_infectedG2_half) # 2050
-  DMR15pc_G1_infectedG2_half <- readRDS("../../data/DiffMeth/DMR15pc_G1_infectedG2_half.RDS")
-  nrow(DMR15pc_G1_infectedG2_half) # 19
+  # 3. CC-CT = fish from CONTROL parents (G2 CvsT) (CpG covered in half trt group)
+  uniteCov14_G2_woSexAndUnknowChr_G1CONTROL <- reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                                          treatment = fullMetadata_OFFS$trtG1G2_NUM[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)],
+                                                          sample.ids = fullMetadata_OFFS$ID[fullMetadata_OFFS$trtG1G2_NUM %in% c(5,6)])
+  tiles_G2_G1CONTROL_half = tileMethylCounts(uniteCov14_G2_woSexAndUnknowChr_G1CONTROL,win.size=100,step.size=100,cov.bases = 10)
+  nrow(tiles_G2_G1CONTROL_half) # methylBase object with 20348 rows
   
-  #######################
-  ## In Brother pairs: ##
-  #######################
-  ## Get DMS CC-TC and TC-TT in all brother pairs (same treatment, different PARENTAL treatment)
-  
-  # Read in (was calculated on Apocrita, 1h 10 cores)
-  DMS_BP_G2_list <- readRDS("../../data/DiffMeth/BP/DMS_BP_G2_list.RDS")
+  # 4. TC-TT = fish from TREATMENT parents (G2 CvsT) (CpG covered in half trt group)
+  uniteCov14_G2_woSexAndUnknowChr_G1INFECTED <- reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
+                                                           treatment = fullMetadata_OFFS$trtG1G2_NUM[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)],
+                                                           sample.ids = fullMetadata_OFFS$ID[fullMetadata_OFFS$trtG1G2_NUM %in% c(2,3)])
+  tiles_G2_G1INFECTED_half = tileMethylCounts(uniteCov14_G2_woSexAndUnknowChr_G1INFECTED,win.size=100,step.size=100,cov.bases = 10)
+  nrow(tiles_G2_G1INFECTED_half) # methylBase object with 20348 rows
 }
