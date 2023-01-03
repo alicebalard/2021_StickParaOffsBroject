@@ -1,9 +1,9 @@
 ## Alice Balard, Eizaguirre lab, QMUL
-## 22nd of June 2022
-## Code structure for the project "Methylation inheritance after parasite infection in the three-spined stickleback"
+## updated January 2023
+## Code structure for the project "DNA methylation biomarkers reveal offspring’s disease tolerance can stem from trans-generational paternal effects"
 
 ############## DATA ORGANISATION  ################
-### Raw files fro the 114 samples (zipped) here:
+### Raw files for the raw samples (zipped) here:
 /data/archive/archive-SBCS-EizaguirreLab/RRBS/StickPara_Broject/00Illumina_RawReads/
 
 [btx915@frontend8:/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/]
@@ -27,7 +27,6 @@
 ├── miniBashTools
 ├── misc
 ├── R
-├── run_gynofuncal.stderr
 ├── run_gynofuncal.stdout
 ├── S00_multiQC_generateReports.sh
 ├── S01_fastqc.sh
@@ -43,59 +42,16 @@
 ########## R SCRIPTS (within GIT_StickParaOffsBroject/code/R) ################
 
 ├── customRfunctions.R
+├── homebrewDMSannotation.R
 ├── librariesLoading.R
-├── R00_calculateStats.R # creat fullmetadata135 and compare BSBolt with Bismark mapping
-├── R01.1_prepBSBOLTForMethylkit.R
-├── R01.2_prepObjectMethylkit.R
-├── R02.1_loadMetadata.R
-├── R02.2_loadMethyldata.R
-├── R02.3_DATALOAD.R # main loading script, call R02.1 and R02.2
-├── R03.1_methylationAndFitness.Rmd # Explore link between global methylation and body condition index
-├── R03.2_globalMethylation.R
-├── R04.1.2_getDifferentialMethylationByBrotherPairs.R
-├── R04.1_getDifferentialMethylation.R
-├── R04.2_exploreDifferentialMethylation.R
-├── R04.3_GeneOntology.R
-├── R04.4_NetworkAnalyses.R
-├── rawDataCleaning.R
-├── Rdata
-├── readme.txt
-├── Rfigures
-├── run_R00.R.stdout
-├── run_R00.sh
-├── run_R01.2.R.sh
-├── run_R01.2.R.stdout
-├── run_R03.1.R_oldglobalmethylation.sh
-├── run_R03.1.R.stdout
-├── run_R04.1.2_getDifferentialMethylationByBrotherPairs.R
-├── run_R04.1.2_getDifferentialMethylationByBrotherPairs.R.o2434786
-├── run_R04.1.diffMeth.R.sh
-├── run_R04.1.diffMeth.R.stdout
-└── Rxx_sliddingWindow.R
-
-
-
-
-##############################
-##### R methylation analysis workflow: #####
-Preparation of data and metadata:
-R00 -> alignment stats
-R01.1, R01.2, R01.3, R01.4 -> data preparation
-
-R02 -> link methylation and fitness (tbc)
-
-# PART 1. (script R03.1) Methylation profile: or Adonis multivariate stats, presence/abs, block effect=family
-# PART 2. (script R03.2) DMS 
-# PART 3.DMR: Precise localisation of blocks investing in methylation
-# PART 4.Network: Explore other parameters than geographic: are the modules
-#   on a high recombination place? Or with high mutation rate? 
-#   What does modules capture on top of DMRs?
-##### Then 
-# - Gene Ontology
-# - Final: Check robustness: reshuffle the controls and check that we find less DMS/DMR/modules
-# 
-# These analyses will be done on:
-# A. Parents ctr-trt
-# B. Offspring ctr-trt pat1 & ctrl-trt pat2 (different offspring treatments)
-# C. Offspring ctrl-ctrl & trt-trt (different paternal treatment)
-##############################
+├── R00_rawDataCleaning.R
+├── R01_calculateSequencingStats.R
+├── R02_prepBSBOLTForMethylkit_runInCLUSTER.R
+├── R03_prepObjectMethylkit_runInCLUSTER.R
+├── R04_getDifferentialMethylation_runInCLUSTER.R
+├── R05_GlobalMethylationAndFitness.R
+├── R06_GlobalMethylationProfile.R
+├── R07_DMSeffects.R
+├── R08_DMSannotation.R
+├── R09_CorrelationPCAmethPhenotype.R
+└── R10_TopDownDMSparentsInG2.R
