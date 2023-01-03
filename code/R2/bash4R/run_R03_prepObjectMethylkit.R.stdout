@@ -1,0 +1,208 @@
+Loading R/4.0.2
+  Loading requirement: java/1.8.0_171-oracle
+Loading required package: GenomicRanges
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
+    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+Received list of locations.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+Reading file.
+[1] "Remove unwanted samples"
+[1] "Filter"
+[1] "Normalise"
+
+   Control  E_control  E_exposed    Exposed NE_control NE_exposed 
+         8         28         28          8         28         27 
+[1] "Add CpG present in ALL individuals"
+uniting...
+uniting...
+uniting...
+uniting...
+uniting...
+[1] "nbr CpG on sex chromosome of unmapped:"
+[1] 5486
+[1] "Keep CpG apart from sex chromosome XIX and unmapped (comprise Y chr)"
+[1] "nbr CpG shared by all 127 samples:"
+[1] 60861
+[1] "nbr CpG shared by all parents:"
+[1] 186006
+[1] "nbr CpG shared by all offsprings:"
+[1] 78384
+[1] "nbr CpG shared by 50% (4) of parents per trt group (overlapping with G2):"
+[1] 1002565
+[1] "nbr CpG shared by 50% (14) of offsprings per trt group (overlapping with G1):"
+[1] 1002565

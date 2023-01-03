@@ -29,7 +29,6 @@ list.of.packages <- c(
   "lmtest", # for lrtests
   "lmerTest", # for stepwise analysis of lmer
   "magrittr",      # provides the %>% operator
-  "methylKit",
   "MuMIn", # participation of variables to the variance
   "missMDA",# PCA for incomplete data
   "nlme", ## for mixed models
@@ -56,18 +55,18 @@ list.of.packages <- c(
 ## install from CRAN and require all libraries from CRAN and github
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg))
-    install.packages(new.pkg, dependencies = TRUE)
+#  if (length(new.pkg))
+#    install.packages(new.pkg, dependencies = TRUE,repos = "http://cran.us.r-project.org")
   sapply(pkg, require, character.only = TRUE)
 }
 ipak(list.of.packages)
 
 ##########################################
 ## install packages from github if not yet
-install_github("ropensci/rentrez")
-install_github("asishallab/goEnrichment")
-install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
-install_github("gaospecial/ggVennDiagram")
+#install_github("ropensci/rentrez")
+#install_github("asishallab/goEnrichment")
+#install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+#install_github("gaospecial/ggVennDiagram")
 
 #####################################################
 ## install from biocmanager and require all libraries
@@ -76,17 +75,19 @@ list.bioc <- c("Category", # for hypergeometric GO test
                "WGCNA", # for networks
                "GenomicFeatures",## for annotation
                "GOstats", # for GO analysis
-               "GSEABase"  # for GO term GeneSetCollection
+               "GSEABase",  # for GO term GeneSetCollection
+               "methylKit"
 ) 
 ipak2 <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg))
-    BiocManager::install(new.pkg)
+#  if (length(new.pkg))
+#   BiocManager::install(new.pkg)
   sapply(pkg, require, character.only = TRUE)
 }
+
 ipak2(list.bioc)
 
 ## offspring colors for all kind of plots
 colOffs <- c("#ffe67f", "#ff6300","#a8caff","#a800d4")
 
-theme_set(theme_pubr())
+#theme_set(theme_pubr())
