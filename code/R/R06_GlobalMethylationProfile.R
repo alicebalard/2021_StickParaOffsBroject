@@ -51,8 +51,8 @@ print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permuta
 
 # Results:
 # -   1.5% of the variation explained by PAT (R2=0.01470, p \< 0.001)
-# -   1% of the variation explained by outcome (R2=0.01009, p = 0.05)
-# -   1.3% of the variation explained by Sex (R2=0.01277, p \< 0.01)
+# -   1% of the variation explained by outcome (R2=0.01009, p = 0.035)
+# -   1.3% of the variation explained by Sex (R2=0.01277, p = 0.004)
 
 ## NMDS
 #### RUN Goodness of fit

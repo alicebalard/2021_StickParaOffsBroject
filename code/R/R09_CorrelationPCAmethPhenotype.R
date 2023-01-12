@@ -71,20 +71,7 @@ dev.off()
 
 # Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
 RESPCA <- getPCACpG(DMSvec=DMS_G1onlyEffect_4BPmin, effect="G1")
-# 1640 DMS linked with G1
-# [1] "The chosen model is:"
-# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-#     PCA2:PAT + No.Worms:PAT
-# PCA2:PAT                        0  39499   39499     1   105 12.4803 0.0006127 ***
-# No.Worms:PAT                    0  20493   20493     1   105  6.4750 0.0123948 *  
-# [1] "862 CpG sites most correlated (p < 0.05) with the first principal component"
-# [1] "826 CpG sites most correlated (p < 0.05) with the second principal component"
-
 formula(RESPCA$PCA_percAtDMS_imputed$modSel)
-# The SECOND PCA axis is significant in BCI
-# [1] "The chosen model is:"
-# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-#     PCA2:PAT + No.Worms:PAT
 
 ### How much of the BCI variance is explained by each variables?
 mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
@@ -105,6 +92,18 @@ round(A, 2) #10.41% of the variance in associated with the parasite load (number
 round(B, 2) #22.02% of the variance in associated with the paternal treatment
 round(C, 2) #9.6% of the variance in associated with the second PCA axis
 
+## Summary:
+# 1640 DMS linked with intergenerational effect
+# 862 CpG sites most correlated (p < 0.05) with PCA1
+# 826 CpG sites most correlated (p < 0.05) with PCA2
+# The chosen model is:
+# BCI ~ PCA2 + No.Worms + paternal treatment + PCA2:paternal treatment + No.Worms:paternal treatment + (1 | father's family) + (1 | Sex)
+# Backward reduced elimination with Satterthwaite method
+# PCA2:paternal treatment F=12.48, p-value<0.001
+# No.Worms:paternal treatment F=6.47, p-value=0.012
+# Variance in BCI associated with:
+# No.Worms=10.4% paternal treatment=22% PCA2=9.6%
+
 ### Plot of the model
 phenoMethPlotG1 <- plot(ggpredict(RESPCA$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) +
   theme_bw() +
@@ -121,20 +120,8 @@ dev.off()
 
 # Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
 RESPCA <- getPCACpG(DMSvec=DMS_G2onlyEffect_4BPmin, effect="G2")
-# 309 DMS linked with G2
-# [1] "The chosen model is:"
-# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-#     PCA2:PAT + No.Worms:PAT
-# PCA2:PAT                        0 24737.6 24737.6     1   105  7.4498 0.007441 **
-# No.Worms:PAT                    0 23505.5 23505.5     1   105  7.0787 0.009025 **
-# [1] "181 CpG sites most correlated (p < 0.05) with the first principal component"
-# [1] "178 CpG sites most correlated (p < 0.05) with the second principal component"
 
 formula(RESPCA$PCA_percAtDMS_imputed$modSel)
-# The SECOND PCA axis is significant in BCI
-# [1] "The chosen model is:"
-# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-#     PCA2:PAT + No.Worms:PAT
 
 ### How much of the BCI variance is explained by each variables?
 mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
@@ -155,6 +142,18 @@ round(A, 2) #11.81% of the variance in associated with the parasite load (number
 round(B, 2) #18.88% of the variance in associated with the paternal treatment
 round(C, 2) #6.08% of the variance in associated with the second PCA axis
 
+## Summary:
+# 309 DMS linked with infection-induced effect
+# 181 CpG sites most correlated (p < 0.05) with PCA1
+# 178 CpG sites most correlated (p < 0.05) with PCA2
+# The chosen model is:
+# BCI ~ PCA2 + No.Worms + paternal treatment + PCA2:paternal treatment + No.Worms:paternal treatment + (1 | father's family) + (1 | Sex)
+# Backward reduced elimination with Satterthwaite method
+# PCA2:paternal treatment F=12.48, p-value<0.001
+# No.Worms:paternal treatment F=6.47, p-value=0.012
+# Variance in BCI associated with:
+# No.Worms=11.8% paternal treatment=18.9% PCA2=6.1%
+
 ### Plot of the model
 phenoMethPlotG2 <- plot(ggpredict(RESPCA$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) +
   theme_bw() +
@@ -171,20 +170,8 @@ dev.off()
 
 # Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
 RESPCA <- getPCACpG(DMSvec=DMS_G1G2additiveEffect_4BPmin, effect="additive")
-# 173 DMS linked with additive
-# [1] "The chosen model is:"
-# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-#     PCA2:PAT + No.Worms:PAT
-# PCA2:PAT                        0 27074.3 27074.3     1 105.000  8.5037 0.004334 **
-# No.Worms:PAT                    0 26722.0 26722.0     1 105.000  8.3930 0.004585 **
-# [1] "95 CpG sites most correlated (p < 0.05) with the first principal component"
-# [1] "81 CpG sites most correlated (p < 0.05) with the second principal component"
 
 formula(RESPCA$PCA_percAtDMS_imputed$modSel)
-# The SECOND PCA axis is significant in BCI
-# [1] "The chosen model is:"
-# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-#     PCA2:PAT + No.Worms:PAT
 
 ### How much of the BCI variance is explained by each variables?
 mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
@@ -205,6 +192,18 @@ round(A, 2) #10.86% of the variance in associated with the parasite load (number
 round(B, 2) #20.03% of the variance in associated with the paternal treatment
 round(C, 2) #9.17% of the variance in associated with the second PCA axis
 
+## Summary:
+# 173 DMS linked with additive effect
+# 95 CpG sites most correlated (p < 0.05) with PCA1
+# 81 CpG sites most correlated (p < 0.05) with PCA2
+# The chosen model is:
+# BCI ~ PCA2 + No.Worms + paternal treatment + PCA2:paternal treatment + No.Worms:paternal treatment + (1 | father's family) + (1 | Sex)
+# Backward reduced elimination with Satterthwaite method
+# PCA2:paternal treatment F=12.48, p-value<0.001
+# No.Worms:paternal treatment F=6.47, p-value=0.012
+# Variance in BCI associated with:
+# No.Worms=10.9% paternal treatment=20% PCA2=9.2%
+
 ### Plot of the model
 phenoMethPlotadditive <- plot(ggpredict(RESPCA$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) +
   theme_bw() +
@@ -221,20 +220,8 @@ dev.off()
 
 # Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
 RESPCA <- getPCACpG(DMSvec=DMS_G1G2interactionEffect_4BPmin, effect="interaction")
-# 151 DMS linked with interaction
-# [1] "The chosen model is:"
-# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-#     PCA2:No.Worms + PCA2:PAT + No.Worms:PAT + PCA2:No.Worms:PAT
-# PCA2:No.Worms:PAT               0 16347.7 16347.7     1   103  4.8922 0.02919 *
-# [1] "72 CpG sites most correlated (p < 0.05) with the first principal component"
-# [1] "54 CpG sites most correlated (p < 0.05) with the second principal component"
 
 formula(RESPCA$PCA_percAtDMS_imputed$modSel)
-# The SECOND PCA axis is significant in BCI
-# [1] "The chosen model is:"
-# BCI ~ PCA2 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) +
-#   PCA2:No.Worms + PCA2:PAT + No.Worms:PAT + PCA2:No.Worms:PAT
-# PCA2:No.Worms:PAT               0 16347.7 16347.7     1   103  4.8922 0.02919 *
 
 ### How much of the BCI variance is explained by each variables?
 mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex), 
@@ -255,6 +242,20 @@ round(A, 2) #14.75% of the variance in associated with the parasite load (number
 round(B, 2) #19.02% of the variance in associated with the paternal treatment
 round(C, 2) #7.05% of the variance in associated with the second PCA axis
 
+## Summary:
+# 151 DMS linked with interaction effect
+# 72 CpG sites most correlated (p < 0.05) with PCA1
+# 54 CpG sites most correlated (p < 0.05) with PCA2
+# The chosen model is:
+# BCI ~ PCA2 + No.Worms + paternal treatment +
+# PCA2:No.Worms + PCA2:paternal treatment + No.Worms:paternal treatment + PCA2:No.Worms:paternal treatment +
+# (1 | father's family) + (1 | Sex)
+# Backward reduced elimination with Satterthwaite method
+# PCA2:paternal treatment F=12.48, p-value<0.001
+# No.Worms:paternal treatment F=6.47, p-value=0.012
+# Variance in BCI associated with:
+# No.Worms=14.8% paternal treatment=19% PCA2=7.1%
+
 ### Plot of the model
 phenoMethPlotinteraction <- plot(ggpredict(RESPCA$PCA_percAtDMS_imputed$modSel, terms = c("No.Worms", "PCA2", "PAT")), add.data = TRUE, alpha = .08) +
   theme_bw() +
@@ -268,6 +269,7 @@ phenoMethPlotinteraction
 pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_interaction.pdf", width = 7, height = 5)
 phenoMethPlotinteraction
 dev.off()
+
 ################
 ### Annotate the genes linked with axis 2 of the PCA
 annotPCAaxisFull <- myHomebrewDMSannotation(DMSvec = paste(RESPCAgeneral$CpGPCA2$chr, RESPCAgeneral$CpGPCA2$end),
@@ -280,7 +282,7 @@ annotPCAaxis = annotPCAaxisFull %>%
   dplyr::select(c("GeneSymbol", "feature.name", "Note", "chrom", "nDMSperGenekb", "ENTREZID", "description", "summary", "effect"))%>% 
   unique
 
-write.csv(annotPCAaxis, "../../dataOut/annotPCA2_1137DMS_437genes.csv", row.names = F)
+write.csv(annotPCAaxis, "../../dataOut/annotPCA2_1137DMS_437genes_supTabS2.csv", row.names = F)
 
 ### Plot annotated Manhattan plots for those 437 genes associated with PCA2!
 P=plotManhattanGenesDMS(annotFile = annotPCAaxisFull, GYgynogff = GYgynogff)
@@ -302,11 +304,11 @@ GOplot <- GO_PCA2_1137DMS %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
         legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
         legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), legend.position="left") + # grey box for legend
   facet_grid(fct_inorder(GO.category)~., scales="free",space = "free")+
-  scale_y_discrete(labels = function(x) str_wrap(x, width = 20)) # split too long GO names in half
+  scale_y_discrete(limits=rev) # revers axis to have alphabetical order
 
 GOplot
 
-pdf(GOplot, file = "../../dataOut/GOplotPCA2.pdf", width = 6, height = 7)
+pdf(GOplot, file = "../../dataOut/GOplotPCA2_supF6.pdf", width = 6, height = 8)
 GOplot
 dev.off()
 
