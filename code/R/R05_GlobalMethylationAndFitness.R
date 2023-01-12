@@ -65,6 +65,7 @@ mod_Tol <- lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=fullMetada
 step(mod_Tol, reduce.random = F) # Model found: full model
 
 ## The slope of BCI on nbrworms varies upon treatment
+pdf(file = "../../dataOut/SupplFigS4.pdf", width = 7, height = 5)
 plot(ggpredict(mod_Tol, terms = c("No.Worms", "PAT")), add.data=T)+ theme_bw() +
   ylab("Body Condition Index") + xlab("Number of worms") +
   ggtitle("Predicted values of Body Condition Index in offspring")+
@@ -73,6 +74,7 @@ plot(ggpredict(mod_Tol, terms = c("No.Worms", "PAT")), add.data=T)+ theme_bw() +
   scale_x_continuous(breaks = 0:10)+
   geom_point(size=0)+ # to have color key in legend as point
   guides(colour = guide_legend(override.aes = list(size=3,linetype=0, fill = NA)))
+dev.off()
 
 ## Link between methylation and fitness (BCI and tolerance)
 

@@ -1,6 +1,18 @@
 # Each script sources the previous script of the pipeline if needed
 source("R06_GlobalMethylationProfile.R")
 
+## Load genome annotation
+## NB Promoters are defined by options at genomation::readTranscriptFeatures function. 
+## The default option is to take -1000,+1000bp around the TSS and you can change that. 
+## -> following Heckwolf 2020 and Sagonas 2020, we consider 1500bp upstream and 500 bp downstream
+annotBed12=readTranscriptFeatures("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.transdec.bed12",
+                                  remove.unusual = FALSE, up.flank = 1500, down.flank = 500)
+## Change recursively the gene names to keep only ID
+getName <- function(x) {sub(";.*", "", sub(".*ID=", "", x))}
+for (i in 1:length(annotBed12)){
+  annotBed12[[i]]$name <- getName(annotBed12[[i]]$name)
+}
+
 # Load the calculated DMS by BP
 DMBPlist <- readRDS("../../data/DiffMeth/DMperBP_list_dec2022.RDS")
 DMSBPlist <- lapply(DMBPlist, "[[", 1)
@@ -320,3 +332,102 @@ ggVennDiagram(list("Paternal effect" = DMS_PaternalEffect_4BPmin, "Offspring eff
               label_alpha = 0) + scale_color_manual(values = c(1,1,1))+
   scale_fill_gradient(low="white",high = "yellow") + theme(legend.position = "none")
 dev.off()
+
+#######################
+## Where are these DMS?
+DMSvec=unique(c(DMS_G1onlyEffect_4BPmin, DMS_G2onlyEffect_4BPmin, DMS_G1G2additiveEffect_4BPmin, DMS_G1G2interactionEffect_4BPmin))
+
+getFeature <- function(DMSvec){
+  # Change the DMS vector into a GRange:
+  GRangeOBJ = makeGRangesFromDataFrame(data.frame(chr=sapply(strsplit(DMSvec, " "), `[`, 1), 
+                                                  start=sapply(strsplit(DMSvec, " "), `[`, 2),
+                                                  end=sapply(strsplit(DMSvec, " "), `[`, 2),
+                                                  DMS=DMSvec), keep.extra.columns = T)
+  annotateWithGeneParts(target = as(GRangeOBJ,"GRanges"), feature = annotBed12)
+}
+
+A=getFeature(DMSvec = DMSvec)
+print(paste0("Positions of the ", length(DMSvec)," DMS:"))
+print(A)
+
+# A1 = getFeature(DMSvec = DMS_G1onlyEffect_4BPmin)
+# print(paste0("Positions of the ", length(DMS_G1onlyEffect_4BPmin)," intergenerational DMS:"))
+# print(A1@precedence)
+# 
+# A2 = getFeature(DMSvec = DMS_G2onlyEffect_4BPmin)
+# print(paste0("Positions of the ", length(DMS_G1onlyEffect_4BPmin)," infection-induced DMS:"))
+# print(A2@precedence)
+# 
+# A3 = getFeature(DMSvec = DMS_G1G2additiveEffect_4BPmin)
+# print(paste0("Positions of the ", length(DMS_G1onlyEffect_4BPmin)," additive DMS:"))
+# print(A3@precedence)
+# 
+# A4 = getFeature(DMSvec = DMS_G1G2interactionEffect_4BPmin)
+# print(paste0("Positions of the ", length(DMS_G1onlyEffect_4BPmin)," interaction DMS:"))
+# print(A4@precedence)
+
+#######################
+## Are the positions of DMS on features random? Comparison with sequenced CpGs which are not DMS
+# A=getFeature(DMSvec = DMSvec)
+AnonDMS= getFeature(DMSvec = paste(uniteCovHALF_G1_woSexAndUnknowChrOVERLAP$chr, uniteCovHALF_G1_woSexAndUnknowChrOVERLAP$start))
+
+ChiTable1 = merge((A@members %>% data.frame() %>% mutate(feature=ifelse(prom==1, "promoter", 
+                                                                        ifelse(exon==1, "exon",
+                                                                               ifelse(intron==1, "intron", "intergenic")))) %>% 
+                     dplyr::select(feature) %>% 
+                     table %>% melt %>% dplyr::rename(DMS=value)),
+                  (AnonDMS@members %>% data.frame() %>% mutate(feature=ifelse(prom==1, "promoter", 
+                                                                              ifelse(exon==1, "exon",
+                                                                                     ifelse(intron==1, "intron", "intergenic")))) %>% 
+                     dplyr::select(feature) %>% 
+                     table %>% melt %>% dplyr::rename(nonDMS=value)))
+
+chisq.test(ChiTable1$DMS, ChiTable1$nonDMS)
+# X-squared = 12, df = 9, p-value = 0.2133
+
+donutDF = ChiTable1 %>% dplyr::mutate(percDMS=DMS/sum(DMS)*100, percNonDMS=nonDMS/sum(nonDMS)*100) %>%
+  dplyr::select("feature", "percDMS", "percNonDMS") %>% melt
+
+ggplot(donutDF, aes(x = variable, y = value, fill = feature)) +
+  geom_col() +  scale_x_discrete(limits = c(" ", "percNonDMS","percDMS")) +
+  scale_fill_viridis_d()+
+  coord_polar("y")
+
+## Positions on chromosomes?
+df = A@members %>% data.frame() %>% mutate(feature=ifelse(prom==1, "promoter", 
+                                                          ifelse(exon==1, "exon",
+                                                                 ifelse(intron==1, "intron", "intergenic"))))%>%
+  
+  mutate(DMS=DMSvec, 
+         chr=sapply(strsplit(DMSvec, " "), `[`, 1)%>% str_remove(.,"Gy_chr"))
+
+melt(table(df$feature))
+
+df2 = melt(table(df$feature, df$chr))
+names(df2)=c("feature","chromosome", "nDMS")
+
+# Number of positions sequenced on each chromosome
+df3 = table(uniteCovHALF_G1_woSexAndUnknowChrOVERLAP$chr) %>% data.frame() %>% 
+  mutate(chromosome=str_remove(Var1,"Gy_chr"), nCpG=Freq) 
+
+df=merge(df2, df3) %>% dplyr::select(c(feature, chromosome, nDMS, nCpG))%>% 
+  mutate(percent=nDMS/nCpG)
+
+df$feature=factor(df$feature, levels = c("promoter", "exon", "intron", "intergenic"))
+
+pdf(file = "../../dataOut/suppl1_featureDist.pdf", width = 8, height = 6)
+ggplot(df, aes(x=chromosome, y=percent, fill=feature))+
+  geom_bar(stat = "identity")+
+  ylab("Percentage of DMS among CpG sequenced")+
+  scale_y_continuous(labels=scales::percent)+
+  scale_fill_manual(values = c("red", "purple", "blue", "grey"))
+dev.off()
+
+dfChi = df %>% group_by(chromosome) %>% dplyr::summarise(nDMS=sum(nDMS)) %>%
+  merge(df3) 
+
+chisq.test(dfChi[c("nDMS", "nCpG")])
+# X-squared = 233.87, df = 19, p-value < 2.2e-16
+
+dfChi %>% mutate(percent=nDMS/(nCpG)*100) %>% arrange(percent) 
+# range from 0.13% (XV) to 0.39% of CpG beign DMS (XVIII)

@@ -7,17 +7,7 @@ source("homebrewDMSannotation.R")# needed for annotation, slight modification of
 GYgynogff = read.table("../../data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt")
 names(GYgynogff) = c("chrom","length")
 
-## Load genome annotation
-## NB Promoters are defined by options at genomation::readTranscriptFeatures function. 
-## The default option is to take -1000,+1000bp around the TSS and you can change that. 
-## -> following Heckwolf 2020 and Sagonas 2020, we consider 1500bp upstream and 500 bp downstream
-annotBed12=readTranscriptFeatures("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.transdec.bed12",
-                                  remove.unusual = FALSE, up.flank = 1500, down.flank = 500)
-## Change recursively the gene names to keep only ID
-getName <- function(x) {sub(";.*", "", sub(".*ID=", "", x))}
-for (i in 1:length(annotBed12)){
-  annotBed12[[i]]$name <- getName(annotBed12[[i]]$name)
-}
+## Bed12 file loaded in script R06
 
 ## Load curated gff file
 annotGff3 <- rtracklayer::readGFF("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff")
@@ -85,7 +75,7 @@ allDMSAnnot_top = allDMSAnnot %>% arrange(effect)
 allDMSAnnot_top = allDMSAnnot_top[!duplicated(allDMSAnnot_top$effect),]%>% arrange(desc(nDMSperGeneKb))
 
 # Write out
-write.csv(allDMSAnnot, file = "../../dataOut/allDMSAnnot.csv", row.names = F)
+write.csv(allDMSAnnot, file = "../../dataOut/allDMSAnnot_supTabS1.csv", row.names = F)
 write.csv(allDMSAnnot_top, file = "../../dataOut/allDMSAnnot_top.csv", row.names = F)
 
 #### Focus on gene FKBP3
@@ -229,12 +219,14 @@ dev.off()
 gene_universe <- data.frame(
   subsetByOverlaps(GRanges(annotGff3), GRanges(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP))) %>% # subselect covered CpGs
   filter(lengths(Ontology_term)!=0) %>% # rm non existing GO terms
-  filter(type %in% "gene")  %>% # keep all the 7416 genes with GO terms
+  filter(type %in% "gene")  %>% # keep all the 7404 genes with GO terms
   dplyr::select(c("Name", "Ontology_term")) %>%
   mutate(go_linkage_type = "IEA") %>% #NB: IEA but not necessarily true, it's from Interproscan after Maker. Sticklebacks (biomart) have 82701 IEA and 63 ISS.
   relocate("Ontology_term","go_linkage_type","Name") %>%
   unnest(Ontology_term) %>% # one GO per line (was a list before in this column)
   data.frame()
+
+gene_universe$Name %>% unique %>% length #7404 genes
 
 # Create gene set collection
 goFrame <- GOFrame(gene_universe, organism="Gasterosteus aculeatus")
@@ -246,16 +238,24 @@ gsc_universe <- GeneSetCollection(goAllFrame, setType = GOCollection())
 
 # select genes which contains DMS only associated with ONE effect:
 GO_G1only = makedfGO(DMS_G1onlyEffect_4BPmin_ANNOT %>%
-                       distinct(feature.name,.keep_all = TRUE), gene_universe, effect = "598 genes with DMS associated with G1 effect only")
+                       distinct(feature.name,.keep_all = TRUE), gene_universe, 
+                     effect = paste0(length(unique(DMS_G1onlyEffect_4BPmin_ANNOT$feature.name)),
+                                     " genes with DMS associated with G1 effect only"))
 
 GO_G2only = makedfGO(DMS_G2onlyEffect_4BPmin_ANNOT %>%
-                       distinct(feature.name,.keep_all = TRUE) , gene_universe, effect = "143 genes with DMS associated with G2 effect only")
+                       distinct(feature.name,.keep_all = TRUE) , gene_universe, 
+                     effect = paste0(length(unique(DMS_G2onlyEffect_4BPmin_ANNOT$feature.name)),
+                                     " genes with DMS associated with G2 effect only"))
 
 GO_G1G2addit = makedfGO(DMS_G1G2additiveEffect_4BPmin_ANNOT %>%
-                          distinct(feature.name,.keep_all = TRUE), gene_universe, effect = "80 genes with DMS associated with additive effect")
+                          distinct(feature.name,.keep_all = TRUE), gene_universe, 
+                        effect = paste0(length(unique(DMS_G1G2additiveEffect_4BPmin_ANNOT$feature.name)),
+                                        " genes with DMS associated with additive effect"))
 
 GO_G1G2inter = makedfGO(DMS_G1G2interactionEffect_4BPmin_ANNOT %>%
-                          distinct(feature.name,.keep_all = TRUE), gene_universe, effect = "72 genes with DMS associated with interaction effect")
+                          distinct(feature.name,.keep_all = TRUE), gene_universe, 
+                        effect = paste0(length(unique(DMS_G1G2interactionEffect_4BPmin_ANNOT$feature.name)),
+                                        " genes with DMS associated with interaction effect"))
 
 dfGO = rbind(GO_G1only, GO_G2only, GO_G1G2addit, GO_G1G2inter)
 
@@ -273,13 +273,13 @@ GOplot <- dfGO %>% ggplot(aes(x=Effect, y = factor(GO.name))) +
   scale_y_discrete(limits=rev, # revers axis to have alphabetical order
                    labels = function(x) str_wrap(x, width = 40)) # split too long GO names in half
 
-pdf(GOplot, file = "../../dataOut/Supplementary_GOplot_fig3VennGenes.pdf", width = 6, height = 18)
+pdf(GOplot, file = "../../dataOut/Supplementary_GOplot_figS3VennGenes.pdf", width = 6, height = 18)
 GOplot
 dev.off()
 
 ## Hyp: PATERNAL EFFECT ONLY CpG persist despite G2 trt
 # Test: is the correlation between G1 and G2 methylation at these CpG stronger than for the other effects?
-  
+
 length(DMS_G1onlyEffect_4BPmin) # 1640 positions different ONLY following paternal treatments
 length(DMS_G2onlyEffect_4BPmin) # 309 positions different ONLY following offspring treatments
 length(DMS_G1G2additiveEffect_4BPmin) # 173 positions
@@ -487,3 +487,7 @@ cowplot::plot_grid(cowplot::plot_grid(
     aligned_x_dens, NULL, modelPlot, aligned_y_dens, ncol = 2, nrow = 2, rel_heights = c(0.3, 1), rel_widths = c(1, 0.3)
   ), ncol=2)
 dev.off()
+
+
+
+
