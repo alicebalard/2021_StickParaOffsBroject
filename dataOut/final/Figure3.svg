@@ -6710,20 +6710,20 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="911.40791"
-     inkscape:cy="720.53161"
+     inkscape:cx="981.4218"
+     inkscape:cy="48.406845"
      inkscape:document-units="mm"
-     inkscape:current-layer="g49261"
+     inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
      showgrid="false"
      fit-margin-top="2"
      fit-margin-left="2"
      fit-margin-right="2"
      fit-margin-bottom="2"
-     inkscape:window-width="1680"
-     inkscape:window-height="1021"
+     inkscape:window-width="1280"
+     inkscape:window-height="691"
      inkscape:window-x="0"
-     inkscape:window-y="15"
+     inkscape:window-y="0"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata2721">
@@ -6787,7 +6787,7 @@
            id="tspan400-8"
            x="-91.001442"
            y="97.2612"
-           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.29167px;font-family:Helvetica;-inkscape-font-specification:'Helvetica Bold';stroke-width:0.22848">A. Number of DMS associated with each effect</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.29167px;font-family:Helvetica;-inkscape-font-specification:'Helvetica Bold';stroke-width:0.22848">A. Number of DMS associated with each origin</tspan></text>
       <g
          id="g5924"
          transform="translate(-0.7884616)">
@@ -7594,7 +7594,7 @@
              id="tspan400"
              x="25.218918"
              y="97.812515"
-             style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.29167px;font-family:Helvetica;-inkscape-font-specification:'Helvetica Bold';stroke-width:0.22848">B. Number of genes containing DMS associated with each effect</tspan></text>
+             style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.29167px;font-family:Helvetica;-inkscape-font-specification:'Helvetica Bold';stroke-width:0.22848">B. Number of genes containing DMS associated with each origin</tspan></text>
         <path
            d="m 53.406,120.44259 -1.311401,1.29899 -1.154152,1.43071 -0.990968,1.55457 -0.824818,1.67313 -0.6557,1.78644 -0.483618,1.89182 -0.308565,1.98668 -0.133514,2.07889 0.04154,2.15794 0.216587,2.23436 0.391642,2.29496 0.56669,2.35292 0.735808,2.39508 0.904929,2.4346 1.068108,2.46097 1.228327,2.47674 1.385575,2.48466 1.533924,2.48205 1.679307,2.46884 1.812818,2.44779 1.946334,2.41616 2.06798,2.37401 2.18369,2.32394 2.287534,2.26332 2.385445,2.19482 2.471489,2.11845 2.548628,2.03147 2.616869,1.93925 2.67324,1.83649 2.720713,1.72582 2.756317,1.61254 2.780052,1.49131 2.794886,1.36224 2.797855,1.23047 2.788955,1.09083 2.77115,0.94853 2.738514,0.80364 2.69995,0.65344 2.6495,0.50062 2.58423,0.35044 2.51304,0.19235 2.4329,0.0369 2.33799,-0.11856 2.24006,-0.27404 2.13028,-0.42947 2.00863,-0.5823 1.887,-0.73249 1.75051,-0.88005 1.61108,-1.02495 1.4627,-1.16461 1.31142,-1.29898 1.15413,-1.43071 0.99098,-1.55457 0.82482,-1.67578 0.6557,-1.78379 0.48361,-1.89183 0.30855,-1.98929 0.13353,-2.07627 -0.0416,-2.16058 -0.21659,-2.23172 -0.3946,-2.29496 -0.56373,-2.35292 -0.73579,-2.39773 -0.90494,-2.43195 -1.0681,-2.46097 -1.22833,-2.47674 -1.38556,-2.48466 -1.53395,-2.48205 -1.6793,-2.46884 -1.81579,-2.44779 -1.94337,-2.41616 -2.06797,-2.37401 -2.1837,-2.32394 -2.28754,-2.26332 -2.38542,-2.19482 -2.47151,-2.11845 -2.54862,-2.03147 -2.61686,-1.93925 -2.67325,-1.8365 -2.72071,-1.72846 -2.756315,-1.60989 -2.780054,-1.49131 -2.794888,-1.36224 -2.797852,-1.23047 -2.788955,-1.09083 -2.771151,-0.94853 -2.741481,-0.80364 -2.696977,-0.65344 -2.649506,-0.50325 -2.584231,-0.34781 -2.515991,-0.19235 -2.429951,-0.0369 -2.340941,0.11856 -2.237095,0.27404 -2.130286,0.42947 -2.011606,0.5823 -1.884027,0.73249 -1.750515,0.88005 -1.611063,1.02495 -1.462719,1.1646"
            style="fill:none;fill-opacity:1;stroke:#e69f00;stroke-width:1.73773;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
@@ -7862,7 +7862,7 @@
            style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.29167px;font-family:Helvetica;-inkscape-font-specification:'Helvetica Bold';stroke-width:0.281173"
            x="-108.39034"
            y="221.01495"
-           id="tspan7219">each effect on FKBP3 gene</tspan></text>
+           id="tspan7219">different origins on FKBP3 gene</tspan></text>
       <g
          id="g49092"
          transform="translate(-13.741788,0.52916663)">
@@ -12414,7 +12414,7 @@
          xml:space="preserve"><tspan
            x="-141.98105"
            y="225.55281"><tspan
-             style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.29167px;font-family:Helvetica;-inkscape-font-specification:'Helvetica Bold';stroke-width:0.22848">D. Genes containing DMS associated with a unique effect</tspan></tspan></text>
+             style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.29167px;font-family:Helvetica;-inkscape-font-specification:'Helvetica Bold';stroke-width:0.22848">D. Genes containing DMS associated with a unique origin</tspan></tspan></text>
     </g>
     <rect
        style="fill:#cccccc;fill-opacity:1;stroke:none;stroke-width:0.5628;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;paint-order:fill markers stroke"
@@ -16289,9 +16289,9 @@
          y="77.826599"><tspan
            sodipodi:role="line"
            style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.29167px;font-family:Helvetica;-inkscape-font-specification:Helvetica;text-align:center;text-anchor:middle;fill:#000000;stroke-width:0.397637"
-           x="-52.044594"
+           x="-52.044586"
            y="77.826599"
-           id="tspan3401-9">Effect associated to differentially methylated sites (DMS):</tspan></text>
+           id="tspan3401-9">Origins associated to differentially methylated sites (DMS):</tspan></text>
       <g
          id="g12-9"
          transform="matrix(0.35277777,0,0,-0.35277777,3.4112684,531.88209)" />

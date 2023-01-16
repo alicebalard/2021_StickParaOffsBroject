@@ -3064,19 +3064,19 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.53649395"
-     inkscape:cx="905.58962"
-     inkscape:cy="359.03742"
+     inkscape:cx="959.07926"
+     inkscape:cy="335.89828"
      inkscape:document-units="mm"
-     inkscape:current-layer="g3367"
+     inkscape:current-layer="g2740-3"
      inkscape:document-rotation="0"
      showgrid="false"
      fit-margin-top="5"
      fit-margin-left="5"
      fit-margin-right="5"
      fit-margin-bottom="5"
-     inkscape:window-width="1920"
-     inkscape:window-height="1051"
-     inkscape:window-x="1920"
+     inkscape:window-width="1280"
+     inkscape:window-height="691"
+     inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      showguides="true" />
@@ -3767,66 +3767,66 @@
                y="43.186733"
                style="font-size:7.05556px;stroke-width:0.264583">Paternal effect</tspan></text>
           <g
-             id="g2740"
-             transform="translate(-0.48607969,1.5875)">
+             id="g3458"
+             transform="translate(12.572127)">
             <rect
-               style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:0.867076;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+               style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:0.667758;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
                id="rect4256-5-7-3-6"
                width="8.7366352"
-               height="53.027157"
-               x="570.10352"
-               y="-114.60249"
+               height="31.450132"
+               x="571.69104"
+               y="-92.539391"
                rx="0"
                ry="0"
                transform="rotate(90)" />
             <text
                xml:space="preserve"
                style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-               x="62.450497"
-               y="577.10217"
+               x="62.548176"
+               y="578.6897"
                id="text3672-7"><tspan
                  sodipodi:role="line"
                  id="tspan3670-4"
-                 x="62.450497"
-                 y="577.10217"
-                 style="font-size:7.05556px;stroke-width:0.264583">additive effect</tspan></text>
+                 x="62.548176"
+                 y="578.6897"
+                 style="font-size:7.05556px;stroke-width:0.264583">additive</tspan></text>
           </g>
           <g
-             id="g2757"
-             transform="translate(-11.48424,1.5875095)">
+             id="g3453"
+             transform="translate(12.660893)">
             <rect
-               style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:0.931684;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+               style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:0.753413;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
                id="rect4256-5-7-3"
                width="8.7218456"
-               height="61.327759"
-               x="570.1109"
-               y="-199.61653"
+               height="40.103806"
+               x="571.69843"
+               y="-166.90834"
                rx="0"
                ry="0"
                transform="rotate(90)" />
             <text
                xml:space="preserve"
                style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-               x="138.35674"
-               y="577.10217"
+               x="127.74476"
+               y="578.6897"
                id="text3672-3-3"><tspan
                  sodipodi:role="line"
                  id="tspan3670-5-5"
-                 x="138.35674"
-                 y="577.10217"
-                 style="font-size:7.05556px;stroke-width:0.264583">interaction effect</tspan></text>
+                 x="127.74476"
+                 y="578.6897"
+                 style="font-size:7.05556px;stroke-width:0.264583">interaction</tspan></text>
           </g>
           <text
              xml:space="preserve"
              style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-             x="92.653305"
+             x="113.13923"
              y="448.31552"
              id="text14670-8"><tspan
                sodipodi:role="line"
-               x="92.653305"
+               x="113.13923"
                y="448.31552"
                style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:7.05556px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';text-align:center;text-anchor:middle;stroke-width:0.264583"
-               id="tspan20265">C. Classification of CpG sites</tspan></text>
+               id="tspan20265">C. Classification of CpG sites by origins</tspan></text>
           <g
              id="g1426"
              transform="matrix(1.4811345,0,0,1.4811345,-44.108989,-450.6116)">
@@ -4329,56 +4329,56 @@
              id="g2740-3"
              transform="translate(37.337012,60.174011)">
             <g
-               id="g3489"
-               transform="translate(-20.637507)">
+               id="g3448"
+               transform="translate(15.195753)">
               <rect
-                 style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:1.09879;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+                 style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:0.947429;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
                  id="rect4256-5-7-3-6-6"
                  width="8.7366352"
-                 height="85.155701"
+                 height="63.310783"
                  x="570.10352"
-                 y="-147.03098"
+                 y="-104.54855"
                  rx="0"
                  ry="0"
                  transform="rotate(90)" />
               <text
                  xml:space="preserve"
                  style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-                 x="62.450497"
-                 y="577.10217"
+                 x="42.405769"
+                 y="576.41833"
                  id="text3672-7-7"><tspan
                    sodipodi:role="line"
                    id="tspan3670-4-5"
-                   x="62.450497"
-                   y="577.10217"
-                   style="font-size:7.05556px;stroke-width:0.264583">intergenerational effect</tspan></text>
+                   x="42.405769"
+                   y="576.41833"
+                   style="font-size:7.05556px;stroke-width:0.264583">intergenerational</tspan></text>
             </g>
             <g
                id="g3489-3"
-               transform="translate(-5.4773508,-122.50989)">
+               transform="translate(-11.811543,-122.50989)">
               <g
-                 id="g3816">
+                 id="g3398">
                 <rect
-                   style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:0.879775;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+                   style="fill:#e6e6e6;fill-opacity:1;stroke:#b3b3b3;stroke-width:0.940961;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
                    id="rect4256-5-7-3-6-6-5"
                    width="8.7366352"
-                   height="54.591797"
+                   height="62.449337"
                    x="570.10352"
-                   y="-116.58887"
+                   y="-124.4464"
                    rx="0"
                    ry="0"
                    transform="rotate(90)" />
                 <text
                    xml:space="preserve"
                    style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-                   x="62.450497"
+                   x="62.570702"
                    y="577.10217"
                    id="text3672-7-7-6"><tspan
                      sodipodi:role="line"
                      id="tspan3670-4-5-2"
-                     x="62.450497"
+                     x="62.570702"
                      y="577.10217"
-                     style="font-size:7.05556px;stroke-width:0.264583">infection effect</tspan></text>
+                     style="font-size:7.05556px;stroke-width:0.264583">infection-induced</tspan></text>
               </g>
             </g>
           </g>
