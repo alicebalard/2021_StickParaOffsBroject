@@ -4,7 +4,7 @@ source("R08_DMSannotation.R")
 ## Correlation between methylation (after PCA) and phenotype (nbr worms, BCI)
 
 # Approach:
- 
+
 #  For each DMS G1 and/or G2 effects:
 # 1. Extract methylation values: raw beta values at DMS shared by \>4 (or more) BP
 # 2. PCA
@@ -38,7 +38,7 @@ mod_noworms = lmer(BCI ~ PCA2 + PAT + PCA2:PAT + (1 | brotherPairID) + (1 | Sex)
                    data = RESPCA$PCA_percAtDMS_imputed$metadata)
 mod_noPAT = lmer(BCI ~ PCA2 + No.Worms + (1 | brotherPairID) + (1 | Sex), 
                  data = RESPCA$PCA_percAtDMS_imputed$metadata)
-mod_noPCA2 = lmer(BCI ~ + No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
+mod_noPCA2 = lmer(BCI ~ No.Worms + PAT + No.Worms:PAT +(1 | brotherPairID) + (1 | Sex), 
                   data = RESPCA$PCA_percAtDMS_imputed$metadata)
 
 # R2c conditional R2 value associated with fixed effects plus the random effects.
@@ -337,3 +337,41 @@ GOplot_sub
 pdf(GOplot_sub, file = "../../dataOut/GOplot4Venncat_split.pdf", width = 6, height = 15)
 GOplot_sub
 dev.off()
+
+#############################
+## Test of specific positions
+### First, some plots
+
+# Top 5 genes with more DMS
+# G1: DMS on MTZ2, HMX1, GTF2IRD2, PHACTR3, SPO11 -> on PCA2 only HMX1 (2), GTF2IRD2 (1), SPO11 (2)
+# G2: DMS on TRIM16, ZNF691, DCT, ACAA1, MGAT2 -> on PCA2 only TRIM16 (8), DCT (5), ACAA1 (2), MGAT2 (1)
+# Additive: ZNF518B, ERI2, GYAR, ZMYND19, SLC7A6 -> on PCA2 only GYAR (1), SLC7A6 (1)
+# Interaction: CIAO2B, CYB561D2, BCL7A, SNIP1, TENT5A -> on PCA2 only CIAO2B (1), CYB561D2 (1), BCL7A (1), 
+# To find out: annotPCAaxisFull[annotPCAaxisFull$GeneSymbol %in% "TENT5A",]
+
+mygene = "GYAR"
+
+mypos = paste(annotPCAaxisFull[annotPCAaxisFull$GeneSymbol %in% mygene,"chrom"],
+              annotPCAaxisFull[annotPCAaxisFull$GeneSymbol %in% mygene,"start"])
+
+mydf = methylKit::select(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP,
+                         which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr, uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start) %in% 
+                                 mypos[1])) %>%
+  methylKit::percMethylation() %>% melt %>% dplyr::select(c("Var2", "value")) %>% dplyr::rename("SampleID"="Var2") %>%
+  merge(fullMetadata_OFFS)
+
+mydf = na.omit(mydf[c("value", "BCI", "No.Worms", "PAT", "brotherPairID", "Sex")]) 
+
+mymod = lmerTest::lmer(BCI ~ value*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=mydf)
+
+mymodSel=lmer(formula = attr(attr(lmerTest::step(mymod, reduce.random = F), "drop1"), "heading")[3],
+     data=mydf, REML = F)
+
+mymodSel%>%formula
+
+plot(ggpredict(mymodSel, terms = c("No.Worms","value", "PAT")), add.data = TRUE, alpha = .08) +
+  theme_bw() +
+  scale_color_gradient(low = "white", high = "red")+
+  scale_fill_gradient(low = "white", high = "red") +
+  ylab("Body Condition Index") + xlab("Number of worms")+
+  ggtitle("Predicted values of Body Condition Index in offspring")
