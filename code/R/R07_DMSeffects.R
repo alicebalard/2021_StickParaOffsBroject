@@ -147,82 +147,100 @@ getDMS_runOver1to8BP <- function(NBP){
   subUnite = methylKit::select(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP,
                                which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr, uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$end) %in%
                                        intersect(DMS_OffspringEffect, DMS_PaternalEffect)))
-  
-  # Get mean methylation per brother pair, per treatment:
-  getMeanMeth <- function(subUnite, BP, mytrt){
-    metadata = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP & fullMetadata_OFFS$trtG1G2 %in% mytrt, ]
-    myuniteCov = reorganize(methylObj = subUnite, treatment = metadata$trtG1G2_NUM, sample.ids = metadata$ID)
-    ## remove bases where NO fish in this BP has a coverage
-    myuniteCov = methylKit::select(myuniteCov, which(!is.na(rowSums(percMethylation(myuniteCov)))))
-    # calculate mean methylation
-    df = data.frame(DMS = paste(myuniteCov$chr, myuniteCov$end), meanMeth = rowMeans(percMethylation(myuniteCov)), trt = mytrt, BP = BP)
-    return(df)
-  }
-  
-  # We will apply the following function to all BP and all trt:
-  vecBP <- unique(fullMetadata_OFFS$brotherPairID)
-  vectrt <- unique(fullMetadata_OFFS$trtG1G2)
-  
-  ## Loop over all BP & trt
-  df = data.frame(DMS=NULL, meanMeth=NULL, trt=NULL, BP=NULL) # empty df
-  for (i in 1:length(vecBP)){
-    for (j in 1:length(vectrt)){
-      subdf = getMeanMeth(subUnite = subUnite, BP = vecBP[[i]], mytrt = vectrt[[j]])
-      df = rbind(df, subdf)
+  # for a high N, no more intersect DMS G1 G2:
+  if(length(subUnite$chr) == 0){ 
+    dataFinal = data.frame(NbrDMS = c(length(DMS_PaternalEffect),
+                                      length(DMS_OffspringEffect)), 
+                           DMSgroup = as.factor(c("Intergenerational", "Infection-induced")),
+                           NbrBP = rep(NBP, 2))
+  } else {
+    
+    # Get mean methylation per brother pair, per treatment:
+    getMeanMeth <- function(subUnite, BP, mytrt){
+      metadata = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP & fullMetadata_OFFS$trtG1G2 %in% mytrt, ]
+      myuniteCov = reorganize(methylObj = subUnite, treatment = metadata$trtG1G2_NUM, sample.ids = metadata$ID)
+      ## remove bases where NO fish in this BP has a coverage
+      myuniteCov = methylKit::select(myuniteCov, which(!is.na(rowSums(percMethylation(myuniteCov)))))
+      # calculate mean methylation
+      df = data.frame(DMS = paste(myuniteCov$chr, myuniteCov$end), meanMeth = rowMeans(percMethylation(myuniteCov)), trt = mytrt, BP = BP)
+      return(df)
     }
+    
+    # We will apply the following function to all BP and all trt:
+    vecBP <- unique(fullMetadata_OFFS$brotherPairID)
+    vectrt <- unique(fullMetadata_OFFS$trtG1G2)
+    
+    ## Loop over all BP & trt
+    df = data.frame(DMS=NULL, meanMeth=NULL, trt=NULL, BP=NULL) # empty df
+    for (i in 1:length(vecBP)){
+      for (j in 1:length(vectrt)){
+        subdf = getMeanMeth(subUnite = subUnite, BP = vecBP[[i]], mytrt = vectrt[[j]])
+        df = rbind(df, subdf)
+      }
+    }
+    
+    ## Add G1 & G2 trt
+    df$G1trt = ifelse(df$trt %in% c("NE_control", "NE_exposed"), "control", "infected")
+    df$G2trt = ifelse(df$trt %in% c("NE_control", "E_control"), "control", "infected")
+    
+    ## cut by G1 trt & merge
+    dfcp = df[df$G1trt %in% "control"  ,]
+    dfcpco = dfcp[dfcp$G2trt %in% "control",]; dfcpio = dfcp[dfcp$G2trt %in% "infected",]
+    dfcp = merge(dfcpco, dfcpio, by = c("DMS", "BP")) %>%
+      mutate(meanDiffMeth=meanMeth.y - meanMeth.x) %>% dplyr::select(c("DMS", "BP", "meanDiffMeth"))
+    dfip = df[df$G1trt %in% "infected",]
+    dfipco = dfip[dfip$G2trt %in% "control",]; dfipio = dfip[dfip$G2trt %in% "infected",]
+    dfip = merge(dfipco, dfipio, by = c("DMS", "BP")) %>%
+      mutate(meanDiffMeth=meanMeth.y - meanMeth.x) %>% dplyr::select(c("DMS", "BP", "meanDiffMeth"))
+    df2=merge(dfcp,dfip, by=c("DMS", "BP"))
+    
+    ## interaction if slope inversion/additive if not
+    df2$inversionSlopeReactionNorms = FALSE
+    df2[!sign(df2$meanDiffMeth.x) == sign(df2$meanDiffMeth.y),"inversionSlopeReactionNorms"] = TRUE
+    names(df2)[names(df2) %in% "meanDiffMeth.x"] = "meanDiffMeth.controlG1"
+    names(df2)[names(df2) %in% "meanDiffMeth.y"] = "meanDiffMeth.infectedG1"
+    
+    ####################
+    # Get a vector of DMS for each category:
+    ## A DMS is "interaction" if there are more often slope inversion than not
+    DMS_G1G2interactionEffect = df2 %>% group_by(DMS) %>% dplyr::summarise(count=n(), inversionSlopeRate=sum(inversionSlopeReactionNorms)/count,                                                                 
+                                                                           effect=ifelse(inversionSlopeRate>0.5, "interaction", "additive")) %>%
+      dplyr::filter(effect=="interaction") %>% dplyr::select(DMS) %>% unlist()
+    
+    DMS_G1G2additiveEffect = df2 %>% group_by(DMS) %>%
+      dplyr::summarise(count=n(), inversionSlopeRate=sum(inversionSlopeReactionNorms)/count, effect=ifelse(inversionSlopeRate>0.5, "interaction", "additive")) %>%
+      dplyr::filter(effect=="additive") %>% dplyr::select(DMS) %>% unlist()
+    
+    DMS_G1onlyEffect = DMS_PaternalEffect[!DMS_PaternalEffect %in% c(DMS_G1G2interactionEffect, DMS_G1G2additiveEffect)]
+    
+    DMS_G2onlyEffect = DMS_OffspringEffect[!DMS_OffspringEffect %in% c(DMS_G1G2interactionEffect, DMS_G1G2additiveEffect)]
+    
+    dataFinal = data.frame(NbrDMS = c(length(DMS_G1onlyEffect),
+                                      length(DMS_G2onlyEffect),
+                                      length(DMS_G1G2additiveEffect),
+                                      length(DMS_G1G2interactionEffect)), 
+                           DMSgroup = as.factor(c("Intergenerational", "Infection-induced",  "Additive", "Interaction")),
+                           NbrBP = rep(NBP, 4))
   }
-  
-  ## Add G1 & G2 trt
-  df$G1trt = ifelse(df$trt %in% c("NE_control", "NE_exposed"), "control", "infected")
-  df$G2trt = ifelse(df$trt %in% c("NE_control", "E_control"), "control", "infected")
-  
-  ## cut by G1 trt & merge
-  dfcp = df[df$G1trt %in% "control"  ,]
-  dfcpco = dfcp[dfcp$G2trt %in% "control",]; dfcpio = dfcp[dfcp$G2trt %in% "infected",]
-  dfcp = merge(dfcpco, dfcpio, by = c("DMS", "BP")) %>%
-    mutate(meanDiffMeth=meanMeth.y - meanMeth.x) %>% dplyr::select(c("DMS", "BP", "meanDiffMeth"))
-  dfip = df[df$G1trt %in% "infected",]
-  dfipco = dfip[dfip$G2trt %in% "control",]; dfipio = dfip[dfip$G2trt %in% "infected",]
-  dfip = merge(dfipco, dfipio, by = c("DMS", "BP")) %>%
-    mutate(meanDiffMeth=meanMeth.y - meanMeth.x) %>% dplyr::select(c("DMS", "BP", "meanDiffMeth"))
-  df2=merge(dfcp,dfip, by=c("DMS", "BP"))
-  
-  ## interaction if slope inversion/additive if not
-  df2$inversionSlopeReactionNorms = FALSE
-  df2[!sign(df2$meanDiffMeth.x) == sign(df2$meanDiffMeth.y),"inversionSlopeReactionNorms"] = TRUE
-  names(df2)[names(df2) %in% "meanDiffMeth.x"] = "meanDiffMeth.controlG1"
-  names(df2)[names(df2) %in% "meanDiffMeth.y"] = "meanDiffMeth.infectedG1"
-  
-  ####################
-  # Get a vector of DMS for each category:
-  ## A DMS is "interaction" if there are more often slope inversion than not
-  DMS_G1G2interactionEffect = df2 %>% group_by(DMS) %>% dplyr::summarise(count=n(), inversionSlopeRate=sum(inversionSlopeReactionNorms)/count,                                                                 
-                                                                         effect=ifelse(inversionSlopeRate>0.5, "interaction", "additive")) %>%
-    dplyr::filter(effect=="interaction") %>% dplyr::select(DMS) %>% unlist()
-  
-  DMS_G1G2additiveEffect = df2 %>% group_by(DMS) %>%
-    dplyr::summarise(count=n(), inversionSlopeRate=sum(inversionSlopeReactionNorms)/count, effect=ifelse(inversionSlopeRate>0.5, "interaction", "additive")) %>%
-    dplyr::filter(effect=="additive") %>% dplyr::select(DMS) %>% unlist()
-  
-  DMS_G1onlyEffect = DMS_PaternalEffect[!DMS_PaternalEffect %in% c(DMS_G1G2interactionEffect, DMS_G1G2additiveEffect)]
-  
-  DMS_G2onlyEffect = DMS_OffspringEffect[!DMS_OffspringEffect %in% c(DMS_G1G2interactionEffect, DMS_G1G2additiveEffect)]
-  
-  return(data.frame(NbrDMS = c(length(DMS_G1onlyEffect),
-                               length(DMS_G2onlyEffect),
-                               length(DMS_G1G2interactionEffect),
-                               length(DMS_G1G2additiveEffect)), 
-                    DMSgroup = c("Paternal only", "Offspring only", "interaction", "additive"),
-                    NbrBP = rep(NBP, 4)))
+  return(dataFinal)
 }
 
-A=do.call(rbind, lapply(1:6, getDMS_runOver1to8BP)) 
+A=do.call(rbind, lapply(1:8, getDMS_runOver1to8BP)) 
 
+A$DMSgroup = factor(A$DMSgroup, levels = c("Intergenerational", "Infection-induced",  "Additive", "Interaction"))
+
+pdf(file = "../../dataOut/justify4BP.pdf", width = 8, height = 6)
 ggplot(A, aes(fill=DMSgroup, y=NbrDMS, x=NbrBP)) + 
   geom_bar(position="stack", stat="identity")+
-  scale_y_log10()
+  scale_y_log10()+
+  scale_fill_manual(values = c("#e69f00", "#56b4e9", "#009e73", "#cc79a7"))+
+  xlab("Number of families (brother pairs)") +
+  ylab("Number of DMS")+
+  guides(fill=guide_legend(title="Categories"))+
+  scale_x_continuous(breaks = 1:8)
+dev.off()
 
-A %>% head
+A
 
 # Identify DMS in 4 BP or more:
 
@@ -382,16 +400,8 @@ ChiTable1 = merge((A@members %>% data.frame() %>% mutate(feature=ifelse(prom==1,
                      dplyr::select(feature) %>% 
                      table %>% melt %>% dplyr::rename(nonDMS=value)))
 
-chisq.test(ChiTable1$DMS, ChiTable1$nonDMS)
-# X-squared = 12, df = 9, p-value = 0.2133
-
-donutDF = ChiTable1 %>% dplyr::mutate(percDMS=DMS/sum(DMS)*100, percNonDMS=nonDMS/sum(nonDMS)*100) %>%
-  dplyr::select("feature", "percDMS", "percNonDMS") %>% melt
-
-ggplot(donutDF, aes(x = variable, y = value, fill = feature)) +
-  geom_col() +  scale_x_discrete(limits = c(" ", "percNonDMS","percDMS")) +
-  scale_fill_viridis_d()+
-  coord_polar("y")
+chisq.test(ChiTable1[c("DMS", "nonDMS")])
+# X-squared = 190.28, df = 3, p-value < 2.2e-16
 
 ## Positions on chromosomes?
 df = A@members %>% data.frame() %>% mutate(feature=ifelse(prom==1, "promoter", 
@@ -415,14 +425,6 @@ df=merge(df2, df3) %>% dplyr::select(c(feature, chromosome, nDMS, nCpG))%>%
 
 df$feature=factor(df$feature, levels = c("promoter", "exon", "intron", "intergenic"))
 
-pdf(file = "../../dataOut/suppl1_featureDist.pdf", width = 8, height = 6)
-ggplot(df, aes(x=chromosome, y=percent, fill=feature))+
-  geom_bar(stat = "identity")+
-  ylab("Percentage of DMS among CpG sequenced")+
-  scale_y_continuous(labels=scales::percent)+
-  scale_fill_manual(values = c("red", "purple", "blue", "grey"))
-dev.off()
-
 dfChi = df %>% group_by(chromosome) %>% dplyr::summarise(nDMS=sum(nDMS)) %>%
   merge(df3) 
 
@@ -431,3 +433,34 @@ chisq.test(dfChi[c("nDMS", "nCpG")])
 
 dfChi %>% mutate(percent=nDMS/(nCpG)*100) %>% arrange(percent) 
 # range from 0.13% (XV) to 0.39% of CpG beign DMS (XVIII)
+
+#### Plot sup fig 1
+
+# previous
+# #pdf(file = "../../dataOut/suppl1_featureDist.pdf", width = 8, height = 6)
+# ggplot(df, aes(x=chromosome, y=percent, fill=feature))+
+#   geom_bar(stat = "identity")+
+#   ylab("Percentage of DMS among CpG sequenced")+
+#   scale_y_continuous(labels=scales::percent)+
+#   scale_fill_manual(values = c("red", "purple", "blue", "grey"))
+# #dev.off()
+
+donutDF = ChiTable1 %>% dplyr::mutate(percDMS=DMS/sum(DMS)*100, percNonDMS=nonDMS/sum(nonDMS)*100) %>%
+  dplyr::select("feature", "percDMS", "percNonDMS") %>% melt
+
+P1 <- ggplot(donutDF, aes(x = variable, y = value, fill = feature)) +
+  geom_col() +  scale_x_discrete(limits = c(" ", "percNonDMS","percDMS")) +
+  scale_fill_viridis_d()+
+  coord_polar("y")+
+  theme_void()+
+  annotate("text", x = 3.8, y = 0, label = "DMS")+
+  annotate("text", x = 1, y = 0, label = "non DMS")
+
+P2 <- ggplot(df, aes(x=chromosome, y=percent))+
+  geom_bar(stat = "identity", col= "black", fill="black")+
+  ylab("Percentage of DMS among CpG sequenced")+
+  scale_y_continuous(labels=scales::percent)
+
+pdf(file = "../../dataOut/suppl1.pdf", width = 8, height = 6)
+cowplot::plot_grid(P1, P2, nrow = 2, labels = c("A", "B"))
+dev.off()

@@ -321,45 +321,34 @@ getCorG1G2methByEffect <- function(myeffect){
   
   AB=merge(A, B)
   
+  # Rm NA
+  AB=na.omit(AB[c("G1methylation", "G2methylation")])
   # When the variables are not continuous but could be ranked then we do not use pearson correlation 
   # coefficient to find the linear relationship, in this case spearman correlation coefficient comes 
   # into the scene. Since the spearman correlation coefficient considers the rank of values, the 
   # correlation test ignores the same ranks to find the p-values as a result we get the warning
   # “Cannot compute exact p-value with ties”. This can be avoided by using exact = FALSE inside the cor.test function.
-  return(cor.test(x = AB$G1methylation, AB$G2methylation, method = "spearman", exact = FALSE ))
+  
+  return(list(cor.test(x=AB$G1methylation, y=AB$G2methylation, method="spearman"),
+              spearmanRho(x=AB$G1methylation, y=AB$G2methylation, method="spearman", R=1000,ci=T)))
 }
 
+# NB: Takes 4 minutes to run the BS each time
 getCorG1G2methByEffect(myeffect = DMS_G1onlyEffect_4BPmin)
-# Spearman's rank correlation rho
-# S = 4.224e+14, p-value < 2.2e-16
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#       rho 
-# 0.4808556 
+# Spearman's rank correlation rho $ 95% CI (BC 1000)
+# 0.481[0.477-0.484 95%CI]
 
 getCorG1G2methByEffect(myeffect = DMS_G2onlyEffect_4BPmin)
-# Spearman's rank correlation rho
-# S = 3.0929e+12, p-value < 2.2e-16
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#       rho 
-# 0.4071759 
+# Spearman's rank correlation rho $ 95% CI (BC 1000)
+# 0.407[0.398-0.417 95%CI]
 
 getCorG1G2methByEffect(myeffect = DMS_G1G2additiveEffect_4BPmin)
-# Spearman's rank correlation rho
-# S = 6.8324e+11, p-value < 2.2e-16
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#       rho 
-# 0.3671226 
+# Spearman's rank correlation rho $ 95% CI (BC 1000)
+# 0.367[0.354-0.379 95%CI]
 
 getCorG1G2methByEffect(myeffect = DMS_G1G2interactionEffect_4BPmin)
-# Spearman's rank correlation rho
-# S = 4.2648e+11, p-value < 2.2e-16
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#       rho 
-# 0.3908235 
+# Spearman's rank correlation rho $ 95% CI (BC 1000)
+# 0.391[0.378-0.404 95%CI]
 
 ## And as a regression?
 DMSalleffectsDF = data.frame(DMS=c(DMS_G1onlyEffect_4BPmin, DMS_G2onlyEffect_4BPmin, DMS_G1G2additiveEffect_4BPmin, DMS_G1G2interactionEffect_4BPmin),
@@ -406,9 +395,12 @@ AB$SampleID=as.character(AB$SampleID)
 # level effects
 AB$effect <- factor(AB$effect,levels = c("G1", "G2", "addit", "inter"))
 
+AB=na.omit(AB[c("G1methylation", "G2methylation", "effect", "brotherPairID", "SampleID")])
+
 mod1=lme4::lmer(G2methylation~G1methylation * effect + (1|brotherPairID/SampleID), data=AB)
 mod2=lme4::lmer(G2methylation~G1methylation + effect + (1|brotherPairID/SampleID), data=AB)
 mod3=lme4::lmer(G2methylation~G1methylation + (1|brotherPairID/SampleID), data=AB)
+mod4=lme4::lmer(G2methylation~effect + (1|brotherPairID/SampleID), data=AB)
 
 lmtest::lrtest(mod1, mod2)
 # Likelihood ratio test
@@ -427,6 +419,16 @@ lmtest::lrtest(mod1, mod3)
 # #Df   LogLik Df  Chisq Pr(>Chisq)    
 # 1  11 -1123068                         
 # 2   5 -1123334 -6 532.44  < 2.2e-16 ***
+
+lmtest::lrtest(mod1, mod4)
+# Likelihood ratio test
+# 
+# Model 1: G2methylation ~ G1methylation * effect + (1 | brotherPairID/SampleID)
+# Model 2: G2methylation ~ effect + (1 | brotherPairID/SampleID)
+# #Df   LogLik Df Chisq Pr(>Chisq)    
+# 1  11 -1123068                        
+# 2   7 -1152337 -4 58539  < 2.2e-16 ***
+
 
 # Set up modelplot
 modelPlot <- plot_model(mod1, type = "pred", terms = c("G1methylation", "effect"))+
