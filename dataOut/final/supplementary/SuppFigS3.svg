@@ -286,10 +286,10 @@
      showgrid="false"
      lock-margins="true"
      inkscape:zoom="2.3144653"
-     inkscape:cx="519.39807"
-     inkscape:cy="933.78845"
+     inkscape:cx="521.70119"
+     inkscape:cy="933.14035"
      inkscape:window-x="0"
-     inkscape:window-y="15"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="g10"
      fit-margin-top="2"
@@ -560,7 +560,7 @@
          sodipodi:role="line"
          id="tspan672"
          x="69.789001"
-         y="-547.62">597 genes with DMS associated with intergenerational origin</tspan></text><text
+         y="-547.62">597 genes with DMS associated with intergenerational category</tspan></text><text
        transform="scale(1,-1)"
        style="font-variant:normal;font-weight:normal;font-size:9px;font-family:Helvetica;-inkscape-font-specification:Helvetica;writing-mode:lr-tb;fill:#4d4d4d;fill-opacity:1;fill-rule:nonzero;stroke:none"
        id="text678"
@@ -569,7 +569,7 @@
          sodipodi:role="line"
          id="tspan676"
          x="69.185997"
-         y="-537.61993">143 genes with DMS associated with infection origin</tspan></text><text
+         y="-537.61993">143 genes with DMS associated with infection-induced category</tspan></text><text
        transform="scale(1,-1)"
        style="font-variant:normal;font-weight:normal;font-size:9px;font-family:Helvetica;-inkscape-font-specification:Helvetica;writing-mode:lr-tb;fill:#4d4d4d;fill-opacity:1;fill-rule:nonzero;stroke:none"
        id="text682"
@@ -578,7 +578,7 @@
          sodipodi:role="line"
          id="tspan680"
          x="69.771004"
-         y="-527.61993">81 genes with DMS associated with additive origin</tspan></text><text
+         y="-527.61993">81 genes with DMS associated with additive category</tspan></text><text
        transform="scale(1,-1)"
        style="font-variant:normal;font-weight:normal;font-size:9px;font-family:Helvetica;-inkscape-font-specification:Helvetica;writing-mode:lr-tb;fill:#4d4d4d;fill-opacity:1;fill-rule:nonzero;stroke:none"
        id="text686"
@@ -587,7 +587,7 @@
          x="69.690002 74.694 79.697998 82.200012 87.20401 92.208008 97.212013 102.216 106.716 109.21799 115.716 117.71399 120.216 125.22 127.72202 134.22 141.71701 147.72 150.22198 155.22601 159.72601 164.22601 169.23001 173.73001 175.728 180.73199 183.23401 188.23801 193.242 195.74399 202.242 204.23999 206.742 211.746 214.24799 216.246 221.25 223.75198 228.75598 231.66299 236.66699 241.16699 243.66901 245.66699 250.67099 255.67499"
          y="-517.61987"
          sodipodi:role="line"
-         id="tspan684">72 genes with DMS associated with interaction origin</tspan></text><g
+         id="tspan684">72 genes with DMS associated with interaction category</tspan></text><g
        id="g688" /><g
        id="g690" /><g
        id="g692" /><g
