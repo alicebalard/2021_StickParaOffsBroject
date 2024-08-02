@@ -40,6 +40,7 @@ list.of.packages <- c(
   "purr",
   "qualpalr",# extra palettes
   "RColorBrewer", # for colors in Venn diagrams
+  "rcompanion", # for Spearman's rho 95%CI by BS
   "rentrez", # to extract info from NCBI Entrez
   "reshape2",
   "sjPlot", # plot interaction effects

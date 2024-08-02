@@ -321,47 +321,36 @@ getCorG1G2methByEffect <- function(myeffect){
   
   AB=merge(A, B)
   
+  # Rm NA
+  AB=na.omit(AB[c("G1methylation", "G2methylation")])
   # When the variables are not continuous but could be ranked then we do not use pearson correlation 
   # coefficient to find the linear relationship, in this case spearman correlation coefficient comes 
   # into the scene. Since the spearman correlation coefficient considers the rank of values, the 
   # correlation test ignores the same ranks to find the p-values as a result we get the warning
   # “Cannot compute exact p-value with ties”. This can be avoided by using exact = FALSE inside the cor.test function.
-  return(cor.test(x = AB$G1methylation, AB$G2methylation, method = "spearman", exact = FALSE ))
+  
+  return(list(cor.test(x=AB$G1methylation, y=AB$G2methylation, method="spearman"),
+              spearmanRho(x=AB$G1methylation, y=AB$G2methylation, method="spearman", R=1000,ci=T)))
 }
 
-getCorG1G2methByEffect(myeffect = DMS_G1onlyEffect_4BPmin)
-# Spearman's rank correlation rho
-# S = 4.224e+14, p-value < 2.2e-16
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#       rho 
-# 0.4808556 
+# NB: Takes 4 minutes to run the BS each time
+# getCorG1G2methByEffect(myeffect = DMS_G1onlyEffect_4BPmin)
+# Spearman's rank correlation rho $ 95% CI (BC 1000)
+# 0.481[0.477-0.484 95%CI]
 
-getCorG1G2methByEffect(myeffect = DMS_G2onlyEffect_4BPmin)
-# Spearman's rank correlation rho
-# S = 3.0929e+12, p-value < 2.2e-16
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#       rho 
-# 0.4071759 
+# getCorG1G2methByEffect(myeffect = DMS_G2onlyEffect_4BPmin)
+# Spearman's rank correlation rho $ 95% CI (BC 1000)
+# 0.407[0.398-0.417 95%CI]
 
-getCorG1G2methByEffect(myeffect = DMS_G1G2additiveEffect_4BPmin)
-# Spearman's rank correlation rho
-# S = 6.8324e+11, p-value < 2.2e-16
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#       rho 
-# 0.3671226 
+# getCorG1G2methByEffect(myeffect = DMS_G1G2additiveEffect_4BPmin)
+# Spearman's rank correlation rho $ 95% CI (BC 1000)
+# 0.367[0.354-0.379 95%CI]
 
-getCorG1G2methByEffect(myeffect = DMS_G1G2interactionEffect_4BPmin)
-# Spearman's rank correlation rho
-# S = 4.2648e+11, p-value < 2.2e-16
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#       rho 
-# 0.3908235 
+# getCorG1G2methByEffect(myeffect = DMS_G1G2interactionEffect_4BPmin)
+# Spearman's rank correlation rho $ 95% CI (BC 1000)
+# 0.391[0.378-0.404 95%CI]
 
-## And as a regression?
+## And as a regression? We put only this one in the paper, it's the most sophisticated version of Spearman
 DMSalleffectsDF = data.frame(DMS=c(DMS_G1onlyEffect_4BPmin, DMS_G2onlyEffect_4BPmin, DMS_G1G2additiveEffect_4BPmin, DMS_G1G2interactionEffect_4BPmin),
                              effect=c(rep("G1", length(DMS_G1onlyEffect_4BPmin)),
                                       rep("G2", length(DMS_G2onlyEffect_4BPmin)),
@@ -406,9 +395,12 @@ AB$SampleID=as.character(AB$SampleID)
 # level effects
 AB$effect <- factor(AB$effect,levels = c("G1", "G2", "addit", "inter"))
 
+AB=na.omit(AB[c("G1methylation", "G2methylation", "effect", "brotherPairID", "SampleID")])
+
 mod1=lme4::lmer(G2methylation~G1methylation * effect + (1|brotherPairID/SampleID), data=AB)
 mod2=lme4::lmer(G2methylation~G1methylation + effect + (1|brotherPairID/SampleID), data=AB)
 mod3=lme4::lmer(G2methylation~G1methylation + (1|brotherPairID/SampleID), data=AB)
+mod4=lme4::lmer(G2methylation~effect + (1|brotherPairID/SampleID), data=AB)
 
 lmtest::lrtest(mod1, mod2)
 # Likelihood ratio test
@@ -427,6 +419,34 @@ lmtest::lrtest(mod1, mod3)
 # #Df   LogLik Df  Chisq Pr(>Chisq)    
 # 1  11 -1123068                         
 # 2   5 -1123334 -6 532.44  < 2.2e-16 ***
+
+lmtest::lrtest(mod1, mod4)
+# Likelihood ratio test
+# 
+# Model 1: G2methylation ~ G1methylation * effect + (1 | brotherPairID/SampleID)
+# Model 2: G2methylation ~ effect + (1 | brotherPairID/SampleID)
+# #Df   LogLik Df Chisq Pr(>Chisq)    
+# 1  11 -1123068                        
+# 2   7 -1152337 -4 58539  < 2.2e-16 ***
+
+mod1
+
+library(emmeans)
+emmp <- emmeans(mod1, pairwise ~ effect, adjust = "tukey")
+summary(emmp, infer=TRUE)$contrast
+# contrast      estimate    SE  df asymp.LCL asymp.UCL z.ratio p.value
+# G1 - G2          1.885 0.174 Inf     1.438     2.332  10.830  <.0001
+# G1 - addit       1.397 0.218 Inf     0.837     1.957   6.410  <.0001
+# G1 - inter       2.262 0.233 Inf     1.665     2.860   9.723  <.0001
+# G2 - addit      -0.488 0.262 Inf    -1.159     0.184  -1.865  0.2434
+# G2 - inter       0.378 0.274 Inf    -0.326     1.081   1.379  0.5127
+# addit - inter    0.865 0.304 Inf     0.085     1.646   2.849  0.0228
+
+dfTukey = summary(emmp, infer=TRUE)$contrast
+dfTukey = dfTukey %>% 
+  dplyr::mutate_if(is.numeric, round, digits = 4)
+
+write.csv(dfTukey, file = "../../dataOut/SuppTableTukeyG1G2.csv", row.names = F)
 
 # Set up modelplot
 modelPlot <- plot_model(mod1, type = "pred", terms = c("G1methylation", "effect"))+
