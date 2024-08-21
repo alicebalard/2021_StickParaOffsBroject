@@ -32,12 +32,12 @@ list.of.packages <- c(
   "MuMIn", # participation of variables to the variance
   "missMDA",# PCA for incomplete data
   "nlme", ## for mixed models
-  "org.Hs.eg.db", # gene annotation from online databases
   "pairwiseAdonis",
   "pheatmap", # for heatmaps
   "plyr", # for join (keep row order",
   "png",
-  "purr",
+  "purrr",
+  "PQLseq", # calculate diff meth with relatedness
   "qualpalr",# extra palettes
   "RColorBrewer", # for colors in Venn diagrams
   "rcompanion", # for Spearman's rho 95%CI by BS
@@ -57,18 +57,18 @@ list.of.packages <- c(
 ## install from CRAN and require all libraries from CRAN and github
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-#  if (length(new.pkg))
-#    install.packages(new.pkg, dependencies = TRUE,repos = "http://cran.us.r-project.org")
+  if (length(new.pkg))
+    install.packages(new.pkg, dependencies = TRUE,repos = "http://cran.us.r-project.org")
   sapply(pkg, require, character.only = TRUE)
 }
 ipak(list.of.packages)
 
 ##########################################
 ## install packages from github if not yet
-#install_github("ropensci/rentrez")
-#install_github("asishallab/goEnrichment")
-#install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
-#install_github("gaospecial/ggVennDiagram")
+install_github("ropensci/rentrez")
+install_github("asishallab/goEnrichment")
+install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+install_github("gaospecial/ggVennDiagram")
 
 #####################################################
 ## install from biocmanager and require all libraries
@@ -78,12 +78,13 @@ list.bioc <- c("Category", # for hypergeometric GO test
                "GenomicFeatures",## for annotation
                "GOstats", # for GO analysis
                "GSEABase",  # for GO term GeneSetCollection
-               "methylKit"
+               "methylKit",
+               "org.Hs.eg.db" # gene annotation from online databases
 ) 
 ipak2 <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-#  if (length(new.pkg))
-#   BiocManager::install(new.pkg)
+  if (length(new.pkg))
+   BiocManager::install(new.pkg)
   sapply(pkg, require, character.only = TRUE)
 }
 
