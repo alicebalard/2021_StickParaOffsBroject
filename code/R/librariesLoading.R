@@ -14,7 +14,6 @@ list.of.packages <- c(
   "factoextra", # color PCA plots
   "FactoMineR", # for PCA
   "forcats", # keeps characters in previous order axis ggplot (for bubble plot)
-  "genomation", ## for annotation
   "ggeffects", # to plot random effects predictions
   "ggplot2",
   "ggpubr", ## to merge ggplot2 plots
@@ -55,41 +54,112 @@ list.of.packages <- c(
 
 ###################################################################
 ## install from CRAN and require all libraries from CRAN and github
-ipak <- function(pkg){
-  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg))
-    install.packages(new.pkg, dependencies = TRUE,repos = "http://cran.us.r-project.org")
-  sapply(pkg, require, character.only = TRUE)
+install_if_missing <- function(packages, dependencies = TRUE) {
+  new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+  if(length(new_packages)) {
+    message("Installing missing packages: ", paste(new_packages, collapse = ", "))
+    install.packages(new_packages, dependencies = dependencies)
+  } else {
+    message("All CRAN packages are already installed.")
+  }
 }
-ipak(list.of.packages)
+
+install_if_missing(list.of.packages)
+
+message("Loading CRAN packages...")
+for(pkg in list.of.packages) {
+    if(!require(pkg, character.only = TRUE)) {
+        warning(paste("Failed to load package:", pkg))
+    }
+}
 
 ##########################################
 ## install packages from github if not yet
-install_github("ropensci/rentrez")
-install_github("asishallab/goEnrichment")
-install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
-install_github("gaospecial/ggVennDiagram")
+packages_to_install <- c(
+    "ropensci/rentrez","asishallab/goEnrichment","pmartinezarbizu/pairwiseAdonis/pairwiseAdonis", "gaospecial/ggVennDiagram")
+
+install_and_load_github_packages <- function(packages, dependencies = TRUE) {
+  # Ensure devtools is installed and loaded
+  if (!requireNamespace("devtools", quietly = TRUE)) {
+    install.packages("devtools")
+  }
+  library(devtools)
+  
+  # Function to extract package name from GitHub repo string
+  extract_package_name <- function(repo) {
+    parts <- strsplit(repo, "/")[[1]]
+    if (length(parts) > 1) {
+      return(parts[2])
+    } else {
+      return(repo)
+    }
+  }
+  
+  # Install and load packages
+  for (pkg in packages) {
+    pkg_name <- extract_package_name(pkg)
+    if (!requireNamespace(pkg_name, quietly = TRUE)) {
+      message(paste("Installing", pkg, "from GitHub..."))
+      tryCatch(
+        install_github(pkg, dependencies = dependencies),
+        error = function(e) {
+          message(paste("Error installing", pkg, ":", e$message))
+          return()  # Skip to next package if installation fails
+        }
+      )
+    } else {
+      message(paste(pkg_name, "is already installed."))
+    }
+    
+    # Attempt to load the package
+    message(paste("Loading", pkg_name, "..."))
+    if (!require(pkg_name, character.only = TRUE)) {
+      warning(paste("Failed to load package:", pkg_name))
+    }
+  }
+}
+
+message("Loading github packages...")
+install_and_load_github_packages(packages_to_install)
 
 #####################################################
 ## install from biocmanager and require all libraries
 ## Biocmanager packages 
-list.bioc <- c("Category", # for hypergeometric GO test
+bioc_packages <- c("Category", # for hypergeometric GO test
                "WGCNA", # for networks
+               "genomation", ## for annotation
                "GenomicFeatures",## for annotation
                "GOstats", # for GO analysis
                "GSEABase",  # for GO term GeneSetCollection
                "methylKit",
                "org.Hs.eg.db" # gene annotation from online databases
 ) 
-ipak2 <- function(pkg){
-  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg))
-   BiocManager::install(new.pkg)
-  sapply(pkg, require, character.only = TRUE)
+
+install_and_load_bioc_packages <- function(packages) {
+  # Ensure BiocManager is installed and loaded
+  if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+  }
+  library(BiocManager)
+
+  # Install and load packages
+  for (pkg in packages) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      message(paste("Installing", pkg, "..."))
+      BiocManager::install(pkg, update = FALSE, ask = FALSE)
+    }
+    
+    message(paste("Loading", pkg, "..."))
+    if (!require(pkg, character.only = TRUE)) {
+      warning(paste("Failed to load package:", pkg))
+    }
+  }
 }
 
-ipak2(list.bioc)
+message("Loading bioconductor packages...")
+install_and_load_bioc_packages(bioc_packages)
 
+############# Extra configuration
 ## offspring colors for all kind of plots
 colOffs <- c("#ffe67f", "#ff6300","#a8caff","#a800d4")
 
