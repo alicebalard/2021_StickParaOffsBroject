@@ -1,10 +1,10 @@
 #!/bin/bash
 # Functional annotation of gynogen genome
-#$ -pe smp 1
+#$ -pe smp 10
 #$ -l h_vmem=10G
 #$ -l h_rt=240:0:0
-#$ -o /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/run_gynofuncal.stdout
-#$ -e /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/GIT_StickParaOffsBroject/code/run_gynofuncal.stderr
+#$ -o /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/logs/S04_run_gynofuncal.stdout
+#$ -e /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/logs/S04_run_gynofuncal.stderr
 #$ -V
 
 ## Source: http://weatherby.genetics.utah.edu/MAKER/wiki/index.php/MAKER_Tutorial_for_WGS_Assembly_and_Annotation_Winter_School_2018#Example_MAKER_Annotation_Project
@@ -12,8 +12,8 @@ module load blast+
 module load anaconda3/2020.02
 module load maker/2.31.9-mpi
 ## NB interproscan needs java 11, incompatible with R so unload R and reload java 11
-module unload R/4.0.2
-module load java/11.0.2
+module unload R/4.2.2
+module load java/11.0.20-openjdk
 
 DIR=/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/06GynoGen_functionalAnnotation
 GFF1=$DIR/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff
@@ -44,9 +44,37 @@ NEWGFF=$DIR/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGA
 
 BLASTPout=$DIR/output_onlyuniprot.blastp
 
-# STEP 2: Run interproscan
+# STEP 2: Run interproscan (improvement Sept 2024 from Charley)
 ## Install: https://interproscan-docs.readthedocs.io/en/latest/UserDocs.html
-# ./my_interproscan/interproscan-5.56-89.0/interproscan.sh -appl pfam -dp -f TSV -goterms -iprlookup -pa -t p -i $DIR/Gynogen_pchrom_assembly_all_PROTEINS_noast.faa -o $DIR/Gynogen_pchrom_assembly_all_PROTEINS_noast.faa.iprscan
+
+## Gene3D (4.3.0) : Structural assignment for whole genes and genomes using the CATH domain structure database.
+## PANTHER (15.0) : The PANTHER (Protein ANalysis THrough Evolutionary Relationships) Classification System is a unique resource that classifies genes by their functions, using published scientific experimental evidence and evolutionary relationships to predict function even in the absence of direct experimental evidence.
+## Pfam (34.0) : A large collection of protein families, each represented by multiple sequence alignments and hidden Markov models (HMMs)
+## SFLD (4) : SFLD is a database of protein families based on hidden Markov models (HMMs).
+## SUPERFAMILY (1.75) : SUPERFAMILY is a database of structural and functional annotations for all proteins and genomes.
+## TIGRFAM (15.0) : TIGRFAMs are protein families based on hidden Markov models (HMMs).
+
+INTERPROSCAN=./my_interproscan/interproscan-5.56-89.0/interproscan.sh
+
+echo "ncpu:"
+echo $NSLOTS
+
+# Set variables
+INPUT_FILE="Gynogen_pchrom_assembly_all_PROTEINS_noast.faa"
+OUTPUT_PREFIX="Gynogen_pchrom_assembly_all_PROTEINS_noast.faa.iprscan"
+
+echo "Run InterProScan..."
+# Run InterProScan
+$INTERPROSCAN -appl Gene3D,PANTHER,pfam,PIRSR,SFLD,SUPERFAMILY,TIGRFAM \
+  -i $INPUT_FILE \
+  -f TSV,GFF3 \
+  -t p \ 
+  -o $OUTPUT_PREFIX \
+  -cpu $NSLOTS \
+  --goterms \
+  --pathways \
+  -dp -iprlookup
+echo "InterProScan analysis complete."
 
 IPRout=$DIR/Gynogen_pchrom_assembly_all_PROTEINS_noast.faa.iprscan
 

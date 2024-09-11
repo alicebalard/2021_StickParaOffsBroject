@@ -1,9 +1,11 @@
 ## Global methylation and fitness
 ## A. Balard
-## January 2023
+## September 2024
+## Produces fig S4
 
 # Each script sources the previous script of the pipeline if needed
-source("R04_getDifferentialMethylation_runInCLUSTER.R")
+## source("R04_getDiffMeth_PQLseq_runInCLUSTER.R") ## uncomment when finished run and run = F
+source("R03_prepObjectMethylkit_runInCLUSTER.R")
 
 print("Number of CpG positions shared by all fish:")
 print(nrow(uniteCovALL_woSexAndUnknowChr))# 60861 
@@ -66,11 +68,13 @@ step(mod_Tol, reduce.random = F) # Model found: full model
 
 ## The slope of BCI on nbrworms varies upon treatment
 pdf(file = "../../dataOut/SupplFigS4.pdf", width = 7, height = 5)
-plot(ggpredict(mod_Tol, terms = c("No.Worms", "PAT")), add.data=T)+ theme_bw() +
+plot(ggpredict(mod_Tol, terms = c("No.Worms", "PAT")), show_data=T, jitter = TRUE, 
+     dot_alpha =1, alpha = .5)+
+  theme_pubr() + # was overridden by plot ggpredict
   ylab("Body Condition Index") + xlab("Number of worms") +
   ggtitle("Predicted values of Body Condition Index in offspring")+
-  scale_color_manual(NULL, values = c("black", "red")) +
-  scale_fill_manual(NULL, values = c("black", "red"))  +
+  scale_color_manual(NULL, values = c("#a9d6c1ff", "#d1b000ff")) +
+  scale_fill_manual(NULL, values = c("#a9d6c1ff", "#d1b000ff"))  +
   scale_x_continuous(breaks = 0:10)+
   geom_point(size=0)+ # to have color key in legend as point
   guides(colour = guide_legend(override.aes = list(size=3,linetype=0, fill = NA)))
@@ -211,22 +215,21 @@ plot(ggpredict(mod, terms = c("Sex")), add.data = T)
 # NB: this is WITH unknown and sex chromosomes, before filtering.
 
 ### No difference in mean coverage per CpG in the filtered dataset (p\>0.05)
-
 mod = lm(MeanCoverage ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
-plot(ggpredict(mod, terms = c("Sex")), add.data = T)
+plot(ggpredict(mod, terms = c("Sex")), show_data = T)
 # NB: this is in G2, considering positions shared by at least 14 fish per treatment group (half individuals per group), and which overlap with positions retained in G1, without sex and unknown chromosome (after filtering) 
 
 ### No difference in number of sites covered in the filtered dataset (p\>0.05)
 mod = lm(Nbr_coveredCpG ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
-plot(ggpredict(mod, terms = c("Sex")), add.data = T)
+plot(ggpredict(mod, terms = c("Sex")), show_data = T)
 # NB: this is in G2, considering positions shared by at least 14 fish per treatment group (half individuals per group), and which overlap with positions retained in G1, without sex and unknown chromosome (after filtering)
 
 ### No difference in number of sites covered in the filtered dataset (p\>0.05)
 mod = lm(OverallPercentageMethylation ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
-plot(ggpredict(mod, terms = c("Sex")), add.data = T)
+plot(ggpredict(mod, terms = c("Sex")), show_data = T)
 #NB: this is in G2, considering positions shared by at least 14 fish per treatment group (half individuals per group), and which overlap with
 #positions retained in G1, without sex and unknown chromosome (after filtering)
 
@@ -235,7 +238,7 @@ mod = lm(res_Nbr_methCpG_Nbr_coveredCpG ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod)) # sex is significant p = 0.000157 ***
 anova(mod)
 
-plot(ggpredict(mod, terms = c("Sex")), add.data = T) +
+plot(ggpredict(mod, terms = c("Sex")), show_data = T, jitter = T) +
   xlab(NULL)+
   ylab("Residuals of N methylated sites on N covered sites") +
   ggtitle("Predicted values of global methylation in offspring")

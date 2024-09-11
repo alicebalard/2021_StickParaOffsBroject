@@ -1,5 +1,6 @@
 # Each script sources the previous script of the pipeline if needed
 source("R05_GlobalMethylationAndFitness.R")
+## Produces the subplots for figure 2
 
 # Methylation profile, CpG present in all fish
 ## Dendogram of methylations
@@ -9,7 +10,7 @@ print("number of fish in total:")
 print(length(uniteCovALL_woSexAndUnknowChr@sample.ids))
 
 makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr, fullMetadata,
-                      my.cols.trt=c("#333333ff","#ff0000ff","#ffe680ff","#ff6600ff","#aaccffff","#aa00d4ff"),
+                      my.cols.trt=c("#333333ff","#ff0000ff",colOffs),
                       my.cols.fam = c(1:4), nbrk = 8)
 
 ### Offspring:
@@ -21,7 +22,6 @@ print(length(uniteCovALL_G2_woSexAndUnknowChr@sample.ids))
 # Save
 pdf(file = "../../dataOut/clusterALLCpG_offspings.pdf", width = 10, height = 4)
 makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
-                      my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
                       my.cols.fam = c(1:4), nbrk = 8)
 dev.off()
 
@@ -108,3 +108,4 @@ if (run==TRUE){
   NMDSanalysis_G1infected$NMDSplot
   #dev.off()
 }
+

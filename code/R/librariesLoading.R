@@ -40,6 +40,7 @@ list.of.packages <- c(
   "qualpalr",# extra palettes
   "RColorBrewer", # for colors in Venn diagrams
   "rcompanion", # for Spearman's rho 95%CI by BS
+  "RhpcBLASctl", # To deal with alarming nodes issue with PQLseq
   "rentrez", # to extract info from NCBI Entrez
   "reshape2",
   "sjPlot", # plot interaction effects
@@ -50,76 +51,86 @@ list.of.packages <- c(
   "UpSetR", # for upset plots
   "VCA",
   "vegan", ## for Adonis
-  "VennDiagram")
+  "VennDiagram",
+  "RcppArmadillo", "foreach","parallel", "PQLseq") # all needed for PQLseq
 
 ###################################################################
+message("Install CRAN packages if missing, and load CRAN packages...")
+
 ## install from CRAN and require all libraries from CRAN and github
 install_if_missing <- function(packages, dependencies = TRUE) {
-  new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
-  if(length(new_packages)) {
-    message("Installing missing packages: ", paste(new_packages, collapse = ", "))
-    install.packages(new_packages, dependencies = dependencies)
-  } else {
-    message("All CRAN packages are already installed.")
-  }
+    new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+    if(length(new_packages)) {
+        message("Installing missing packages: ", paste(new_packages, collapse = ", "))
+        install.packages(new_packages, dependencies = dependencies)
+    } else {
+        message("All CRAN packages are already installed.")
+    }
 }
 
 install_if_missing(list.of.packages)
 
 message("Loading CRAN packages...")
-for(pkg in list.of.packages) {
-    if(!require(pkg, character.only = TRUE)) {
-        warning(paste("Failed to load package:", pkg))
+load_packages <- function(package_list) {
+    not_loaded <- character()
+    for (pkg in package_list) {
+        if (suppressPackageStartupMessages(require(pkg, character.only = TRUE, quietly = TRUE))) {
+                                        # Package loaded successfully, do nothing
+        } else {
+            not_loaded <- c(not_loaded, pkg)
+        }
+    }  
+    if (length(not_loaded) > 0) {
+        message("The following packages could not be loaded: ", paste(not_loaded, collapse = ", "))
+    } else {
+        message("All packages loaded successfully.")
     }
 }
+
+load_packages(list.of.packages)
 
 ##########################################
 ## install packages from github if not yet
 packages_to_install <- c(
     "ropensci/rentrez","asishallab/goEnrichment","pmartinezarbizu/pairwiseAdonis/pairwiseAdonis", "gaospecial/ggVennDiagram")
 
-install_and_load_github_packages <- function(packages, dependencies = TRUE) {
+install_and_load_github_packages <- function(packages) {
   # Ensure devtools is installed and loaded
   if (!requireNamespace("devtools", quietly = TRUE)) {
     install.packages("devtools")
   }
   library(devtools)
   
-  # Function to extract package name from GitHub repo string
-  extract_package_name <- function(repo) {
-    parts <- strsplit(repo, "/")[[1]]
-    if (length(parts) > 1) {
-      return(parts[2])
-    } else {
-      return(repo)
-    }
-  }
+  not_loaded <- character()
   
-  # Install and load packages
   for (pkg in packages) {
-    pkg_name <- extract_package_name(pkg)
+    pkg_name <- strsplit(pkg, "/")[[1]][2]
+    
     if (!requireNamespace(pkg_name, quietly = TRUE)) {
       message(paste("Installing", pkg, "from GitHub..."))
       tryCatch(
-        install_github(pkg, dependencies = dependencies),
+        devtools::install_github(pkg, quiet = TRUE),
         error = function(e) {
           message(paste("Error installing", pkg, ":", e$message))
-          return()  # Skip to next package if installation fails
         }
       )
-    } else {
-      message(paste(pkg_name, "is already installed."))
     }
     
-    # Attempt to load the package
-    message(paste("Loading", pkg_name, "..."))
-    if (!require(pkg_name, character.only = TRUE)) {
-      warning(paste("Failed to load package:", pkg_name))
+    if (suppressPackageStartupMessages(require(pkg_name, character.only = TRUE, quietly = TRUE))) {
+      # Package loaded successfully, do nothing
+    } else {
+      not_loaded <- c(not_loaded, pkg_name)
     }
+  }
+  
+  if (length(not_loaded) > 0) {
+    message("The following packages could not be loaded: ", paste(not_loaded, collapse = ", "))
+  } else {
+    message("All packages loaded successfully.")
   }
 }
 
-message("Loading github packages...")
+message("Install github packages if missing, and load github packages...")
 install_and_load_github_packages(packages_to_install)
 
 #####################################################
@@ -132,27 +143,34 @@ bioc_packages <- c("Category", # for hypergeometric GO test
                "GOstats", # for GO analysis
                "GSEABase",  # for GO term GeneSetCollection
                "methylKit",
+               "qvalue", # for FDR after PQLseq
                "org.Hs.eg.db" # gene annotation from online databases
 ) 
 
-install_and_load_bioc_packages <- function(packages) {
-  # Ensure BiocManager is installed and loaded
+install_and_load_bioc_packages <- function(package_list) {
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager")
   }
-  library(BiocManager)
-
-  # Install and load packages
-  for (pkg in packages) {
+  
+  not_loaded <- character()
+  
+  for (pkg in package_list) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
       message(paste("Installing", pkg, "..."))
       BiocManager::install(pkg, update = FALSE, ask = FALSE)
     }
     
-    message(paste("Loading", pkg, "..."))
-    if (!require(pkg, character.only = TRUE)) {
-      warning(paste("Failed to load package:", pkg))
+    if (suppressPackageStartupMessages(require(pkg, character.only = TRUE, quietly = TRUE))) {
+      # Package loaded successfully, do nothing
+    } else {
+      not_loaded <- c(not_loaded, pkg)
     }
+  }
+  
+  if (length(not_loaded) > 0) {
+    message("The following packages could not be loaded: ", paste(not_loaded, collapse = ", "))
+  } else {
+    message("All packages loaded successfully.")
   }
 }
 
@@ -161,6 +179,7 @@ install_and_load_bioc_packages(bioc_packages)
 
 ############# Extra configuration
 ## offspring colors for all kind of plots
-colOffs <- c("#ffe67f", "#ff6300","#a8caff","#a800d4")
+## colOffs <- c("#ffe67f", "#ff6300","#a8caff","#a800d4") ## previous ugly
+colOffs <- c("#a9d6c1ff", "#d1b000ff","#4b8da3ff","#c05a29ff")
 
 theme_set(theme_pubr())

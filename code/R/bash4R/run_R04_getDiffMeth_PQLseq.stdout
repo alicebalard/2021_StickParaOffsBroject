@@ -1,0 +1,46 @@
+Loading R/4.2.2
+  Loading requirement: gcc/12.1.0
+Install CRAN packages if missing, and load CRAN packages...
+All CRAN packages are already installed.
+Loading CRAN packages...
+All packages loaded successfully.
+Install github packages if missing, and load github packages...
+All packages loaded successfully.
+Loading bioconductor packages...
+
+All packages loaded successfully.
+[1] "Number of raw reads:"
+[1] 11.02197
+[1] "+/-"
+[1] 0.3834343
+[1] "Mapping efficiency with BSBolt in %:"
+[1] 85.6287
+[1] "+/-"
+[1] 0.5071501
+[1] "Number of individuals considered:"
+[1] 127
+[1] "including parents and offspring:"
+
+  O   P 
+111  16 
+Warning message:
+replacing previous import 'Biostrings::pattern' by 'grid::pattern' when loading 'genomation' 
+[1] TRUE
+[1] TRUE
+Comparison between group  5  and  2
+## number of total individuals:  56 
+## number of total genes/sites:  1002565 
+## number of adjusted covariates:  1 
+# fitting binomial mixed model ... 
+916108 CpG sites converged out of 1002565 sites
+Comparison between group  6  and  3
+## number of total individuals:  55 
+## number of total genes/sites:  1002565 
+## number of adjusted covariates:  1 
+# fitting binomial mixed model ... 
+916702 CpG sites converged out of 1002565 sites
+Comparison between group  5  and  6
+## number of total individuals:  55 
+## number of total genes/sites:  1002565 
+## number of adjusted covariates:  1 
+# fitting binomial mixed model ... 
