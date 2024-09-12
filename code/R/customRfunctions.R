@@ -67,20 +67,6 @@ get_pos <- function(CHROM,genome){
 
 makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50","grey50","darkred","darkred"), 
                                mytitle = "Manhattan plot of DMS"){
-  #GA_genome.fa.sizes.txt is a file with chromosome sizes and names
-  genome <- GYgynogff %>%
-    mutate(chrom_nr=chrom %>% deroman(),
-           chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
-    arrange(chrom_order) %>%
-    mutate(gstart=lag(length,default=0) %>% cumsum(),
-           gend=gstart+length, 
-           type=LETTERS[2-(chrom_order%%2)],
-           gmid=(gstart+gend)/2)
-  
-  #genome without M re-type:
-  genome2=genome[genome$chrom_nr!="M",] %>%
-    mutate(type=rep(c("A","B"),length(length)/2))
-  
   region=as.factor(ifelse(annotFile$prom==1,"promoter",
                           ifelse(annotFile$exon==1,"exon",
                                  ifelse(annotFile$intron==1, "intron","intergenic"))))

@@ -92,7 +92,8 @@ load_packages(list.of.packages)
 ##########################################
 ## install packages from github if not yet
 packages_to_install <- c(
-    "ropensci/rentrez","asishallab/goEnrichment","pmartinezarbizu/pairwiseAdonis/pairwiseAdonis", "gaospecial/ggVennDiagram")
+    "ropensci/rentrez","asishallab/goEnrichment","pmartinezarbizu/pairwiseAdonis/pairwiseAdonis",
+    "gaospecial/ggVennDiagram", "ebbertd/chisq.posthoc.test")
 
 install_and_load_github_packages <- function(packages) {
   # Ensure devtools is installed and loaded
@@ -183,3 +184,42 @@ install_and_load_bioc_packages(bioc_packages)
 colOffs <- c("#a9d6c1ff", "#d1b000ff","#4b8da3ff","#c05a29ff")
 
 theme_set(theme_pubr())
+
+## Annotation files
+message("Load annotation files: GYgynogff containing length of each gynogen chromosomes, annotBed12 and annotGff3 for the full annotation...")
+
+## Load file containing length of each gynogen chromosomes
+## grep "contig" gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff | awk '{print $1, $5}' > data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt
+GYgynogff = read.table("../../data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt")
+names(GYgynogff) = c("chrom","length")
+#GA_genome.fa.sizes.txt is a file with chromosome sizes and names
+genome <- GYgynogff %>%
+  mutate(chrom_nr=chrom %>% deroman(),
+         chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
+  arrange(chrom_order) %>%
+  mutate(gstart=lag(length,default=0) %>% cumsum(),
+         gend=gstart+length, 
+         type=LETTERS[2-(chrom_order%%2)],
+         gmid=(gstart+gend)/2,
+         chrom=as.factor(chrom))
+genome$chrom <- with(genome, reorder(chrom, chrom_order)) # keep chr in order
+
+#genome without M re-type:
+GYgynogff=genome[genome$chrom_nr!="M",] %>%
+  mutate(type=rep(c("A","B"),length(length)/2))
+
+rm(genome)
+
+## NB Promoters are defined by options at genomation::readTranscriptFeatures function. 
+## The default option is to take -1000,+1000bp around the TSS and you can change that. 
+## -> following Heckwolf 2020 and Sagonas 2020, we consider 1500bp upstream and 500 bp downstream
+annotBed12=readTranscriptFeatures("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.transdec.bed12",
+                                  remove.unusual = FALSE, up.flank = 1500, down.flank = 500)
+## Change recursively the gene names to keep only ID
+getName <- function(x) {sub(";.*", "", sub(".*ID=", "", x))}
+for (i in 1:length(annotBed12)){
+  annotBed12[[i]]$name <- getName(annotBed12[[i]]$name)
+}
+
+## Load curated gff file
+annotGff3 <- rtracklayer::readGFF("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff")

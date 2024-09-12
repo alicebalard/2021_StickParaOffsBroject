@@ -61,12 +61,15 @@ print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permuta
 # Goodness of fit for NMDS suggested the presence of six dimensions with a
 # stress value \> 0.1 and 2 with \> 0.2
 
-## to find the seed that allows convergence:
-# sapply(3:10, function(x) myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = x))
-NMDSanalysis <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = 4)
-pdf(file = "../../dataOut/NMDSplot_allG2.pdf", width = 9, height = 11)
-NMDSanalysis$NMDSplot
-dev.off()
+run = FALSE
+if (run==TRUE){
+  ## to find the seed that allows convergence:
+  # sapply(3:10, function(x) myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = x))
+  NMDSanalysis <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = 4)
+  pdf(file = "../../dataOut/NMDSplot_allG2.pdf", width = 9, height = 11)
+  NMDSanalysis$NMDSplot
+  dev.off()
+}
 
 ## The methylation pattern is more affected by direct treatment when the father was infected (Adonis test WITHIN both parental trt)
 

@@ -44,3 +44,10 @@ Comparison between group  5  and  6
 ## number of total genes/sites:  1002565 
 ## number of adjusted covariates:  1 
 # fitting binomial mixed model ... 
+912260 CpG sites converged out of 1002565 sites
+Comparison between group  2  and  3
+## number of total individuals:  56 
+## number of total genes/sites:  1002565 
+## number of adjusted covariates:  1 
+# fitting binomial mixed model ... 
+921414 CpG sites converged out of 1002565 sites

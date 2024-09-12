@@ -2,27 +2,13 @@
 source("R06_GlobalMethylationProfile.R")
 # Generates figure S1
 
-## Load genome annotation
-## NB Promoters are defined by options at genomation::readTranscriptFeatures function. 
-## The default option is to take -1000,+1000bp around the TSS and you can change that. 
-## -> following Heckwolf 2020 and Sagonas 2020, we consider 1500bp upstream and 500 bp downstream
-annotBed12=readTranscriptFeatures("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.transdec.bed12",
-                                  remove.unusual = FALSE, up.flank = 1500, down.flank = 500)
-## Change recursively the gene names to keep only ID
-getName <- function(x) {sub(";.*", "", sub(".*ID=", "", x))}
-for (i in 1:length(annotBed12)){
-  annotBed12[[i]]$name <- getName(annotBed12[[i]]$name)
-}
-
 # Load the calculated DMS
+## G1 diff
 load("../../dataOut/fitPQLseqG2_fit_G2_CC.TC.RData")
 load("../../dataOut/fitPQLseqG2_fit_G2_CT.TT.RData")
-
-fit_G2_CC.TC = fit_G2_CC.TC$fit ## to rm after clean raw output, rm fitpass
-fit_G2_CT.TT = fit_G2_CT.TT$fit
-##
-fit_G2_CC.CT = head(fit_G2_CT.TT, 10000)## TO TEST ONLY RMMMM LATER
-fit_G2_TC.TT = head(fit_G2_CC.TC, 10000) ## TO TEST ONLY RMMMM LATER
+## G2 diff
+load("../../dataOut/fitPQLseqG2_fit_G2_CC.CT.RData")
+load("../../dataOut/fitPQLseqG2_fit_G2_TC.TT.RData")
 
 ## Statistical setup
 # PARENTAL effect: DMS found in either CC-TC or CT-TT comparisons
@@ -30,76 +16,125 @@ fit_G2_TC.TT = head(fit_G2_CC.TC, 10000) ## TO TEST ONLY RMMMM LATER
 # INTERACTION effects: DMS found in CC-CT which show a differential methylation (not necessarily significant)
 # in the opposite direction in TC-TT, or inversely
 
+################################
 ## Define the threshold for pass
-mypval = 0.05
-mydif = 10
+myqval = 0.05
+mydif = 5
 
-CC.TC_pass = fit_G2_CC.TC[fit_G2_CC.TC$converged==T & fit_G2_CC.TC$pvalue < mypval & 
+makeVolcano = function(fit){
+  ggplot()+
+    geom_point(data = fit[fit$qvalue < 0.1,],
+               aes(x = aveDiffMeth_ab, y = qvalue), alpha = .3) +
+    scale_y_continuous(trans = "log1p") + # log(x+1)
+    geom_rect(aes(xmin=-Inf, xmax=-5, ymin=0, ymax=0.05), fill = "red", alpha = .3)+
+    geom_rect(aes(xmin=5, xmax=Inf, ymin=0, ymax=0.05), fill = "red", alpha = .3)
+}
+
+volcanoPlotThreshold <- cowplot::plot_grid(makeVolcano(fit_G2_CC.CT), makeVolcano(fit_G2_CC.TC),
+                                           makeVolcano(fit_G2_CT.TT), makeVolcano(fit_G2_TC.TT), 
+                                           nrow = 2, labels = c("CC.CT", "CC.TC", "CT.TT", "TC.TT"))
+volcanoPlotThreshold
+
+## Select based on threshold
+CC.TC_pass = fit_G2_CC.TC[fit_G2_CC.TC$converged==T & fit_G2_CC.TC$qvalue <= myqval & 
                             (fit_G2_CC.TC$aveDiffMeth_ab>mydif | fit_G2_CC.TC$aveDiffMeth_ab< -mydif),]
 
-CT.TT_pass = fit_G2_CT.TT[fit_G2_CT.TT$converged==T & fit_G2_CT.TT$pvalue < mypval & 
+CT.TT_pass = fit_G2_CT.TT[fit_G2_CT.TT$converged==T & fit_G2_CT.TT$qvalue <= myqval & 
                             (fit_G2_CT.TT$aveDiffMeth_ab>mydif | fit_G2_CT.TT$aveDiffMeth_ab< -mydif),]
 
-CC.CT_pass = fit_G2_CC.CT[fit_G2_CC.CT$converged==T & fit_G2_CC.CT$pvalue < mypval & 
+CC.CT_pass = fit_G2_CC.CT[fit_G2_CC.CT$converged==T & fit_G2_CC.CT$qvalue <= myqval & 
                             (fit_G2_CC.CT$aveDiffMeth_ab>mydif | fit_G2_CC.CT$aveDiffMeth_ab< -mydif),]
 
-TC.TT_pass = fit_G2_TC.TT[fit_G2_TC.TT$converged==T & fit_G2_TC.TT$pvalue < mypval & 
+TC.TT_pass = fit_G2_TC.TT[fit_G2_TC.TT$converged==T & fit_G2_TC.TT$qvalue <= myqval & 
                             (fit_G2_TC.TT$aveDiffMeth_ab>mydif | fit_G2_TC.TT$aveDiffMeth_ab< -mydif),]
 
-PATERNAL_DMS = rbind(CC.TC_pass, CT.TT_pass)
+PATERNAL_DMS = rbind(CC.TC_pass, CT.TT_pass) %>% dplyr::select(chrom,start,end, pos)
+row.names(PATERNAL_DMS) = NULL
 PATERNAL_DMS[duplicated(PATERNAL_DMS)] ## no duplicates
+nrow(PATERNAL_DMS) #314
 
-OFFSPRING_DMS = rbind(CC.CT_pass, TC.TT_pass)
-OFFSPRING_DMS[duplicated(OFFSPRING_DMS)] ## tbc
+OFFSPRING_DMS = rbind(CC.CT_pass, TC.TT_pass) %>% dplyr::select(chrom,start,end, pos)
+row.names(OFFSPRING_DMS) = NULL
+OFFSPRING_DMS[duplicated(OFFSPRING_DMS)] ## no duplicates
+nrow(OFFSPRING_DMS) #400
 
-INFECTION_INDUCED = row.names(dplyr::anti_join(OFFSPRING_DMS, PATERNAL_DMS))
-INTERGENERATIONAL = row.names(dplyr::anti_join(PATERNAL_DMS,OFFSPRING_DMS))
+PATERNAL_DMS$effect = "PATERNAL"
+OFFSPRING_DMS$effect = "OFFSPRING"
+
+intersect(PATERNAL_DMS$pos, OFFSPRING_DMS$pos) # 7 intersection
+
+###########################
+## Create our 4 categories:
+outersect <- function(x, y) {
+  sort(c(setdiff(x, y), setdiff(y, x)))
+}
+
+## 1. INFECTION_INDUCED: methylation change only due to offspring treatment
+INFECTION_INDUCED = OFFSPRING_DMS[OFFSPRING_DMS$pos %in% outersect(OFFSPRING_DMS$pos, PATERNAL_DMS$pos),]
+INFECTION_INDUCED$effect = "INFECTION_INDUCED"
+
+## 2. INTERGENERATIONAL: methylation change only due to paternal treatment
+INTERGENERATIONAL = PATERNAL_DMS[PATERNAL_DMS$pos %in% outersect(OFFSPRING_DMS$pos, PATERNAL_DMS$pos),]
+INTERGENERATIONAL$effect = "INTERGENERATIONAL"
 
 ## OVERLAP=DMS found in PATERNAL_DMS & OFFSPRING_DMS
-# case 1 -> INTERACTION effects DMS found in CC-CT which show a differential methylation
-# in the opposite direction in TC-TT, or inversely (reaction norm are inversed)
-# case 2 -> ADDITIVE effect: no slope inversion
+OVERLAP = PATERNAL_DMS[PATERNAL_DMS$pos %in% intersect(PATERNAL_DMS$pos, OFFSPRING_DMS$pos),]
+OVERLAP$effect = "OVERLAP"
 
-OVERLAP = dplyr::intersect(PATERNAL_DMS, OFFSPRING_DMS)
+## 3.INTERACTION: interaction effects in the overlap, i.e. DMS found in CC-CT which show a differential methylation
+# in the opposite direction in TC-TT, or inversely (reaction norm are inverse)
+
+## 4.ADDITIVE: additive effect in the overlap, no slope inversion
 
 # INTERACTION = DMS found in comparison 1) “G1control-G2control (CC) vs G1control-G2infected (TC)” 
 # and showed a mean differential methylation in the opposite direction in comparison 
 # 2) “G1infected-G2control (CT) vs G1infected-G2infected (TT)”, or inversely
 
-A=fit_G2_CC.TC[row.names(fit_G2_CC.TC) %in% row.names(OVERLAP),"aveDiffMeth_ab"]
-B=fit_G2_CT.TT[row.names(fit_G2_CT.TT) %in% row.names(OVERLAP),"aveDiffMeth_ab"]
-C=row.names(fit_G2_CC.TC[row.names(fit_G2_CC.TC) %in% row.names(OVERLAP), ])
+A=fit_G2_CC.TC[fit_G2_CC.TC$pos %in% OVERLAP$pos,]
+B=fit_G2_CT.TT[fit_G2_CT.TT$pos %in% OVERLAP$pos,]
 
-INTERACTION = C[sign(A) != sign(B)]
-ADDITIVE = C[sign(A) == sign(B)]
+INTERACTION = OVERLAP[sign(A$aveDiffMeth_ab) != sign(B$aveDiffMeth_ab),]
+INTERACTION$effect = "INTERACTION"
 
-rm(A,B,C)
+ADDITIVE = OVERLAP[sign(A$aveDiffMeth_ab) == sign(B$aveDiffMeth_ab),]
+ADDITIVE$effect = "ADDITIVE"
 
-dataFinal = data.frame(NbrDMS = c(length(INTERGENERATIONAL),
-                                  length(INFECTION_INDUCED),
-                                  length(ADDITIVE),
-                                  length(INTERACTION)),
-                       DMSgroup = as.factor(c("Intergenerational", "Infection-induced",  "Additive", "Interaction")))
+rm(A,B)
 
-# # Plot a Venn diagram
-# ggVennDiagram(list("Paternal effect" = row.names(PATERNAL_DMS), "Offspring effect" = row.names(OFFSPRING_DMS),
-#                    "InteractionEffects" = INTERACTION),
-#               label_alpha = 0) + scale_color_manual(values = c(1,1,1))+
-#   scale_fill_gradient(low="white",high = "yellow") + theme(legend.position = "none")
-# 
-# # Save:
-# # pdf(file = "../../dataOut/DMS3groupsVenn.pdf", width = 7, height = 6)
-# ggVennDiagram(list("Paternal effect" = row.names(PATERNAL_DMS), 
-#                    "Offspring effect" = row.names(OFFSPRING_DMS),
-#                    "INTER" = INTERACTION,
-#                    "ADD" = ADDITIVE),
-#               label_alpha = 0) + scale_color_manual(values = c(1,1,1))+
-#   scale_fill_gradient(low="white",high = "yellow") + theme(legend.position = "none")
-# # dev.off()
+## DF of all our effects
+EffectsDF <- rbind(INTERGENERATIONAL, INFECTION_INDUCED, INTERACTION, ADDITIVE)
+table(duplicated(EffectsDF$pos)) # all should be unique
+## order effects factor
+EffectsDF$effect <- factor(EffectsDF$effect, levels = c("INFECTION_INDUCED", "INTERGENERATIONAL", "ADDITIVE", "INTERACTION" ))
 
-#######################
-## Where are these DMS?
-DMSvec=unique(c(INTERGENERATIONAL, INFECTION_INDUCED, ADDITIVE, INTERACTION))
+table(EffectsDF$effect)
+# INFECTION_INDUCED INTERGENERATIONAL          ADDITIVE       INTERACTION 
+# 393               307                 1                 6 
+
+## Add chromosome length and relative position for future plots
+EffectsDF <- merge(EffectsDF, GYgynogff[c("chrom", "length", "gstart", "gend")])
+
+###################
+## Plot our results
+unique=data.frame(chrom=unique(EffectsDF$chrom),
+                 length=unique(EffectsDF$length))
+
+posDMSplot <- ggplot(EffectsDF) +
+  geom_col(data = unique, aes(x=length, y=chrom), width = .7, fill="#e0ebeb")+
+  geom_tile(aes(x=start, y=chrom, fill=effect, width = 50000, height = .8))+
+  theme_blank()+
+  scale_fill_manual(values = as.vector(palette.colors(palette = "Okabe-Ito")[1:4]),
+                    name = "Effect:", labels = c("infection induced", "intergenerational", "additive", "interaction"))+ # rename legend
+  scale_x_continuous(breaks = seq(0, 3e+07, by = 0.5e+7),
+                     labels = paste0(seq(0, 3e+07, by = 0.5e+7)/1e+6, "Mb"),
+                     expand = c(0, 0)) + # Remove space before 0
+  ylab(NULL) + xlab(NULL)+
+  guides(fill = guide_legend(position = "inside"))+
+  theme(legend.position.inside = c(0.85, 0.75))
+posDMSplot
+
+###################################
+## On which features are these DMS?
 
 getFeature <- function(DMSvec){
   # Change the DMS vector into a GRange:
@@ -110,28 +145,28 @@ getFeature <- function(DMSvec){
   annotateWithGeneParts(target = as(GRangeOBJ,"GRanges"), feature = annotBed12)
 }
 
-A=getFeature(DMSvec = DMSvec)
-print(paste0("Positions of the ", length(DMSvec)," DMS:"))
-print(A)
+print(paste0("Positions of the ", length(EffectsDF$pos)," DMS:"))
+print(getFeature(DMSvec = EffectsDF$pos))
 
-print(paste0("Positions of the ", length(INTERGENERATIONAL)," intergenerational DMS:"))
-print(getFeature(DMSvec = INTERGENERATIONAL)@precedence)
+print(paste0("Positions of the ", length(EffectsDF$pos[EffectsDF$effect %in% "INTERGENERATIONAL"])," intergenerational DMS:"))
+print(getFeature(EffectsDF$pos[EffectsDF$effect %in% "INTERGENERATIONAL"])@precedence)
 
-print(paste0("Positions of the ", length(INFECTION_INDUCED)," infection-induced DMS:"))
-print(getFeature(DMSvec = INFECTION_INDUCED)@precedence)
+print(paste0("Positions of the ", length(EffectsDF$pos[EffectsDF$effect %in% "INFECTION_INDUCED"])," infection-induced DMS:"))
+print(getFeature(EffectsDF$pos[EffectsDF$effect %in% "INFECTION_INDUCED"])@precedence)
 
-print(paste0("Positions of the ", length(ADDITIVE)," additive DMS:"))
-print(getFeature(DMSvec = ADDITIVE)@precedence)
+print(paste0("Positions of the ", length(EffectsDF$pos[EffectsDF$effect %in% "ADDITIVE"])," additive DMS:"))
+print(getFeature(EffectsDF$pos[EffectsDF$effect %in% "ADDITIVE"])@precedence)
 
-print(paste0("Positions of the ", length(INTERACTION)," interaction DMS:"))
-print(getFeature(DMSvec = INTERACTION)@precedence)
+print(paste0("Positions of the ", length(EffectsDF$pos[EffectsDF$effect %in% "INTERACTION"])," interaction DMS:"))
+print(getFeature(EffectsDF$pos[EffectsDF$effect %in% "INTERACTION"])@precedence)
 
-#######################
-## Are the positions of DMS on features random? Comparison with sequenced CpGs which are not DMS
+###############################################
+## Are the positions of DMS on features random? 
+## Comparison with sequenced CpGs which are not DMS
 allCpG = paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr, 
                uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = "_")
 
-A=getFeature(DMSvec = DMSvec)
+A=getFeature(DMSvec = EffectsDF$pos)
 AallCpG= getFeature(DMSvec = allCpG)
 
 ChiTable1 = merge((A@members %>% data.frame() %>% mutate(feature=ifelse(prom==1, "promoter", 
@@ -144,13 +179,28 @@ ChiTable1 = merge((A@members %>% data.frame() %>% mutate(feature=ifelse(prom==1,
                                                                                      ifelse(intron==1, "intron", "intergenic")))) %>% 
                      dplyr::select(feature) %>% 
                      table %>% melt %>% dplyr::rename(allCpG=value)))
+row.names(ChiTable1) <- ChiTable1$feature
+ChiTable1 <-ChiTable1[!names(ChiTable1) %in% "feature"]
 
-chisq.test(ChiTable1[c("DMS", "allCpG")])
-## TBCorrected when all run
+chisq.test(ChiTable1)
+## TBCorrected when annotation finished
+# Pearson's Chi-squared test
+# data:  ChiTable1
+# X-squared = 53.747, df = 3, p-value = 1.271e-11
+
+##run a post hoc analysis for Pearson’s Chi-squared Test for Count Data
+## ref T. Mark Beasley & Randall E. Schumacker (1995) Multiple Regression Approach to Analyzing Contingency Tables: Post Hoc and Planned Comparison Procedures, The Journal of Experimental Education, 64:1, 79-93, DOI: 10.1080/00220973.1995.9943797
+
+ChiTable1 %>% mutate(DMSprop=DMS/sum(DMS),allCpGprop=allCpG/sum(allCpG))
+chisq.posthoc.test(ChiTable1, method = "bonferroni")
+## Exon and introns are the same, but proportionally less in promoters and more in intergenic regions
+
+## !!! may be important
+## !!!
 
 #######################
 ## Are the positions of DMS on chromosomes random? Comparison with sequenced CpGs which are not DMS
-a=table(paste(sapply(strsplit(DMSvec, "_"), `[`, 1), sapply(strsplit(DMSvec, "_"), `[`, 2), sep = "_"))
+a=table(paste(sapply(strsplit(EffectsDF$pos, "_"), `[`, 1), sapply(strsplit(EffectsDF$pos, "_"), `[`, 2), sep = "_"))
 b=table(paste(sapply(strsplit(allCpG, "_"), `[`, 1), sapply(strsplit(allCpG, "_"), `[`, 2), sep = "_"))
 
 a=as.data.frame(a)
@@ -169,13 +219,15 @@ df=merge(df, df2) %>% dplyr::select(c(chromosome, nbrDMS, nbrCpG))%>%
   mutate(percent=nbrDMS/(nbrDMS+nbrCpG))
 
 chisq.test(df[c("nbrDMS", "nbrCpG")])
-## TBC
+# Pearson's Chi-squared test
+# data:  df[c("nbrDMS", "nbrCpG")]
+# X-squared = 38.427, df = 19, p-value = 0.005235
 
-df %>% arrange(percent) 
-# range from 0.13% (XV) to 0.39% of CpG beign DMS (XVIII) TBC++++
+df %>% arrange(percent) %>% mutate(perc = round(percent*100,2))
+# range from 0.11% (V) to 0.05% of CpG beign DMS (XIV) TBVerified++++
 
 #### Plot sup fig 1
-donutDF = ChiTable1 %>% dplyr::mutate(percDMS=DMS/sum(DMS)*100, percCpG=allCpG/sum(allCpG)*100) %>%
+donutDF = ChiTable1 %>% dplyr::mutate(feature = row.names(ChiTable1), percDMS=DMS/sum(DMS)*100, percCpG=allCpG/sum(allCpG)*100) %>%
   dplyr::select("feature", "percDMS", "percCpG") %>% melt
 
 P1 <- ggplot(donutDF, aes(x = variable, y = value, fill = feature)) +

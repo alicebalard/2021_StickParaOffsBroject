@@ -2,15 +2,17 @@
 ## Annotate a vector of DMS
 
 # Usage: 
-# myHomebrewDMSannotation(DMSvec = c(paste("Gy_chrXVIII", 14108812), paste("Gy_chrXVIII", 14108815), paste("Gy_chrXVIII", 14008815)),
+# myHomebrewDMSannotation(DMSvec = c("Gy_chrI_26116565", "Gy_chrII_2635914"),
 #                         myannotBed12 = annotBed12, myannotGff3 = annotGff3)
+## NB: bugs if too few features (if 0 DMS in one given feature type)
 
 myHomebrewDMSannotation <- function(DMSvec, myannotBed12, myannotGff3){
   
   # Change the vector into a GRange:
-  GRangeOBJ = makeGRangesFromDataFrame(data.frame(chr=sapply(strsplit(DMSvec, " "), `[`, 1), 
-                                                  start=sapply(strsplit(DMSvec, " "), `[`, 2),
-                                                  end=sapply(strsplit(DMSvec, " "), `[`, 2),
+  GRangeOBJ = makeGRangesFromDataFrame(data.frame(chr=paste(sapply(strsplit(DMSvec, "_"), `[`, 1), 
+                                                            sapply(strsplit(DMSvec, "_"), `[`, 2), sep = "_"),
+                                                  start=sapply(strsplit(DMSvec, "_"), `[`, 3),
+                                                  end=sapply(strsplit(DMSvec, "_"), `[`, 3),
                                                   DMS=DMSvec), keep.extra.columns = T)
   A = annotateWithGeneParts(target = as(GRangeOBJ,"GRanges"), feature = myannotBed12)
   ## We assign the feature type to GRangeOBJ
@@ -43,7 +45,7 @@ myHomebrewDMSannotation <- function(DMSvec, myannotBed12, myannotGff3){
   
   ## Case 2: the feature is intergenic: we get the annotation by proximity to nearest TSS
   GRangeOBJ2=GRangeOBJ[GRangeOBJ$featureType %in% "intergenic"]
-  a = annotateWithGeneParts(target = as(GRangeOBJ2,"GRanges"), feature = annotBed12)
+  a = annotateWithGeneParts(target = as(GRangeOBJ2,"GRanges"), feature = myannotBed12)
   # Heckwolf 2020: To be associated to a gene, the DMS had to be either inside the gene or,
   # if intergenic, not further than 10 kb away from the TSS.
   rows2rm = which((a@dist.to.TSS$dist.to.feature>10000 | a@dist.to.TSS$dist.to.feature< -10000) &
@@ -51,7 +53,7 @@ myHomebrewDMSannotation <- function(DMSvec, myannotBed12, myannotGff3){
   if (is_empty(rows2rm)){  GRangeOBJ2 = GRangeOBJ2
   } else { GRangeOBJ2 = GRangeOBJ2[-rows2rm,] }
   ## Re-annotate the subsetted object
-  b = annotateWithGeneParts(as(GRangeOBJ2,"GRanges"),annotBed12)
+  b = annotateWithGeneParts(as(GRangeOBJ2,"GRanges"),myannotBed12)
   ## Get genes associated with these TSS
   c = getAssociationWithTSS(b)
   GRangeOBJ2$feature.name=c$feature.name
@@ -61,7 +63,7 @@ myHomebrewDMSannotation <- function(DMSvec, myannotBed12, myannotGff3){
   
   ## Get annotations for these genes
   annotDF = merge(GRangeOBJ %>% data.frame()%>% dplyr::rename(chrom = seqnames),
-                  data.frame(subset(annotGff3, Name %in% GRangeOBJ$feature.name)) %>%
+                  data.frame(subset(myannotGff3, Name %in% GRangeOBJ$feature.name)) %>%
                     dplyr::select(c("Name", "Note","Ontology_term", "start","end","strand", "Parent"))  %>%
                     dplyr::rename(feature.name=Name, start.gene = start, end.gene = end), by="feature.name")
   

@@ -2,20 +2,13 @@
 source("R07_DMSeffects.R")
 
 source("homebrewDMSannotation.R")# needed for annotation, slight modification of genomation
-## Load file containing length of each gynogen chromosomes
-## grep "contig" gitignore/bigdata/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff | awk '{print $1, $5}' > data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt
-GYgynogff = read.table("../../data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt")
-names(GYgynogff) = c("chrom","length")
 
-## Bed12 file loaded in script R06
-
-## Load curated gff file
-annotGff3 <- rtracklayer::readGFF("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff")
-#########################
+INTERGENERATIONAL
 
 ### Annotate the different DMS groups
-DMS_G1onlyEffect_4BPmin_ANNOT = myHomebrewDMSannotation(DMSvec = DMS_G1onlyEffect_4BPmin,
+DMS_INTERGENERATIONAL_ANNOT = myHomebrewDMSannotation(DMSvec = INTERGENERATIONAL,
                                                         myannotBed12 = annotBed12, myannotGff3 = annotGff3)
+
 DMS_G1onlyEffect_4BPmin_ANNOT=DMS_G1onlyEffect_4BPmin_ANNOT %>% mutate(effect = "G1")
 # "check that these features are identical:"
 # "gasAcul16628-RA" "gasAcul16627-RA" -> overlapping: Protein of unknown function & Tp63

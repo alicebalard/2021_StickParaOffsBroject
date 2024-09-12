@@ -4,8 +4,7 @@
 ## Produces fig S4
 
 # Each script sources the previous script of the pipeline if needed
-## source("R04_getDiffMeth_PQLseq_runInCLUSTER.R") ## uncomment when finished run and run = F
-source("R03_prepObjectMethylkit_runInCLUSTER.R")
+source("R04_getDiffMeth_PQLseq_runInCLUSTER.R") 
 
 print("Number of CpG positions shared by all fish:")
 print(nrow(uniteCovALL_woSexAndUnknowChr))# 60861 

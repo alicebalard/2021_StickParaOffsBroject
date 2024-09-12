@@ -5,6 +5,8 @@
 ## load previous scripts
 source("R03_prepObjectMethylkit_runInCLUSTER.R")
 
+## set run = TRUE at the last block of code to re-run the comparisons
+
 #############################
 ## PQLSeq node alarm issue ##
 ## library(RhpcBLASctl) # To deal with alarming nodes issue (in librarie script)
@@ -184,26 +186,38 @@ getDiffMeth_PQLseq <- function(uniteCov, groupa, groupb, subset = FALSE){
 ## E_control TC 2
 ## E_exposed TT 3
 
-run = T
+run = F
 if (run == T){
     ## 1. CC-TC = CONTROL fish (parent CvsT)
     fit_G2_CC.TC = getDiffMeth_PQLseq(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, 5, 2)
-    save(fit_G2_CC.TC = fit_G2_CC.TC, file = "../../dataOut/fitPQLseqG2_fit_G2_CC.TC.RData")
-    
+
     ## 2. CT-TT = TREATMENT fish (parent CvsT)
     fit_G2_CT.TT = getDiffMeth_PQLseq(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, 6, 3)
-    save(fit_G2_CT.TT = fit_G2_CT.TT, file = "../../dataOut/fitPQLseqG2_fit_G2_CT.TT.RData")
-    
+
     ## 3. CC-CT = fish from CONTROL parents (G2 CvsT)
     fit_G2_CC.CT = getDiffMeth_PQLseq(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, 5, 6)
-    save(fit_G2_CC.CT = fit_G2_CC.CT, file = "../../dataOut/fitPQLseqG2_fit_G2_CC.CT.RData")
-    
+
     ## 4. TC-TT = fish from TREATMENT parents (G2 CvsT)
     fit_G2_TC.TT = getDiffMeth_PQLseq(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, 2, 3)
-    save(fit_G2_TC.TT = fit_G2_TC.TT, file = "../../dataOut/fitPQLseqG2_fit_G2_TC.TT.RData")
+
+    ## Add the chromosomal position as data columns
+    addChrPos <- function(df){
+      df$chrom=paste(sapply(strsplit(row.names(df), "_"), `[`, 1),
+                   sapply(strsplit(row.names(df), "_"), `[`, 2), sep = "_")
+      df$start=as.numeric(sapply(strsplit(row.names(df), "_"), `[`, 3))
+      df$end=as.numeric(sapply(strsplit(row.names(df), "_"), `[`, 3))
+      df$pos=paste(df$chrom, df$start, sep = "_")
+      return(df)
+    }
     
-    ## Save comparisons:
-    save(fit_G2_CC.TC = fit_G2_CC.TC, fit_G2_CT.TT = fit_G2_CT.TT, 
-         fit_G2_CC.CT = fit_G2_CC.CT, fit_G2_TC.TT = fit_G2_TC.TT, 
-         file = "../../dataOut/fitPQLseqG2_4comp.RData")
+    fit_G2_CC.CT = addChrPos(fit_G2_CC.CT)
+    fit_G2_CC.TC = addChrPos(fit_G2_CC.TC)
+    fit_G2_CT.TT = addChrPos(fit_G2_CT.TT)
+    fit_G2_TC.TT = addChrPos(fit_G2_TC.TT)
+    
+    save(fit_G2_CC.CT = fit_G2_CC.CT, file = "../../dataOut/fitPQLseqG2_fit_G2_CC.CT.RData")
+    save(fit_G2_CC.TC = fit_G2_CC.TC, file = "../../dataOut/fitPQLseqG2_fit_G2_CC.TC.RData")
+    save(fit_G2_CT.TT = fit_G2_CT.TT, file = "../../dataOut/fitPQLseqG2_fit_G2_CT.TT.RData")
+    save(fit_G2_TC.TT = fit_G2_TC.TT, file = "../../dataOut/fitPQLseqG2_fit_G2_TC.TT.RData")
 }
+
