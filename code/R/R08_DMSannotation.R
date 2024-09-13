@@ -2,12 +2,13 @@
 source("R07_DMSeffects.R")
 
 source("homebrewDMSannotation.R")# needed for annotation, slight modification of genomation
-
-INTERGENERATIONAL
+## NB unfinished, curate ENTREZ manually!!
 
 ### Annotate the different DMS groups
-DMS_INTERGENERATIONAL_ANNOT = myHomebrewDMSannotation(DMSvec = INTERGENERATIONAL,
-                                                        myannotBed12 = annotBed12, myannotGff3 = annotGff3)
+EffectsDF_ANNOT = myHomebrewDMSannotation(DMSvec = EffectsDF$pos,
+                                          myannotBed12 = annotBed12, myannotGff3 = annotGff3)
+
+## TBC here
 
 DMS_G1onlyEffect_4BPmin_ANNOT=DMS_G1onlyEffect_4BPmin_ANNOT %>% mutate(effect = "G1")
 # "check that these features are identical:"

@@ -1,0 +1,17 @@
+ncpu:
+1
+Run InterProScan...
+13/09/2024 08:22:04:388 Welcome to InterProScan-5.56-89.0
+13/09/2024 08:22:04:389 Running InterProScan v5 in STANDALONE mode... on Linux
+13/09/2024 08:22:16:251 RunID: ddy31_20240913_082214998_2s55
+13/09/2024 08:22:29:332 Loading file /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/06GynoGen_functionalAnnotation/testInput.100.faa
+13/09/2024 08:22:29:340 Running the following analyses:
+[Gene3D-4.3.0,PANTHER-15.0,Pfam-34.0,PIRSR-2021_05,SFLD-4,SUPERFAMILY-1.75,TIGRFAM-15.0]
+Pre-calculated match lookup service DISABLED.  Please wait for match calculations to complete...
+13/09/2024 08:25:51:715 26% completed
+13/09/2024 08:27:35:487 52% completed
+13/09/2024 08:28:09:475 84% completed
+13/09/2024 08:28:10:615 91% completed
+13/09/2024 08:28:23:371 100% done:  InterProScan analyses completed 
+
+InterProScan analysis complete.

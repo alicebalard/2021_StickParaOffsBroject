@@ -4,94 +4,96 @@
 # Usage: 
 # myHomebrewDMSannotation(DMSvec = c("Gy_chrI_26116565", "Gy_chrII_2635914"),
 #                         myannotBed12 = annotBed12, myannotGff3 = annotGff3)
-## NB: bugs if too few features (if 0 DMS in one given feature type)
 
 myHomebrewDMSannotation <- function(DMSvec, myannotBed12, myannotGff3){
-  
   # Change the vector into a GRange:
   GRangeOBJ = makeGRangesFromDataFrame(data.frame(chr=paste(sapply(strsplit(DMSvec, "_"), `[`, 1), 
                                                             sapply(strsplit(DMSvec, "_"), `[`, 2), sep = "_"),
                                                   start=sapply(strsplit(DMSvec, "_"), `[`, 3),
                                                   end=sapply(strsplit(DMSvec, "_"), `[`, 3),
                                                   DMS=DMSvec), keep.extra.columns = T)
-  A = annotateWithGeneParts(target = as(GRangeOBJ,"GRanges"), feature = myannotBed12)
+  
+  # Annotate with features
+  GRangeOBJ_annot = annotateWithGeneParts(target = as(GRangeOBJ,"GRanges"), 
+                                          feature = myannotBed12)
+
   ## We assign the feature type to GRangeOBJ
-  GRangeOBJ$featureType = ifelse(A@members[,1]==1, "promoter",
-                                 ifelse(A@members[,2]==1, "exon",
-                                        ifelse(A@members[,3]==1, "intron", "intergenic")))
+  GRangeOBJ$featureType = ifelse(GRangeOBJ_annot@members[,1]==1, "promoters",
+                                 ifelse(GRangeOBJ_annot@members[,2]==1, "exons",
+                                        ifelse(GRangeOBJ_annot@members[,3]==1, "introns", "intergenic")))
+  ## We assign distance to TSS
+  GRangeOBJ$dist.to.TSS = GRangeOBJ_annot@dist.to.TSS$dist.to.feature
+  
+  ## valid only if trusted, to check
+  GRangeOBJ$feature.name = as.character(GRangeOBJ_annot@dist.to.TSS$feature.name)
+  
   # Heckwolf 2020: To be associated to a gene, the DMS had to be either inside the gene or,
   # if intergenic, not further than 10 kb away from the TSS.
-  rows2rm = which((A@dist.to.TSS$dist.to.feature>10000 | A@dist.to.TSS$dist.to.feature< -10000) &
-                    rowSums(A@members) %in% 0)
+  rows2rm = which((GRangeOBJ$dist.to.TSS>10000 | 
+                     GRangeOBJ$dist.to.TSS < -10000) &
+                    GRangeOBJ$featureType %in% "intergenic")
   if (is_empty(rows2rm)){
     GRangeOBJ = GRangeOBJ
   } else {
     GRangeOBJ = GRangeOBJ[-rows2rm,]
   }
   
-  ## Case 1: the feature is NOT intergenic: we get the annotation by intersection with bed file
-  GRangeOBJ1=GRangeOBJ[!GRangeOBJ$featureType %in% "intergenic"]
-  names(myannotBed12) = c("exon", "intron", "promoter", "TSSes")
+  # Change recursively the gene names to keep only ID
+  getName <- function(x) {sub(";.*", "", sub(".*ID=", "", x))}
   
-  GRangeOBJ1$feature.name = NA
-  for (i in 1:length(GRangeOBJ1$featureType)){
-    a=myannotBed12[[GRangeOBJ1$featureType[i]]][
-      queryHits(GenomicRanges::findOverlaps(myannotBed12[[GRangeOBJ1$featureType[i]]],
-                                            GRangeOBJ1[i]))]
-    if(length(unique(a$name))>1){
-      print("check that these features are identical:"); print(unique(a$name))}
-    GRangeOBJ1[i]$feature.name = a$name[1]
+  for (i in 1:length(GRangeOBJ)){
+    GRangeOBJ$feature.name[i] <- getName(GRangeOBJ$feature.name[i])
   }
   
-  ## Case 2: the feature is intergenic: we get the annotation by proximity to nearest TSS
-  GRangeOBJ2=GRangeOBJ[GRangeOBJ$featureType %in% "intergenic"]
-  a = annotateWithGeneParts(target = as(GRangeOBJ2,"GRanges"), feature = myannotBed12)
-  # Heckwolf 2020: To be associated to a gene, the DMS had to be either inside the gene or,
-  # if intergenic, not further than 10 kb away from the TSS.
-  rows2rm = which((a@dist.to.TSS$dist.to.feature>10000 | a@dist.to.TSS$dist.to.feature< -10000) &
-                    rowSums(a@members) %in% 0)
-  if (is_empty(rows2rm)){  GRangeOBJ2 = GRangeOBJ2
-  } else { GRangeOBJ2 = GRangeOBJ2[-rows2rm,] }
-  ## Re-annotate the subsetted object
-  b = annotateWithGeneParts(as(GRangeOBJ2,"GRanges"),myannotBed12)
-  ## Get genes associated with these TSS
-  c = getAssociationWithTSS(b)
-  GRangeOBJ2$feature.name=c$feature.name
+  ## Get annotations for our DMS
+  annotDF = data.frame(GRangeOBJ)
   
-  ## Merge back 2 cases
-  GRangeOBJ=c(GRangeOBJ1, GRangeOBJ2)
+  annotDF$Note = myannotGff3[match(annotDF$feature.name,myannotGff3$Name),"Note"] %>% unlist()
+  annotDF$Ontology_term = sapply(myannotGff3[match(annotDF$feature.name,myannotGff3$Name),"Ontology_term"], 
+                                 function(x) paste(x, collapse = " ")) ## keep multiple GO terms together
+  annotDF$start = myannotGff3[match(annotDF$feature.name,myannotGff3$Name),"start"] 
+  annotDF$end = myannotGff3[match(annotDF$feature.name,myannotGff3$Name),"end"] 
+  annotDF$strand = myannotGff3[match(annotDF$feature.name,myannotGff3$Name),"strand"] 
+  annotDF$Parent = myannotGff3[match(annotDF$feature.name,myannotGff3$Name),"Parent"] %>% unlist()
   
-  ## Get annotations for these genes
-  annotDF = merge(GRangeOBJ %>% data.frame()%>% dplyr::rename(chrom = seqnames),
-                  data.frame(subset(myannotGff3, Name %in% GRangeOBJ$feature.name)) %>%
-                    dplyr::select(c("Name", "Note","Ontology_term", "start","end","strand", "Parent"))  %>%
-                    dplyr::rename(feature.name=Name, start.gene = start, end.gene = end), by="feature.name")
-  
+  annotDF = annotDF %>% dplyr::rename(start.gene = start, end.gene = end)
+  annotDF = annotDF[!names(annotDF) %in% "width"]
+
   ## How many CpG per gene?
   annotDF = merge(annotDF,
-                  data.frame(table(annotDF$feature.name)) %>% dplyr::rename(feature.name=Var1, nDMSperGene=Freq))
+                  data.frame(table(annotDF$feature.name)) %>% 
+                    dplyr::rename(feature.name=Var1, nDMSperGene=Freq))
   
-  # Add extra info (nbr CpG per gene length, gene length, chrom name)
+  # Add extra info
   annotDF = annotDF  %>%
-    mutate(geneLengthkb = (end.gene - start.gene)/1000, nDMSperGenekb = round(nDMSperGene/geneLengthkb,2))
+    mutate(geneLengthkb = (end.gene - start.gene)/1000,
+           nDMSperGenekb = nDMSperGene/geneLengthkb,
+           GeneSymbol =   str_extract(Note, "(?<=Similar to ).*?(?=[:()])")) # extract after Similar to and before : or (
   
-  # Add full genes descriptions whenever possible
-  # Extract gene symbol from the "Note" attribute
-  annotDF$Note = unlist(annotDF$Note)
-  annotDF$GeneSymbol = str_extract(annotDF$Note, "(?<=Similar to )(\\w+)")
-  # MANUAL CURATION!! All the genes that are weirdly named, with "-" or so
-  #check = annotDF[c("Note", "GeneSymbol")]
-  listOfWeirdos = c("Type-4 ice-structuring protein LS-12", "MNCb-2990", "Trypsin-3", "anxa2-b", "unc5b-b", "QtsA-11015", # comp1
-                    "Type-4 ice-structuring protein LS-12", "MNCb-2990", "en2-a", "draxin-B", "Trypsin-3", " Protein C1orf43 homolog", "Uncharacterized protein FLJ43738", "tlcd4-b", #comp2
-                    "tlcd4-b", # comp3
-                    "anxa2-b", "QtsA-11015", "unc5b-b") # comp4
-  for (i in 1:length(listOfWeirdos)){
-    annotDF[grepl(listOfWeirdos[i],annotDF$Note),"GeneSymbol"] = listOfWeirdos[i]
-  }
   annotDF$GeneSymbol = annotDF$GeneSymbol %>% toupper # upper case all gene symbols to fit human DB
-  # Convert the uniprot gene names to entrez ids
-  ENTREZIDlist = mapIds(org.Hs.eg.db, keys = annotDF$GeneSymbol, column = "ENTREZID", keytype = "SYMBOL")
   
+  message("we have ",   
+          length(unique(annotDF$feature.name[!annotDF$Note %in% "Protein of unknown function"])),
+          " DMS on ", length(unique(annotDF$GeneSymbol[!is.na(annotDF$GeneSymbol)])), " unique known genes",
+          " and ", table(is.na(annotDF$GeneSymbol))[2], " DMS on ",  
+          length(unique(annotDF$feature.name[annotDF$Note %in% "Protein of unknown function"])), 
+          " genes with unknown function")
+  
+  # Convert the uniprot gene names to entrez ids
+  ENTREZIDlist = mapIds(org.Hs.eg.db, keys = unique(na.omit(annotDF$GeneSymbol)),
+                        column = "ENTREZID", keytype = "SYMBOL")
+  
+  ##### MANUAL CURATION AREA
+  message("Check NA in ENTREZIDlist and manually add it! To do after annotation!!!")
+  message(paste("There are ",
+                nrow(annotDF[is.na(annotDF$GeneSymbol) & !annotDF$Note %in% "Protein of unknown function",]),
+                " genes to curate manually"))
+  
+  # change of gene ID
+  annotDF[annotDF$GeneSymbol %in% "RNF165", "GeneSymbol"] = "ARK2C" 
+  
+  ENTREZIDlist = ENTREZIDlist[!is.na(ENTREZIDlist)]
+
   # Retrieve gene summary & description IN HUMANS (more annotation)
   
   # Throw in an error if too toooo big (needs then a bigger fix e.g. rollaply)
@@ -109,11 +111,15 @@ myHomebrewDMSannotation <- function(DMSvec, myannotBed12, myannotGff3){
   } else {
     SummaENTREZ = entrez_summary(db="gene", id=ENTREZIDlist)
   }
-  SummaDF = data.frame(GeneSymbol=sapply(SummaENTREZ, function(x) x[["name"]]) %>% unlist(),
-                       ENTREZID = names(SummaENTREZ),
-                       description=sapply(SummaENTREZ, function(x) x[["description"]]) %>% unlist(),
-                       summary=sapply(SummaENTREZ, function(x) x[["summary"]]) %>% unlist())
   
+  ## Select useful
+  SummaENTREZ = SummaENTREZ[names(SummaENTREZ) %in% ENTREZIDlist]
+  
+  SummaDF = unique(data.frame(GeneSymbol=  sapply(SummaENTREZ, function(x) x[["name"]]),
+                       ENTREZID = names(SummaENTREZ),
+                       description=sapply(SummaENTREZ, function(x) x[["description"]]),
+                       summary=sapply(SummaENTREZ, function(x) x[["summary"]])))
+    
   # merge with Notes from uniprot (contained in the gff3)
   SummaDF = unique(merge(annotDF, SummaDF, all=T))
   
@@ -128,3 +134,5 @@ myHomebrewDMSannotation <- function(DMSvec, myannotBed12, myannotGff3){
   SummaDF = SummaDF[apply(SummaDF, 2, function(x) sum(!is.na(x))!=0)]
   return(SummaDF)
 }
+
+                                                      

@@ -1,11 +1,13 @@
 #!/bin/bash
 # Functional annotation of gynogen genome
-#$ -pe smp 10
-#$ -l h_vmem=10G
+#$ -pe smp 1
+#$ -l h_vmem=3G
 #$ -l h_rt=240:0:0
 #$ -o /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/logs/S04_run_gynofuncal.stdout
 #$ -e /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/logs/S04_run_gynofuncal.stderr
 #$ -V
+
+## with 10 nodes and 10G for interproscan run one day
 
 ## Source: http://weatherby.genetics.utah.edu/MAKER/wiki/index.php/MAKER_Tutorial_for_WGS_Assembly_and_Annotation_Winter_School_2018#Example_MAKER_Annotation_Project
 module load blast+
@@ -40,46 +42,51 @@ NEWGFF=$DIR/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGA
 # We assigned functional annotation to genes by searching homology against uniprot database (http://www.uniprot.org) using BLASTp alignments. uniprot_sprot.fasta.gz was retrieved on the 02-Mar-2022 at 18:23
 
 # makeblastdb -in $UNIPROTDB -dbtype prot
-# blastp -query $DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa -db $UNIPROTDB -num_threads 8 -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out $DIR/output_onlyuniprot.blastp
+# blastp -query $DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa -db $UNIPROTDB -num_threads 8 -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out $DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa.blast.out.blastp
 
-BLASTPout=$DIR/output_onlyuniprot.blastp
+BLASTPout=$DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa.blast.out.blastp
 
 # STEP 2: Run interproscan (improvement Sept 2024 from Charley)
 ## Install: https://interproscan-docs.readthedocs.io/en/latest/UserDocs.html
 
-## Gene3D (4.3.0) : Structural assignment for whole genes and genomes using the CATH domain structure database.
-## PANTHER (15.0) : The PANTHER (Protein ANalysis THrough Evolutionary Relationships) Classification System is a unique resource that classifies genes by their functions, using published scientific experimental evidence and evolutionary relationships to predict function even in the absence of direct experimental evidence.
-## Pfam (34.0) : A large collection of protein families, each represented by multiple sequence alignments and hidden Markov models (HMMs)
-## SFLD (4) : SFLD is a database of protein families based on hidden Markov models (HMMs).
-## SUPERFAMILY (1.75) : SUPERFAMILY is a database of structural and functional annotations for all proteins and genomes.
-## TIGRFAM (15.0) : TIGRFAMs are protein families based on hidden Markov models (HMMs).
+## Run for a day or 2, separate script
+## qsub /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/S04.1_interproscan.sh
+ 
+## Integrate functional annotations into structural annotations.
+# INTERPROout=$DIR/Gynogen_pchrom_assembly_all_PROTEINS_noast.faa.interproscan.out.tsv
 
-INTERPROSCAN=./my_interproscan/interproscan-5.56-89.0/interproscan.sh
+INTERPROout=$DIR/Gynogen_pchrom_assembly_all_PROTEINS_noast.faa.interproscan.out.tsv
 
-echo "ncpu:"
-echo $NSLOTS
 
-# Set variables
-INPUT_FILE="Gynogen_pchrom_assembly_all_PROTEINS_noast.faa"
-OUTPUT_PREFIX="Gynogen_pchrom_assembly_all_PROTEINS_noast.faa.iprscan"
+### Rename gene models and other data.
 
-echo "Run InterProScan..."
-# Run InterProScan
-$INTERPROSCAN -appl Gene3D,PANTHER,pfam,PIRSR,SFLD,SUPERFAMILY,TIGRFAM \
-  -i $INPUT_FILE \
-  -f TSV,GFF3 \
-  -t p \ 
-  -o $OUTPUT_PREFIX \
-  -cpu $NSLOTS \
-  --goterms \
-  --pathways \
-  -dp -iprlookup
-echo "InterProScan analysis complete."
+maker_map_ids --prefix GMOD_ --justify 8 S_pombe_chrIII.all.gff > map
+map_gff_ids map S_pombe_chrIII.all.gff
+map_fasta_ids map S_pombe_chrIII.all.maker.proteins.fasta
+map_fasta_ids map S_pombe_chrIII.all.maker.transcripts.fasta
+map_data_ids map S_pombe_chrIII.all.maker.proteins.fasta.blastp
+map_data_ids map S_pombe_chrIII.all.maker.proteins.fasta.iprscan
 
-IPRout=$DIR/Gynogen_pchrom_assembly_all_PROTEINS_noast.faa.iprscan
+Integrate functional annotations into structural annotations.
 
-## Integrate functional annotations into structural annotations. 
+ipr_update_gff S_pombe_chrIII.all.gff S_pombe_chrIII.all.maker.proteins.fasta.iprscan > S_pombe_chrIII.all.2.gff
+iprscan2gff3 S_pombe_chrIII.all.maker.proteins.fasta.iprscan S_pombe_chrIII.all.gff >> S_pombe_chrIII.all.2.gff 
+mv S_pombe_chrIII.all.2.gff S_pombe_chrIII.all.gff
+
+maker_functional_gff Swissprot_no_S_pombe.fasta S_pombe_chrIII.all.maker.proteins.fasta.blastp S_pombe_chrIII.all.gff > S_pombe_chrIII.all.2.gff
+maker_functional_fasta Swissprot_no_S_pombe.fasta S_pombe_chrIII.all.maker.proteins.fasta.blastp S_pombe_chrIII.all.maker.proteins.fasta > S_pombe_chrIII.all.maker.proteins.2.fasta
+maker_functional_fasta Swissprot_no_S_pombe.fasta S_pombe_chrIII.all.maker.proteins.fasta.blastp S_pombe_chrIII.all.maker.transcripts.fasta > S_pombe_chrIII.all.maker.proteins.2.fasta
+mv S_pombe_chrIII.all.2.gff S_pombe_chrIII.all.gff
+mv S_pombe_chrIII.all.maker.proteins.2.fasta S_pombe_chrIII.all.maker.proteins.fasta
+mv S_pombe_chrIII.all.maker.proteins.fasta S_pombe_chrIII.all.maker.proteins.2.fasta
+
+
+########## Previous
+
 ##  ipr_update_gff - Takes InterproScan (iptrscan) output and maps domain IDs and GO terms to the Dbxref and Ontology_term attributes in the GFF3 file.
+
+#### TBC here
+
 ipr_update_gff $NEWGFF $IPRout > $DIR/temp.gff
 
 ## iprscan2gff3 - Takes InterproScan (iprscan) output and generates GFF3 features representing domains. Interesting tier for GBrowse.
@@ -97,3 +104,5 @@ conda activate transdecoder
 perl /data/home/btx915/.conda/envs/transdecoder/opt/transdecoder/util/gff3_file_to_bed.pl $DIR/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff > $DIR/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.transdec.bed12
 
 conda deactivate
+
+## And where is the blastp??

@@ -111,3 +111,11 @@ In the meantime, the analysis will continue to run locally.
 12/09/2024 11:48:21:905 20% completed
 12/09/2024 12:48:22:016 22% completed
 12/09/2024 13:48:22:072 26% completed
+12/09/2024 14:48:22:135 28% completed
+12/09/2024 15:48:22:249 91% completed
+12/09/2024 16:36:34:664 100% done:  InterProScan analyses completed 
+
+InterProScan analysis complete.
+ncpu:
+1
+Run InterProScan...
