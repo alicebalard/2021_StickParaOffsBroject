@@ -5,6 +5,8 @@
 # Each script sources the previous script of the pipeline if needed
 source("R01_calculateSequencingStats.R")
 
+message("R02 starting...\n")
+
 ## Was run in the QMUL cluster Aprocrita where data are stored
 rerun = FALSE
 if (rerun == TRUE){
@@ -57,3 +59,5 @@ if (rerun == TRUE){
   ### Files moved after to:
   # /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/04BSBolt_methCall/BSBolt/MethylationCalling/Methylation_calling_splitted/formatCG4methylKit/
 }
+
+message("R02 done. \n")

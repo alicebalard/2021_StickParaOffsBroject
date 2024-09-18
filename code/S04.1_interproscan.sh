@@ -30,7 +30,7 @@ INPUT_FILE="Gynogen_pchrom_assembly_all_PROTEINS_noast.faa"
 
 echo "Run InterProScan..."
 
-$INTERPROSCAN -appl Gene3D,PANTHER,pfam,PIRSR,SFLD,SUPERFAMILY,TIGRFAM  -i $INPUT_FILE -f TSV,GFF3,XML -t p -cpu $NSLOTS --goterms --pathways -dp -iprlookup -b $INPUT_FILE.interproscan.out
+$INTERPROSCAN -appl Gene3D,PANTHER,pfam,PIRSR,SFLD,SUPERFAMILY,TIGRFAM  -i $INPUT_FILE -f TSV -t p -cpu $NSLOTS --goterms --pathways -dp -iprlookup -b $INPUT_FILE.interproscan.out
 
 echo "InterProScan analysis complete."
 

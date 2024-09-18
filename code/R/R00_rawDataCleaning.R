@@ -1,8 +1,9 @@
 ## Cleaning raw data, associate a father to each offspring clutch
 ## 1st of April 2022 (updated Dec22)
-source("librariesLoading.R")
-## load custom functions
-source("customRfunctions.R")
+## load everything needed before analyses
+source("Rstart_load_preanalyses.R")
+
+message("R00 starting...\n")
 
 ## Load data
 dataG1 <- read.csv("../../data/raw data Joshka Kostas/data-G1-Kostas_JK.csv")
@@ -93,3 +94,5 @@ write.csv(cleanDF[cleanDF$clutch.ID %in% clutch.ID2keep,],
 
 ## clean workspace
 rm(clutch.ID2keep, dataAll, dataG1, cleanDF, cleanDFG1, cleanDFG2, clean132, key)
+
+message("R00 done.\n")

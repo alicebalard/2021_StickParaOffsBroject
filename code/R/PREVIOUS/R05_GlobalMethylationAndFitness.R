@@ -1,12 +1,9 @@
 ## Global methylation and fitness
 ## A. Balard
-## September 2024
-## Produces fig S4 dataOut/fig/FigS4_slopeBCIonnbrWorms.pdf
+## January 2023
 
 # Each script sources the previous script of the pipeline if needed
-source("R04_getDiffMeth_PQLseq_runInCLUSTER.R") 
-
-message("R05 starting...\n")
+source("R04_getDifferentialMethylation_runInCLUSTER.R")
 
 print("Number of CpG positions shared by all fish:")
 print(nrow(uniteCovALL_woSexAndUnknowChr))# 60861 
@@ -39,7 +36,7 @@ anova(mod1) # strong significant effect of both offspring trt & paternal + inter
 mod1.2 <- lme(BCI ~  trtG1G2, random=~1|brotherPairID,data=fullMetadata_OFFS)
 ## pairwise posthoc test
 emmeans(mod1.2, list(pairwise ~ trtG1G2), adjust = "tukey")
-## Control father - treatment offspring (NE_exposed) has a strongly significantly lower BC than
+## Control father - treatment offspring has a strongly significantly lower BC than
 ## every other group, same as Kaufmann et al. 2014
 
 myplot1 <- ggplot(fullMetadata_OFFS, aes(x=trtG1G2, y = BCI, fill=trtG1G2))+
@@ -68,14 +65,12 @@ mod_Tol <- lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=fullMetada
 step(mod_Tol, reduce.random = F) # Model found: full model
 
 ## The slope of BCI on nbrworms varies upon treatment
-pdf(file = "../../dataOut/fig/FigS4_slopeBCIonnbrWorms.pdf", width = 7, height = 5)
-plot(ggpredict(mod_Tol, terms = c("No.Worms", "PAT")), show_data=T, jitter = TRUE, 
-     dot_alpha =1, alpha = .5)+
-  theme_pubr() + # was overridden by plot ggpredict
+pdf(file = "../../dataOut/SupplFigS4.pdf", width = 7, height = 5)
+plot(ggpredict(mod_Tol, terms = c("No.Worms", "PAT")), add.data=T)+ theme_bw() +
   ylab("Body Condition Index") + xlab("Number of worms") +
   ggtitle("Predicted values of Body Condition Index in offspring")+
-  scale_color_manual(NULL, values = c("#a9d6c1ff", "#d1b000ff")) +
-  scale_fill_manual(NULL, values = c("#a9d6c1ff", "#d1b000ff"))  +
+  scale_color_manual(NULL, values = c("black", "red")) +
+  scale_fill_manual(NULL, values = c("black", "red"))  +
   scale_x_continuous(breaks = 0:10)+
   geom_point(size=0)+ # to have color key in legend as point
   guides(colour = guide_legend(override.aes = list(size=3,linetype=0, fill = NA)))
@@ -160,7 +155,7 @@ ggplot(fullMetadata_PAR, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_coveredCpG)
 ############
 ## Offspring:
 cor.test(fullMetadata_OFFS$Nbr_coveredCpG,
-         fullMetadata_OFFS$Nbr_methCpG, method = "spearman", exact=FALSE)
+         fullMetadata_OFFS$Nbr_methCpG, method = "spearman")
 ggplot(fullMetadata_OFFS, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
   geom_smooth(method = "lm", col="black")+
   geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
@@ -181,17 +176,17 @@ ggplot(plotdf, aes(x=Nbr_coveredCpG, y=Nbr_methCpG))+
   scale_y_continuous("Number of methylated cytosines") +
   theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
 
-## Check after RMS correction for coverage bias: SEMI CORRECTED (p-value = 0.02, rho = -0.21)
+## Check after RMS correction for coverage bias: SEMI CORRECTED (p-value = 0.01, rho = -0.24)
 cor.test(fullMetadata_OFFS$Nbr_coveredCpG,
-         fullMetadata_OFFS$RMS_coveredCpG, method = "spearman", exact=FALSE)
+         fullMetadata_OFFS$RMS_coveredCpG, method = "spearman")
 ggplot(fullMetadata_OFFS, aes(x=Nbr_coveredCpG, y=RMS_coveredCpG))+
   geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
   geom_smooth(method = "lm", col="black")+
   theme_bw() + ggtitle(label = "Offspring, CpG shared by half fish/trt")
 
-## and with residuals: COMPLETELY CORRECTED p-value = 0.45
+## and with residuals: COMPLETELY CORRECTED p-value = 0.51
 cor.test(fullMetadata_OFFS$Nbr_coveredCpG,
-         fullMetadata_OFFS$res_Nbr_methCpG_Nbr_coveredCpG, method = "spearman",  exact=FALSE)
+         fullMetadata_OFFS$res_Nbr_methCpG_Nbr_coveredCpG, method = "spearman")
 ggplot(fullMetadata_OFFS, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_coveredCpG))+
   geom_point(aes(col=trtG1G2), size = 3)+ scale_color_manual(values = colOffs) +
   geom_smooth(method = "lm", col="black")+
@@ -203,47 +198,44 @@ ggplot(fullMetadata_OFFS, aes(x=Nbr_coveredCpG, y=res_Nbr_methCpG_Nbr_coveredCpG
 
 ### No difference in mappability (p\>0.05)
 
-fullMetadata_OFFS$Sexfact = as.factor(fullMetadata_OFFS$Sex)
-
-mod = lm(`MappingEfficiency%BSBoldvsGynogen` ~ Sexfact, data = fullMetadata_OFFS)
+mod = lm(`MappingEfficiency%BSBoldvsGynogen` ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
-plot(ggpredict(mod, terms = c("Sexfact")), show_data = T, jitter = T)
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
 # NB: this is WITH unknown and sex chromosomes, before filtering.
 
 ### No difference in number of reads (p\>0.05)
 
-mod = lm(M.Seqs_rawReads ~ Sexfact, data = fullMetadata_OFFS)
-summary(mod)
+mod = lm(M.Seqs_rawReads ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
-plot(ggpredict(mod, terms = c("Sexfact")), show_data = T, jitter = T)
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
 # NB: this is WITH unknown and sex chromosomes, before filtering.
 
 ### No difference in mean coverage per CpG in the filtered dataset (p\>0.05)
-mod = lm(MeanCoverage ~ Sexfact, data = fullMetadata_OFFS)
-summary(mod)
+
+mod = lm(MeanCoverage ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
-plot(ggpredict(mod, terms = c("Sexfact")), show_data = T, jitter=T)
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
 # NB: this is in G2, considering positions shared by at least 14 fish per treatment group (half individuals per group), and which overlap with positions retained in G1, without sex and unknown chromosome (after filtering) 
 
 ### No difference in number of sites covered in the filtered dataset (p\>0.05)
-mod = lm(Nbr_coveredCpG ~ Sexfact, data = fullMetadata_OFFS)
+mod = lm(Nbr_coveredCpG ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
-plot(ggpredict(mod, terms = c("Sexfact")), show_data = T, jitter =T)
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
 # NB: this is in G2, considering positions shared by at least 14 fish per treatment group (half individuals per group), and which overlap with positions retained in G1, without sex and unknown chromosome (after filtering)
 
 ### No difference in number of sites covered in the filtered dataset (p\>0.05)
-mod = lm(OverallPercentageMethylation ~ Sexfact, data = fullMetadata_OFFS)
+mod = lm(OverallPercentageMethylation ~ Sex, data = fullMetadata_OFFS)
 summary(step(mod))
-plot(ggpredict(mod, terms = c("Sexfact")), show_data = T, jitter =T)
+plot(ggpredict(mod, terms = c("Sex")), add.data = T)
 #NB: this is in G2, considering positions shared by at least 14 fish per treatment group (half individuals per group), and which overlap with
 #positions retained in G1, without sex and unknown chromosome (after filtering)
 
 ### Males have a lower global methylation than females (residuals of nbr of methylated sites by nbr of sites covered)
-mod = lm(res_Nbr_methCpG_Nbr_coveredCpG ~ Sexfact, data = fullMetadata_OFFS)
-summary(step(mod)) # sex is significant p = 0.000183 ***
+mod = lm(res_Nbr_methCpG_Nbr_coveredCpG ~ Sex, data = fullMetadata_OFFS)
+summary(step(mod)) # sex is significant p = 0.000157 ***
 anova(mod)
 
-plot(ggpredict(mod, terms = c("Sexfact")), show_data = T, jitter = T) +
+plot(ggpredict(mod, terms = c("Sex")), add.data = T) +
   xlab(NULL)+
   ylab("Residuals of N methylated sites on N covered sites") +
   ggtitle("Predicted values of global methylation in offspring")
@@ -257,8 +249,7 @@ mod_Tol.Meth <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*No.Worms*PAT +
                      data=fullMetadata_OFFS, REML = F)
 
 ## Model selection:
-step(mod_Tol.Meth, reduce.random = F) 
-# Model found: BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
+step(mod_Tol.Meth, reduce.random = F) # Model found: BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
 ## The slope of BCI on nbrworms varies upon treatment but methylation does NOT vary with tolerance
 mod_Tol.Meth <- lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex),
                      data=fullMetadata_OFFS)
@@ -268,8 +259,8 @@ mod_Tol.Meth2 <- lmer(BCI ~ res_Nbr_methCpG_Nbr_coveredCpG_div1000*PAT*outcome +
                       data=fullMetadata_OFFS, REML = F)
 
 ## Model selection:
-step(mod_Tol.Meth2, reduce.random = F) 
-# Model found: BCI ~ PAT + outcome + (1 | brotherPairID) + (1 | Sex) + PAT:outcome
+step(mod_Tol.Meth2, reduce.random = F) # Model found: BCI ~ PAT + outcome + (1 | brotherPairID) + (1 | Sex) + PAT:outcome
+
 # The slope of BCI on nbr worms varies upon parental treatment, but methylation does NOT vary with tolerance
 
 ### In exposed offspring only
@@ -367,5 +358,3 @@ aligned_y_hist <- align_plots(y_hist, scatterplot, align = "h")[[1]]
 cowplot::plot_grid(
   aligned_x_hist, NULL, scatterplot, aligned_y_hist, ncol = 2, nrow = 2, rel_heights = c(0.2, 1), rel_widths = c(1, 0.2)
 )
-
-message("R05 done\n")

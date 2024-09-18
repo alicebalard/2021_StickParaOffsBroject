@@ -64,7 +64,7 @@ install_if_missing <- function(packages, dependencies = TRUE) {
         message("Installing missing packages: ", paste(new_packages, collapse = ", "))
         install.packages(new_packages, dependencies = dependencies)
     } else {
-        message("All CRAN packages are already installed.")
+        message("All CRAN packages are already installed.\n")
     }
 }
 
@@ -83,7 +83,7 @@ load_packages <- function(package_list) {
     if (length(not_loaded) > 0) {
         message("The following packages could not be loaded: ", paste(not_loaded, collapse = ", "))
     } else {
-        message("All packages loaded successfully.")
+        message("All packages loaded successfully.\n")
     }
 }
 
@@ -127,7 +127,7 @@ install_and_load_github_packages <- function(packages) {
   if (length(not_loaded) > 0) {
     message("The following packages could not be loaded: ", paste(not_loaded, collapse = ", "))
   } else {
-    message("All packages loaded successfully.")
+    message("All packages loaded successfully.\n")
   }
 }
 
@@ -145,8 +145,10 @@ bioc_packages <- c("Category", # for hypergeometric GO test
                "GSEABase",  # for GO term GeneSetCollection
                "methylKit",
                "qvalue", # for FDR after PQLseq
-               "org.Hs.eg.db" # gene annotation from online databases
+               "org.Hs.eg.db", # gene annotation from online databases
+               "UniProt.ws" # to retrieve uniprot information
 ) 
+# devtools::install_version("dbplyr", version = "2.3.4") # if buggy UniProt.ws
 
 install_and_load_bioc_packages <- function(package_list) {
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
@@ -171,7 +173,7 @@ install_and_load_bioc_packages <- function(package_list) {
   if (length(not_loaded) > 0) {
     message("The following packages could not be loaded: ", paste(not_loaded, collapse = ", "))
   } else {
-    message("All packages loaded successfully.")
+    message("All packages loaded successfully.\n")
   }
 }
 
@@ -183,8 +185,19 @@ install_and_load_bioc_packages(bioc_packages)
 ## colOffs <- c("#ffe67f", "#ff6300","#a8caff","#a800d4") ## previous ugly
 colOffs <- c("#a9d6c1ff", "#d1b000ff","#4b8da3ff","#c05a29ff")
 
+colEffects <- as.vector(palette.colors(palette = "Okabe-Ito")[1:4])
+names(colEffects) <- c("infection induced", "intergenerational", "additive", "interaction")
+
 theme_set(theme_pubr())
 
+########################################
+## Load functions needed in the analyses
+message("Load functions needed in the analyses...")
+source("customRfunctions.R")
+source("homebrewDMSannotation.R")
+message("done.\n")
+
+###################
 ## Annotation files
 message("Load annotation files: GYgynogff containing length of each gynogen chromosomes, annotBed12 and annotGff3 for the full annotation...")
 
@@ -193,29 +206,25 @@ message("Load annotation files: GYgynogff containing length of each gynogen chro
 GYgynogff = read.table("../../data/Gy_allnoM_rd3.maker_apocrita.noseq_corrected_chromoAndLength.txt")
 names(GYgynogff) = c("chrom","length")
 #GA_genome.fa.sizes.txt is a file with chromosome sizes and names
-genome <- GYgynogff %>%
+GYgynogff <- GYgynogff[!GYgynogff$chrom %in% c("Gy_chrUn", "M"),] %>% ## rm unknown and mitochondrial chromosome
   mutate(chrom_nr=chrom %>% deroman(),
          chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
-  arrange(chrom_order) %>%
+  arrange(chrom_order) %>% # keep chr in order
   mutate(gstart=lag(length,default=0) %>% cumsum(),
          gend=gstart+length, 
          type=LETTERS[2-(chrom_order%%2)],
          gmid=(gstart+gend)/2,
-         chrom=as.factor(chrom))
-genome$chrom <- with(genome, reorder(chrom, chrom_order)) # keep chr in order
-
-#genome without M re-type:
-GYgynogff=genome[genome$chrom_nr!="M",] %>%
-  mutate(type=rep(c("A","B"),length(length)/2))
-
-rm(genome)
+         chrom=as.factor(chrom),
+         type=rep(c("A","B"),length(length)/2))
 
 ## NB Promoters are defined by options at genomation::readTranscriptFeatures function. 
 ## The default option is to take -1000,+1000bp around the TSS and you can change that. 
 ## -> following Heckwolf 2020 and Sagonas 2020, we consider 1500bp upstream and 500 bp downstream
 annotBed12=readTranscriptFeatures(
-  "../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.transdec.bed12",
+  "../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.gff.fun.bed12",
   remove.unusual = FALSE, up.flank = 1500, down.flank = 500, unique.prom = F) ## unique.prom otherwise promoters have no name
 
 ## Load curated gff file
-annotGff3 <- rtracklayer::readGFF("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.CURATED.gff")
+annotGff3 <- rtracklayer::readGFF("../../gitignore/bigdata/06GynoAnnot/Gy_allnoM_rd3.maker_apocrita.noseq_corrected.gff.streamlined_for_AGAT.gff.fun.gff3")
+
+message("done.\n")

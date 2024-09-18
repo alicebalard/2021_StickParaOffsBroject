@@ -1,14 +1,17 @@
 # Each script sources the previous script of the pipeline if needed
 source("R06_GlobalMethylationProfile.R")
-# Generates figure S1
+
+message("R07 starting...\n")
+# Generates:
+## figure S1 in dataOut/fig/FigS1_featuresCpGandDMS.pdf
 
 # Load the calculated DMS
 ## G1 diff
-load("../../dataOut/fitPQLseqG2_fit_G2_CC.TC.RData")
-load("../../dataOut/fitPQLseqG2_fit_G2_CT.TT.RData")
+load("../../gitignore/bigdata/PQLseq/fitPQLseqG2_fit_G2_CC.TC.RData")
+load("../../gitignore/bigdata/PQLseq/fitPQLseqG2_fit_G2_CT.TT.RData")
 ## G2 diff
-load("../../dataOut/fitPQLseqG2_fit_G2_CC.CT.RData")
-load("../../dataOut/fitPQLseqG2_fit_G2_TC.TT.RData")
+load("../../gitignore/bigdata/PQLseq/fitPQLseqG2_fit_G2_CC.CT.RData")
+load("../../gitignore/bigdata/PQLseq/fitPQLseqG2_fit_G2_TC.TT.RData")
 
 ## Statistical setup
 # PARENTAL effect: DMS found in either CC-TC or CT-TT comparisons
@@ -20,6 +23,9 @@ load("../../dataOut/fitPQLseqG2_fit_G2_TC.TT.RData")
 ## Define the threshold for pass
 myqval = 0.05
 mydif = 5
+
+message(paste0("We define a threshold for DMS: q-value > ", myqval, 
+               " , diffence of methylation > ", mydif, "%"))
 
 makeVolcano = function(fit){
   ggplot()+
@@ -51,12 +57,12 @@ TC.TT_pass = fit_G2_TC.TT[fit_G2_TC.TT$converged==T & fit_G2_TC.TT$qvalue <= myq
 PATERNAL_DMS = rbind(CC.TC_pass, CT.TT_pass) %>% dplyr::select(chrom,start,end, pos)
 row.names(PATERNAL_DMS) = NULL
 PATERNAL_DMS[duplicated(PATERNAL_DMS)] ## no duplicates
-nrow(PATERNAL_DMS) #314
+message(paste0("Nbr of paternal DMS: ", nrow(PATERNAL_DMS))) #314
 
 OFFSPRING_DMS = rbind(CC.CT_pass, TC.TT_pass) %>% dplyr::select(chrom,start,end, pos)
 row.names(OFFSPRING_DMS) = NULL
 OFFSPRING_DMS[duplicated(OFFSPRING_DMS)] ## no duplicates
-nrow(OFFSPRING_DMS) #400
+message(paste0("Nbr of offspring DMS: ", nrow(OFFSPRING_DMS))) #400
 
 PATERNAL_DMS$effect = "PATERNAL"
 OFFSPRING_DMS$effect = "OFFSPRING"
@@ -111,27 +117,20 @@ table(EffectsDF$effect)
 # INFECTION_INDUCED INTERGENERATIONAL          ADDITIVE       INTERACTION 
 # 393               307                 1                 6 
 
+message(paste0("We identified ", sum(table(EffectsDF$effect)), " DMS out of ",
+               nrow(fit_G2_CC.CT), " CpG sequenced (",
+               round(sum(table(EffectsDF$effect))/nrow(fit_G2_CC.CT)*100,2), "%) including ",
+               table(EffectsDF$effect)[1], " infection induced (", 
+               round(table(EffectsDF$effect)[1]/sum(table(EffectsDF$effect))*100,2), "%), ",
+               table(EffectsDF$effect)[2], " intergenerational (", 
+               round(table(EffectsDF$effect)[2]/sum(table(EffectsDF$effect))*100,2), "%), ",
+               table(EffectsDF$effect)[3], " additive (", 
+               round(table(EffectsDF$effect)[3]/sum(table(EffectsDF$effect))*100,2), "%), ",
+               table(EffectsDF$effect)[4], " interaction (", 
+               round(table(EffectsDF$effect)[4]/sum(table(EffectsDF$effect))*100,2), "%)"))
+               
 ## Add chromosome length and relative position for future plots
 EffectsDF <- merge(EffectsDF, GYgynogff[c("chrom", "length", "gstart", "gend")])
-
-###################
-## Plot our results
-unique=data.frame(chrom=unique(EffectsDF$chrom),
-                 length=unique(EffectsDF$length))
-
-posDMSplot <- ggplot(EffectsDF) +
-  geom_col(data = unique, aes(x=length, y=chrom), width = .7, fill="#e0ebeb")+
-  geom_tile(aes(x=start, y=chrom, fill=effect, width = 50000, height = .8))+
-  theme_blank()+
-  scale_fill_manual(values = as.vector(palette.colors(palette = "Okabe-Ito")[1:4]),
-                    name = "Effect:", labels = c("infection induced", "intergenerational", "additive", "interaction"))+ # rename legend
-  scale_x_continuous(breaks = seq(0, 3e+07, by = 0.5e+7),
-                     labels = paste0(seq(0, 3e+07, by = 0.5e+7)/1e+6, "Mb"),
-                     expand = c(0, 0)) + # Remove space before 0
-  ylab(NULL) + xlab(NULL)+
-  guides(fill = guide_legend(position = "inside"))+
-  theme(legend.position.inside = c(0.85, 0.75))
-posDMSplot
 
 ###################################
 ## On which features are these DMS?
@@ -148,26 +147,15 @@ getFeature <- function(DMSvec){
 print(paste0("Positions of the ", length(EffectsDF$pos)," DMS:"))
 print(getFeature(DMSvec = EffectsDF$pos))
 
-print(paste0("Positions of the ", length(EffectsDF$pos[EffectsDF$effect %in% "INTERGENERATIONAL"])," intergenerational DMS:"))
-print(getFeature(EffectsDF$pos[EffectsDF$effect %in% "INTERGENERATIONAL"])@precedence)
+print(paste0("Positions of the ", length(fit_G2_CC.CT$pos)," CpG sequenced:"))
+allCpG <- fit_G2_CC.CT$pos
+getFeatallCpG <- getFeature(DMSvec = allCpG)
+print(getFeatallCpG)
 
-print(paste0("Positions of the ", length(EffectsDF$pos[EffectsDF$effect %in% "INFECTION_INDUCED"])," infection-induced DMS:"))
-print(getFeature(EffectsDF$pos[EffectsDF$effect %in% "INFECTION_INDUCED"])@precedence)
-
-print(paste0("Positions of the ", length(EffectsDF$pos[EffectsDF$effect %in% "ADDITIVE"])," additive DMS:"))
-print(getFeature(EffectsDF$pos[EffectsDF$effect %in% "ADDITIVE"])@precedence)
-
-print(paste0("Positions of the ", length(EffectsDF$pos[EffectsDF$effect %in% "INTERACTION"])," interaction DMS:"))
-print(getFeature(EffectsDF$pos[EffectsDF$effect %in% "INTERACTION"])@precedence)
-
-###############################################
 ## Are the positions of DMS on features random? 
 ## Comparison with sequenced CpGs which are not DMS
-allCpG = paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr, 
-               uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = "_")
-
 A=getFeature(DMSvec = EffectsDF$pos)
-AallCpG= getFeature(DMSvec = allCpG)
+AallCpG=getFeatallCpG
 
 ChiTable1 = merge((A@members %>% data.frame() %>% mutate(feature=ifelse(prom==1, "promoter", 
                                                                         ifelse(exon==1, "exon",
@@ -183,7 +171,7 @@ row.names(ChiTable1) <- ChiTable1$feature
 ChiTable1 <-ChiTable1[!names(ChiTable1) %in% "feature"]
 
 chisq.test(ChiTable1)
-## TBCorrected when annotation finished
+## Corrected when annotation finished
 # Pearson's Chi-squared test
 # data:  ChiTable1
 # X-squared = 53.747, df = 3, p-value = 1.271e-11
@@ -194,9 +182,6 @@ chisq.test(ChiTable1)
 ChiTable1 %>% mutate(DMSprop=DMS/sum(DMS),allCpGprop=allCpG/sum(allCpG))
 chisq.posthoc.test(ChiTable1, method = "bonferroni")
 ## Exon and introns are the same, but proportionally less in promoters and more in intergenic regions
-
-## !!! may be important
-## !!!
 
 #######################
 ## Are the positions of DMS on chromosomes random? Comparison with sequenced CpGs which are not DMS
@@ -224,7 +209,7 @@ chisq.test(df[c("nbrDMS", "nbrCpG")])
 # X-squared = 38.427, df = 19, p-value = 0.005235
 
 df %>% arrange(percent) %>% mutate(perc = round(percent*100,2))
-# range from 0.11% (V) to 0.05% of CpG beign DMS (XIV) TBVerified++++
+# from 0.05% of the CpG sequenced (chromosome XIV) to 0.11% (chromosome V)
 
 #### Plot sup fig 1
 donutDF = ChiTable1 %>% dplyr::mutate(feature = row.names(ChiTable1), percDMS=DMS/sum(DMS)*100, percCpG=allCpG/sum(allCpG)*100) %>%
@@ -243,6 +228,9 @@ P2 <- ggplot(df, aes(x=chromosome, y=percent))+
   ylab("Percentage of DMS among CpG sequenced")+
   scale_y_continuous(labels=scales::percent)
 
-pdf(file = "../../dataOut/suppl1.pdf", width = 8, height = 6)
+message("Save figure S1 in dataOut/fig/FigS1_featuresCpGandDMS.pdf")
+pdf(file = "../../dataOut/fig/FigS1_featuresCpGandDMS.pdf", width = 8, height = 6)
 cowplot::plot_grid(P1, P2, nrow = 2, labels = c("A", "B"))
 dev.off()
+
+message("R07 done.\n")

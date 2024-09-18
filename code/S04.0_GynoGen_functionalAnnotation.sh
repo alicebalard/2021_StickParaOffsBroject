@@ -58,16 +58,12 @@ CODINGFAA=$DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa
 ## Output: a functionally annotated gff3 and bed12
 
 FASTA=Gynogen_pchrom_assembly_all_PROTEINS_noast.faa ## noast=asterisks removed
-##FASTA=testInput.100.faa
 
 GFF3=$GFF2
-## GFF3=testInput.100.gff3
 
 BLASTPout=$DIR/Gynogen_pchrom_assembly_all_PROTEINS.faa.blast.out.blastp
-## BLASTPout=testInput.100.faa.blast.out.blastp
 
 IPRout=$DIR/Gynogen_pchrom_assembly_all_PROTEINS_noast.faa.interproscan.out.tsv ## noast: we removed asterisk for interproscan
-##IPRout=testInput.100.faa.interproscan.out.tsv
 
 ## Integrate functional annotations into structural annotations.
 

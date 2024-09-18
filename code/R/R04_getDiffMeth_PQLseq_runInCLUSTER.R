@@ -5,6 +5,8 @@
 ## load previous scripts
 source("R03_prepObjectMethylkit_runInCLUSTER.R")
 
+message("R04 starting...\n")
+
 ## set run = TRUE at the last block of code to re-run the comparisons
 
 #############################
@@ -221,3 +223,4 @@ if (run == T){
     save(fit_G2_TC.TT = fit_G2_TC.TT, file = "../../dataOut/fitPQLseqG2_fit_G2_TC.TT.RData")
 }
 
+message("R04 done.\n")

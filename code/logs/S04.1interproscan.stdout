@@ -1,0 +1,18 @@
+ncpu:
+10
+Run InterProScan...
+13/09/2024 21:21:07:006 Welcome to InterProScan-5.56-89.0
+13/09/2024 21:21:07:008 Running InterProScan v5 in STANDALONE mode... on Linux
+13/09/2024 21:21:13:135 RunID: ddy38_20240913_212111683_acgg
+13/09/2024 21:21:19:846 Loading file /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/06GynoGen_functionalAnnotation/Gynogen_pchrom_assembly_all_PROTEINS_noast.faa
+13/09/2024 21:21:19:847 Running the following analyses:
+[Gene3D-4.3.0,PANTHER-15.0,Pfam-34.0,PIRSR-2021_05,SFLD-4,SUPERFAMILY-1.75,TIGRFAM-15.0]
+Pre-calculated match lookup service DISABLED.  Please wait for match calculations to complete...
+13/09/2024 21:21:24:586 Uploaded 20200 unique sequences for analysis
+14/09/2024 00:12:46:328 25% completed
+14/09/2024 01:01:13:358 50% completed
+14/09/2024 01:13:51:432 75% completed
+14/09/2024 01:47:39:615 90% completed
+14/09/2024 02:00:01:800 100% done:  InterProScan analyses completed 
+
+InterProScan analysis complete.

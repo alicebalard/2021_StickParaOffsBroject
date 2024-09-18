@@ -1,11 +1,6 @@
 # Each script sources the previous script of the pipeline if needed
 source("R05_GlobalMethylationAndFitness.R")
 
-message("R06 starting...\n")
-## Produces the subplots for figure 2
-### dataOut/fig/Fig2A_clusterALLCpG_offspings.pdf
-### dataOut/fig/Fig2B_NMDSplot_allG2.pdf
-
 # Methylation profile, CpG present in all fish
 ## Dendogram of methylations
 print("CpG sites covered in all G1 & G2 fish:")
@@ -14,7 +9,7 @@ print("number of fish in total:")
 print(length(uniteCovALL_woSexAndUnknowChr@sample.ids))
 
 makePrettyMethCluster(uniteCovALL_woSexAndUnknowChr, fullMetadata,
-                      my.cols.trt=c("#333333ff","#ff0000ff",colOffs),
+                      my.cols.trt=c("#333333ff","#ff0000ff","#ffe680ff","#ff6600ff","#aaccffff","#aa00d4ff"),
                       my.cols.fam = c(1:4), nbrk = 8)
 
 ### Offspring:
@@ -24,8 +19,9 @@ print("number of G2 fish:")
 print(length(uniteCovALL_G2_woSexAndUnknowChr@sample.ids))
 
 # Save
-pdf(file = "../../dataOut/fig/Fig2A_clusterALLCpG_offspings.pdf", width = 10, height = 4)
+pdf(file = "../../dataOut/clusterALLCpG_offspings.pdf", width = 10, height = 4)
 makePrettyMethCluster(uniteCovALL_G2_woSexAndUnknowChr, fullMetadata_OFFS,
+                      my.cols.trt=c("#ffe680ff","#ff6600ff", "#aaccffff", "#aa00d4ff"),
                       my.cols.fam = c(1:4), nbrk = 8)
 dev.off()
 
@@ -65,15 +61,12 @@ print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permuta
 # Goodness of fit for NMDS suggested the presence of six dimensions with a
 # stress value \> 0.1 and 2 with \> 0.2
 
-run = FALSE
-if (run==TRUE){
-  ## to find the seed that allows convergence:
-  # sapply(3:10, function(x) myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = x))
-  NMDSanalysis <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = 4)
-  pdf(file = "../../dataOut/fig/Fig2B_NMDSplot_allG2.pdf", width = 9, height = 11)
-  NMDSanalysis$NMDSplot
-  dev.off()
-}
+## to find the seed that allows convergence:
+# sapply(3:10, function(x) myNMDS(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = x))
+NMDSanalysis <- myNMDSFUN(dataset = uniteCovALL_G2_woSexAndUnknowChr, metadata = fullMetadata_OFFS, myseed = 4)
+pdf(file = "../../dataOut/NMDSplot_allG2.pdf", width = 9, height = 11)
+NMDSanalysis$NMDSplot
+dev.off()
 
 ## The methylation pattern is more affected by direct treatment when the father was infected (Adonis test WITHIN both parental trt)
 
@@ -115,5 +108,3 @@ if (run==TRUE){
   NMDSanalysis_G1infected$NMDSplot
   #dev.off()
 }
-
-message("R06 done\n")

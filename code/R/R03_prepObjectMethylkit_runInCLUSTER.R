@@ -6,6 +6,8 @@
 # NB: comment when on Apocrita
 source("R02_prepBSBOLTForMethylkit_runInCLUSTER.R")
 
+message("R03 starting...\n")
+
 ## Load unitecov objects
 base::load("../../gitignore/bigdata/05MethylKit/uniteCovObjects/uniteCovALL_woSexAndUnknowChr_20dec2022.RData") 
 base::load("../../gitignore/bigdata/05MethylKit/uniteCovObjects/uniteCovALL_G1_woSexAndUnknowChr_20dec2022.RData") 
@@ -167,54 +169,4 @@ if (rerun == TRUE){
 ## NB: move outcome to gitignore to use on different machines
 }
 
-##################### Previous tests with ALL numbers of fish 1 to 12:
-## we kept for downstream analyses all CpG sites present in at least 1 to 12 individuals per group, or in all individuals:
-# print("Unite and store in a list")
-# mylist_uniteCov=list()
-# for (i in 6:12L){ # done for 1 to 5, then 6 to 12
-#     uniteCov=unite(normFil.myobj, min.per.group=i, mc.cores=8)# try with 8 cores
-#     uniteCov=as(uniteCov,"methylBase")
-#     name=paste0("uniteCov_", as.character(i))
-#     mylist_uniteCov[[name]]=uniteCov
-# }
-
-## Add CpG present in ALL individuals
-# uniteCov=unite(normFil.myobj, mc.cores=8)
-# uniteCov=as(uniteCov,"methylBase")
-# mylist_uniteCov[["uniteCov_ALL"]]=uniteCov
-
-# CpGALL=length(mylist_uniteCov$uniteCov_ALL$coverage1) # 47238
-
-# Idea: plot number of retained CpG site by nbr of individuals sharing these CpG sites. Preparing file for that:
-# print("Make DF")
-# CpGDF1_5=data.frame(lapply(mylist_uniteCov, function(x) length(x$coverage1)))
-# CpGDF1_5=t(CpGDF1_5)
-# CpGDF1_5=data.frame(NbrIndMin=as.numeric(gsub("uniteCov_", "", row.names(CpGDF1_5))),
-#                     NbrCpG=CpGDF1_5[,1])
-# 
-# CpGDF6_12=data.frame(lapply(mylist_uniteCov, function(x) length(x$coverage1)))
-# CpGDF6_12=t(CpGDF6_12)
-# CpGDF6_12=data.frame(NbrIndMin=as.numeric(gsub("uniteCov_", "", row.names(CpGDF6_12))),
-#                      NbrCpG=CpGDF6_12[,1])
-# 
-# CpGDF=rbind(CpGDF1_5, CpGDF6_12)
-
-# print("Save object for plotting")
-# save(CpGDF, file="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/plots/CpGDF.RData")
-
-# print("Save plot")
-# plotCpGshared <- ggplot(CpGDF, aes(x=NbrIndMin, y=NbrCpG))+
-#     geom_smooth(se = F, col = "red")+
-#     geom_smooth(method = "lm", se = F, col = "black") +
-#     geom_point() +
-#     scale_x_continuous("Number of individual fish per treatment group sharing the same methylated CpG sites",
-#                        labels = as.character(CpGDF$NbrIndMin), breaks = CpGDF$NbrIndMin)+
-#     scale_y_continuous("Number of shared methylated CpG sites") +
-#     theme_bw() +
-#     geom_hline(yintercept=CpGALL)
-# 
-# plotCpGshared
-# 
-# pdf(file="/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/Data/05MethylKit/plots/plotCpGshared.pdf")
-# plotCpGshared
-# dev.off()
+message("R03 done. \n")

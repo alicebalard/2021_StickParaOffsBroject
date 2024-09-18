@@ -4,6 +4,8 @@
 # Each script sources the previous script of the pipeline if needed
 source("R00_rawDataCleaning.R")
 
+message("R01 starting...\n")
+
 #########################
 ## Data loading & prep ##
 #########################
@@ -186,3 +188,5 @@ if (rerun == TRUE){
 
 ## clean workspace
 rm(file, fileT, mappDatBIS, mappBismarck, mappBSBolt, mappDatBSB, methylBSdf, rawData)
+
+message("R01 done.\n")
