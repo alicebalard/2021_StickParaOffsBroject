@@ -1,0 +1,12 @@
+[2024-09-19 12:04:11] [INFO]    [OmnipathR] Welcome to OmnipathR!
+[2024-09-19 12:04:11] [INFO]    [OmnipathR] Initialized cache: `/data/home/btx915/.cache/OmnipathR`.
+[2024-09-19 12:04:14] [SUCCESS] [OmnipathR] Building GO slim (organism: uniprot_all; aspects: C, F, P; slim: generic). This will take 20-40 min at the first time, and will be saved in the cache for later use.
+[2024-09-19 12:04:14] [INFO]    [OmnipathR] Cache item `285289cfd54cb41a5ef4a91289cefcb72ab00543` version 9: status changed from `unknown` to `started`.
+[2024-09-19 12:04:14] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/285289cfd54cb41a5ef4a91289cefcb72ab00543-9.rds`.
+[2024-09-19 12:04:14] [TRACE]   [OmnipathR] Looking up in cache: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 12:04:14] [INFO]    [OmnipathR] No version is available for key `0d2ebb71683acc82eb5909ef640ec7f03f8d42fb` (http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz).
+[2024-09-19 12:05:22] [SUCCESS] [OmnipathR] Building GO slim (organism: uniprot_all; aspects: C, F, P; slim: generic). This will take 20-40 min at the first time, and will be saved in the cache for later use.
+[2024-09-19 12:05:22] [INFO]    [OmnipathR] Cache item `285289cfd54cb41a5ef4a91289cefcb72ab00543` version 10: status changed from `unknown` to `started`.
+[2024-09-19 12:05:22] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/285289cfd54cb41a5ef4a91289cefcb72ab00543-10.rds`.
+[2024-09-19 12:05:22] [TRACE]   [OmnipathR] Looking up in cache: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 12:05:22] [INFO]    [OmnipathR] No version is available for key `0d2ebb71683acc82eb5909ef640ec7f03f8d42fb` (http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz).

@@ -14,6 +14,13 @@
 # myGOF.NMDS.FUN check goodness of fit
 # myNMDSFUN runs my NMDS
 
+## GO functions:
+# makedfGO() takes an annotation df, a gene universe and the name of an effect
+# and returns a GO df
+
+## PCA functions:
+# myPCA() runs a PCA on CpG sites
+
 ##############
 
 #the stickleback genome is annotated as chrI, chrII, chrIII ... to chrUn (unknown, includes all scaffolds)
@@ -122,16 +129,16 @@ myGOF.NMDS.FUN <- function(dataset){
 }
 
 myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
-
+  
   print(paste0("my seed = ", myseed))
-
+  
   if (byParentTrt==TRUE){
     dataset = reorganize(methylObj = dataset,
                          treatment = metadata$trtG1G2_NUM[metadata$trtG1G2_NUM %in% trtgp],
                          sample.ids = metadata$ID[metadata$trtG1G2_NUM %in% trtgp])
     metadata = metadata[metadata$trtG1G2_NUM %in% trtgp, ]
   }
-
+  
   ## make percent methylation matrix
   x=makePercentMetMat(dataset)
   #Create NMDS based on bray-curtis distances - metaMDS finds the
@@ -144,10 +151,10 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
   MDS1 = NMDS$points[,1] ; MDS2 = NMDS$points[,2] ; MDS3 = NMDS$points[,3]
   ## OR #extract NMDS scores (x and y coordinates)
   ## data.scores = as.data.frame(scores(NMDS))
-
+  
   #create new data table (important for later hulls finding)
   # with plotting coordinates and variables to test (dim 1,2,3)
-
+  
   if (byParentTrt==FALSE){
     NMDS_dt = data.table::data.table(MDS1 = MDS1, MDS2 = MDS2, MDS3 = MDS3,
                                      ID = metadata$ID,
@@ -162,7 +169,7 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
                                      Sex = as.factor(metadata$Sex),
                                      brotherPairID = as.factor(metadata$brotherPairID))
   }
-
+  
   #### start sub fun
   makeNMDSplots <- function(dim, myvar){
     if (dim == "1_2"){
@@ -172,7 +179,7 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
     } else if (dim == "2_3"){
       dima=2; dimb=3
     }
-
+    
     if (myvar == "PAT"){
       mycols = c("black","yellow"); myshape = c(21,22)
     } else if (myvar == "Sex"){
@@ -182,10 +189,10 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
     } else if (myvar == "brotherPairID"){
       mycols = c(1:8); myshape = rep(21, 8)
     }
-
+    
     # generating convex hulls splitted by myvar in my metadata:
     hulls <- NMDS_dt[, .SD[chull(get(paste0("MDS", dima)), get(paste0("MDS", dimb)))], by = get(myvar)]
-
+    
     myNMDSplot <- ggplot(NMDS_dt,
                          aes_string(x=paste0("MDS",dima), y=paste0("MDS",dimb))) +
       geom_polygon(data = hulls, aes_string(fill=myvar), alpha=0.3) +
@@ -195,10 +202,10 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
       #  geom_label(aes(label=row.names(NMDS2)))+
       scale_shape_manual(values = myshape) +
       theme(legend.title=element_blank(), legend.position = "top")
-
+    
     return(myNMDSplot)
   }
-
+  
   if (byParentTrt==FALSE){
     figure <-  ggarrange(makeNMDSplots(dim= "1_2", myvar = "PAT"),
                          makeNMDSplots(dim= "1_3", myvar = "PAT"),
@@ -228,119 +235,136 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
   return(list(NMDS = NMDS, mystressplot=mystressplot, NMDSplot = figure))
 }
 
+########
+## GO ##
+########
+makedfGO <- function(annot, gene_universe, effect, label){
+  ## Create subuniverse:
+  sub_universe <- gene_universe %>%
+    subset(gene_universe$Name %in% unlist(annot$Parent))
+  
+  ## Run conditional hypergeometric test:
+  runTestHypGeom <- function(sub_universe, onto){
+    ## Constructing a GOHyperGParams objects or KEGGHyperGParams objects from a GeneSetCollection
+    ## Then run hypergeometric test:
+    GO_NO_fdr <- hyperGTest(GSEAGOHyperGParams(
+      name="GO_set",
+      geneSetCollection = gsc_universe,
+      geneIds = as.vector(unique(sub_universe[["Name"]])), # gene ids for the selected gene set
+      universeGeneIds = unique(gene_universe$Name),
+      ontology = onto, # A string for GO to use ("BP", "CC", or "MF")
+      pvalueCutoff = 0.05,
+      conditional = TRUE, # see note above
+      testDirection = "over")) # over represented GO terms
+    
+    # Use GOEnrich as a wrapper around GOStat for extra FDR comparison
+    ## Does not solve all issues, but better than nothing. See: https://support.bioconductor.org/p/5571/
+    GO_fdr <- joinGOEnrichResults(goEnrichTest(
+      gsc=gsc_universe,
+      gene.ids = as.vector(unique(sub_universe[["Name"]])),# genes in selected gene set
+      univ.gene.ids = unique(gene_universe$Name),
+      ontologies = onto, # A string for GO to use ("BP", "CC", or "MF")
+      pvalue.cutoff = 0.05,
+      cond = TRUE, # see note above
+      test.dir = "over"),# over represented GO terms
+      p.adjust.method = "fdr")
+    
+    return(list(GO_NO_fdr=GO_NO_fdr, GO_fdr=GO_fdr))
+  }
+  
+  GO_MF <- runTestHypGeom(sub_universe = sub_universe, onto = "MF")
+  GO_CC <- runTestHypGeom(sub_universe = sub_universe, onto = "CC")
+  GO_BP <- runTestHypGeom(sub_universe = sub_universe, onto = "BP")
+  
+  # Get percentage of genes over represented in universe
+  dfMFperc = GO_MF$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>%
+    dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
+  dfCCperc = GO_CC$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>%
+    dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
+  dfBPperc = GO_BP$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>%
+    dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
+  
+  # Add this information to FDR corrected table
+  GO_MF_all = merge(GO_MF$GO_fdr, dfMFperc)
+  GO_CC_all = merge(GO_CC$GO_fdr, dfCCperc)
+  GO_BP_all = merge(GO_BP$GO_fdr, dfBPperc)
+  
+  # Merge the df MP and BP
+  dfGO = rbind(GO_MF_all, GO_CC_all, GO_BP_all)
+  
+  dfGO = dfGO %>% mutate(Term = factor(x = GO.term, levels = GO.term),
+                         Label = factor(x = label, levels = label),
+                         Effect = factor(x = effect, levels = effect))
+  
+  # Relabel GO group names
+  dfGO$GO.category[dfGO$GO.category %in% "CC"]="Cellular components"
+  dfGO$GO.category[dfGO$GO.category %in% "BP"]="Biological processes"
+  dfGO$GO.category[dfGO$GO.category %in% "MF"]="Molecular functions"
+  
+  return(dfGO)
+}
 
-# #########
-# ## PCA ## 
-# #########
-# myPCA <- function(x, incomplete){
-#   if (incomplete==TRUE){
-#     # estimate the number of components from incomplete data
-#     nb <- estim_ncpPCA(x, scale = T)
-#     # impute the table
-#     res.comp <- imputePCA(x, ncp = nb$ncp, scale = T)
-#     x = res.comp$completeObs
-#   }
-#   # 2. run PCA
-#   res.PCA = FactoMineR::PCA(x, scale.unit = T, graph = FALSE) # perform PCA
-#   metadata = fullMetadata_OFFS
-#   # check that the sample names are in the same order
-#   ifelse(table(rownames(res.PCA$ind$coord) == metadata$SampleID), "sample names are in the same order", "ERROR in PCA sample names order")
-#   # 3. extract axes 1, 2
-#   metadata$PCA1 = res.PCA$ind$coord[,1] # axis 1
-#   metadata$PCA2 = res.PCA$ind$coord[,2] # axis 2
-#   # 4. Correlation with parasite load/BCI
-#   mod = lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
-#   ## Model selection:
-#   modSel = lmer(formula = attr(attr(lmerTest::step(mod, reduce.random = F), "drop1"), "heading")[3],
-#                 data=metadata, REML = F)
-#   print(lmerTest::step(mod, reduce.random = F))
-#   print("The chosen model is:")
-#   print(formula(modSel))
-#   return(list(res.PCA=res.PCA, modSel = modSel, metadata = metadata))
-# }
-# 
-# getPCACpG <- function(DMSvec, effect){
-#   pos2keep = which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr, uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in%
-#                      DMSvec)
-#   uniteAtDMS = methylKit::select(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, pos2keep)
-#   percAtDMS = percMethylation(uniteAtDMS)
-#   
-#   print(paste(nrow(percAtDMS), "DMS linked with", effect))
-#   
-#   # We use missMDA and FactoMineR for imputation of missing data and
-#   # performing of PCA: (see:
-#   #
-#   #                       -   <http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html>
-#   #                       -   <https://www.youtube.com/watch?v=OOM8_FH6_8o>)
-#   
-#   PCA_percAtDMS_imputed <- myPCA(x = t(percAtDMS), incomplete = TRUE)
-#   
-#   # The function dimdesc() can be used to identify the most correlated variables with a given principal component.
-#   mydimdesc = dimdesc(PCA_percAtDMS_imputed$res.PCA, axes = c(1,2), proba = 0.05)
-#   
-#   print(paste(nrow(mydimdesc$Dim.1$quanti), "CpG sites most correlated (p < 0.05) with the first principal component"))
-#   print(paste(nrow(mydimdesc$Dim.2$quanti), "CpG sites most correlated (p < 0.05) with the second principal component"))
-#   
-#   # Extract the values for CpGs associated with the
-#   CpGPCA1 = methylKit::select(uniteAtDMS, as.numeric(gsub("V","",rownames(mydimdesc$Dim.1$quanti))))
-#   CpGPCA2 = methylKit::select(uniteAtDMS, as.numeric(gsub("V","",rownames(mydimdesc$Dim.2$quanti))))
-#   
-#   return(list(PCA_percAtDMS_imputed=PCA_percAtDMS_imputed, CpGPCA1=CpGPCA1, CpGPCA2=CpGPCA2))
-# }
-# 
+#########
+## PCA ##
+#########
+myPCA <- function(x, incomplete){
+  if (incomplete==TRUE){
+    # estimate the number of components from incomplete data
+    nb <- estim_ncpPCA(x, scale = T)
+    # impute the table
+    res.comp <- imputePCA(x, ncp = nb$ncp, scale = T)
+    x = res.comp$completeObs
+  }
+  # 2. run PCA
+  res.PCA = FactoMineR::PCA(x, scale.unit = T, graph = FALSE) # perform PCA
+  metadata = fullMetadata_OFFS
+  # check that the sample names are in the same order
+  ifelse(table(rownames(res.PCA$ind$coord) == metadata$SampleID), "sample names are in the same order", "ERROR in PCA sample names order")
+  # 3. extract axes 1, 2
+  metadata$PCA1 = res.PCA$ind$coord[,1] # axis 1
+  metadata$PCA2 = res.PCA$ind$coord[,2] # axis 2
+  # 4. Correlation with parasite load/BCI
+  mod = lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+  ## Model selection:
+  modSel = lmer(formula = attr(attr(lmerTest::step(mod, reduce.random = F), "drop1"), "heading")[3],
+                data=metadata, REML = F)
+  print(lmerTest::step(mod, reduce.random = F))
+  print("The chosen model is:")
+  print(formula(modSel))
+  return(list(res.PCA=res.PCA, modSel = modSel, metadata = metadata))
+}
+
+getPCACpG <- function(DMSvec, effect){
+  pos2keep = which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr, uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in%
+                     DMSvec)
+  uniteAtDMS = methylKit::select(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, pos2keep)
+  percAtDMS = percMethylation(uniteAtDMS)
+  
+  print(paste(nrow(percAtDMS), "DMS linked with", effect))
+  
+  # We use missMDA and FactoMineR for imputation of missing data and
+  # performing of PCA: (see:
+  #
+  #                       -   <http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html>
+  #                       -   <https://www.youtube.com/watch?v=OOM8_FH6_8o>)
+  
+  PCA_percAtDMS_imputed <- myPCA(x = t(percAtDMS), incomplete = TRUE)
+  
+  # The function dimdesc() can be used to identify the most correlated variables with a given principal component.
+  mydimdesc = dimdesc(PCA_percAtDMS_imputed$res.PCA, axes = c(1,2), proba = 0.05)
+  
+  print(paste(nrow(mydimdesc$Dim.1$quanti), "CpG sites most correlated (p < 0.05) with the first principal component"))
+  print(paste(nrow(mydimdesc$Dim.2$quanti), "CpG sites most correlated (p < 0.05) with the second principal component"))
+  
+  # Extract the values for CpGs associated with the
+  CpGPCA1 = methylKit::select(uniteAtDMS, as.numeric(gsub("V","",rownames(mydimdesc$Dim.1$quanti))))
+  CpGPCA2 = methylKit::select(uniteAtDMS, as.numeric(gsub("V","",rownames(mydimdesc$Dim.2$quanti))))
+  
+  return(list(PCA_percAtDMS_imputed=PCA_percAtDMS_imputed, CpGPCA1=CpGPCA1, CpGPCA2=CpGPCA2))
+}
 
 
-# 
-# ####################
-# ## Manhattan plot ##
-# ####################
-# # Adapted from Melanie Heckwolf
-# # create Manhattan plots over the genome from a DMS file
-# 
-# 
-# get_pos <- function(CHROM,genome){
-#   tibble(CHROM = CHROM, 
-#          POS = sample(x=1:genome$length[genome$chrom == CHROM],size=1))
-# }
-# 
-# makeManhattanPlots <- function(DMSfile, annotFile, GYgynogff, mycols=c("grey50","grey50","darkred","darkred"), 
-#                                mytitle = "Manhattan plot of DMS"){
-#   region=as.factor(ifelse(annotFile$prom==1,"promoter",
-#                           ifelse(annotFile$exon==1,"exon",
-#                                  ifelse(annotFile$intron==1, "intron","intergenic"))))
-#   
-#   mydata = tibble(chrom=DMSfile$chr,
-#                   pos=DMSfile$start,
-#                   meth.diff=DMSfile$meth.diff,
-#                   qval=DMSfile$qvalue,
-#                   region=region)
-#   
-#   # table(DMSfile$chr)## check that chrXIX and chrUN are well removed!!
-#   
-#   # join DMS and genomic position
-#   data = left_join(mydata, genome2) %>% 
-#     mutate(gpos=pos+gstart,significance= ifelse(abs(qval>0.0125) | abs(meth.diff)<15,"not significant","significant"))
-#   
-#   table(data$significance) # all signif
-#   
-#   #plot only significant DMS:
-#   ggplot()+
-#     geom_rect(data=genome2,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=type), alpha=.2)+
-#     geom_point(data=data[abs(data$meth.diff)>15 & data$significance=="significant",],
-#                aes(x=gpos,y=meth.diff,col=region,shape=region),fill="white", size = 2)+
-#     scale_color_manual(values = mycols)+
-#     scale_shape_manual(values=c(21,21,21,21))+
-#     scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none")+
-#     scale_x_continuous(breaks=genome2$gmid,labels=genome2$chrom %>% str_remove(.,"Gy_chr"),
-#                        position = "top",expand = c(0,0))+
-#     theme_minimal()+
-#     theme(panel.grid = element_blank(),
-#           axis.line=element_blank(),
-#           axis.title = element_blank(),
-#           strip.placement = "outside")+
-#     ggtitle(mytitle)
-# }
-# 
+
 #
 # ##########################
 # ## Calculate beta values (methylation proportion per CpG site) for the 1001880 positions covered in half G1 and half G2
@@ -416,140 +440,7 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
 #   )
 # }
 # 
-# ########################################
-# ## Differential methylation functions ##
-# ########################################
-# getDiffMeth <- function(myuniteCov, myMetadata, mccores=10, mydif = 15){
-#   if (length(table(myMetadata$Sex)) == 1 & length(table(myMetadata$brotherPairID)) == 1){ # 1 sex, 1 BP -> no covariate
-#     myDiffMeth=calculateDiffMeth(myuniteCov, mc.cores = mccores)#10 on Apocrita
-#   } else { # if more than 1 sex or 1 BP, we add a covariate
-#     if (length(table(myMetadata$Sex)) == 1 & length(table(myMetadata$brotherPairID)) > 1){
-#       cov = data.frame(brotherPairID = myMetadata$brotherPairID)
-#     } else if (length(table(myMetadata$Sex)) == 2 & length(table(myMetadata$brotherPairID)) > 1){
-#       cov = data.frame(brotherPairID = myMetadata$brotherPairID, Sex = myMetadata$Sex)
-#     } else if (length(table(myMetadata$Sex)) == 2){ # this is for within brother pairs
-#       cov = data.frame(Sex = myMetadata$Sex)
-#     } 
-#     myDiffMeth=calculateDiffMeth(myuniteCov, covariates = cov, mc.cores = mccores)#10 on Apocrita
-#   }
-#   ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
-#   ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
-#   myDMS_15pc = getMethylDiff(myDiffMeth, difference=mydif, qvalue=0.01)
-#   return(myDMS_15pc)
-# }
-# 
-# getDiffMethSimple <- function(myuniteCov, myMetadata){
-#   myDiffMeth=calculateDiffMeth(myuniteCov, mc.cores = 3)#10 on Apocrita
-#   ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%.
-#   ## NB: arg type="hyper" or type="hypo" gives hyper-methylated or hypo-methylated regions/bases.
-#   myDMS_15pc = getMethylDiff(myDiffMeth, difference=15, qvalue=0.01)
-#   return(myDMS_15pc)
-# }
-# 
-# ## Calculate DMS in all brother pairs
-# ## 1. CC-TC = CONTROL fish (parent CvsT)
-# ## 2. CT-TT = TREATMENT fish (parent CvsT)
-# ## 3. CC-CT = fish from CONTROL parents (G2 CvsT)
-# ## 4. TC-TT = fish from TREATMENT parents (G2 CvsT)
-# 
-# ## Per brother pair:
-# getDMperBP <- function(BP){
-#   ## Unite object for one Brother Pair:
-#   metadataBP_CC_TC = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
-#                                          fullMetadata_OFFS$trtG1G2 %in% c("NE_control", "E_control"), ]
-#   metadataBP_CT_TT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
-#                                          fullMetadata_OFFS$trtG1G2 %in% c("NE_exposed", "E_exposed"), ]
-#   metadataBP_CC_CT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
-#                                          fullMetadata_OFFS$trtG1G2 %in% c("NE_control", "NE_exposed"), ]
-#   metadataBP_TC_TT = fullMetadata_OFFS[fullMetadata_OFFS$brotherPairID %in% BP &
-#                                          fullMetadata_OFFS$trtG1G2 %in% c("E_control", "E_exposed"), ]
-#   
-#   ## Make 4 separate uniteCov:
-#   myuniteCovBP_CC_TC = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
-#                                   treatment = metadataBP_CC_TC$trtG1G2_NUM, sample.ids = metadataBP_CC_TC$ID)
-#   myuniteCovBP_CT_TT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
-#                                   treatment = metadataBP_CT_TT$trtG1G2_NUM, sample.ids = metadataBP_CT_TT$ID)
-#   myuniteCovBP_CC_CT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
-#                                   treatment = metadataBP_CC_CT$trtG1G2_NUM, sample.ids = metadataBP_CC_CT$ID)
-#   myuniteCovBP_TC_TT = reorganize(methylObj = uniteCov14_G2_woSexAndUnknowChrOVERLAP,
-#                                   treatment = metadataBP_TC_TT$trtG1G2_NUM, sample.ids = metadataBP_TC_TT$ID)
-#   
-#   ## remove bases where NO fish in this BP has a coverage
-#   myuniteCovBP_CC_TC = methylKit::select(myuniteCovBP_CC_TC, which(!is.na(rowSums(percMethylation(myuniteCovBP_CC_TC)))))
-#   myuniteCovBP_CT_TT = methylKit::select(myuniteCovBP_CT_TT, which(!is.na(rowSums(percMethylation(myuniteCovBP_CT_TT)))))
-#   myuniteCovBP_CC_CT = methylKit::select(myuniteCovBP_CC_CT, which(!is.na(rowSums(percMethylation(myuniteCovBP_CC_CT)))))
-#   myuniteCovBP_TC_TT = methylKit::select(myuniteCovBP_TC_TT, which(!is.na(rowSums(percMethylation(myuniteCovBP_TC_TT)))))
-#   
-#   ## Calculate differential methylation:
-#   ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%, sex as covariate
-#   DMS_15pc_BP_CC_TC = getDiffMeth(myuniteCov = myuniteCovBP_CC_TC, myMetadata = metadataBP_CC_TC, mccores = 10, mydif = 15)
-#   DMS_15pc_BP_CT_TT = getDiffMeth(myuniteCov = myuniteCovBP_CT_TT, myMetadata = metadataBP_CT_TT, mccores = 10, mydif = 15)
-#   DMS_15pc_BP_CC_CT = getDiffMeth(myuniteCov = myuniteCovBP_CC_CT, myMetadata = metadataBP_CC_CT, mccores = 10, mydif = 15)
-#   DMS_15pc_BP_TC_TT = getDiffMeth(myuniteCov = myuniteCovBP_TC_TT, myMetadata = metadataBP_TC_TT, mccores = 10, mydif = 15)
-#   
-#   ## tile for Differentially methylated REGIONS
-#   tilesBP_CC_TC = tileMethylCounts(myuniteCovBP_CC_TC,win.size=100,step.size=100,cov.bases = 10)
-#   DMR_15pc_BP_CC_TC = getDiffMeth(tilesBP_CC_TC, metadataBP_CC_TC)
-#   tilesBP_CT_TT = tileMethylCounts(myuniteCovBP_CT_TT,win.size=100,step.size=100,cov.bases = 10)
-#   DMR_15pc_BP_CT_TT = getDiffMeth(tilesBP_CT_TT, metadataBP_CT_TT)
-#   tilesBP_CC_CT = tileMethylCounts(myuniteCovBP_CC_CT,win.size=100,step.size=100,cov.bases = 10)
-#   DMR_15pc_BP_CC_CT = getDiffMeth(tilesBP_CC_CT, metadataBP_CC_CT)
-#   tilesBP_TC_TT = tileMethylCounts(myuniteCovBP_TC_TT,win.size=100,step.size=100,cov.bases = 10)
-#   DMR_15pc_BP_TC_TT = getDiffMeth(tilesBP_TC_TT, metadataBP_TC_TT)
-#   
-#   return(list(DMSlist = list(DMS_15pc_BP_CC_TC = DMS_15pc_BP_CC_TC, DMS_15pc_BP_CT_TT = DMS_15pc_BP_CT_TT, DMS_15pc_BP_CC_CT = DMS_15pc_BP_CC_CT, DMS_15pc_BP_TC_TT = DMS_15pc_BP_TC_TT),
-#               DMRlist = list(DMR_15pc_BP_CC_TC = DMR_15pc_BP_CC_TC, DMR_15pc_BP_CT_TT = DMR_15pc_BP_CT_TT, DMR_15pc_BP_CC_CT = DMR_15pc_BP_CC_CT, DMR_15pc_BP_TC_TT = DMR_15pc_BP_TC_TT)))
-# }
-# 
-# ## And for positions covered in ALL FISH
-# getDMperBP2 <- function(BP){
-#   ## Unite object for one Brother Pair:
-#   metadataBP_CC_TC = fullMetadata[fullMetadata$brotherPairID %in% BP &
-#                                     fullMetadata$trtG1G2 %in% c("NE_control", "E_control"), ]
-#   metadataBP_CT_TT = fullMetadata[fullMetadata$brotherPairID %in% BP &
-#                                     fullMetadata$trtG1G2 %in% c("NE_exposed", "E_exposed"), ]
-#   metadataBP_CC_CT = fullMetadata[fullMetadata$brotherPairID %in% BP &
-#                                     fullMetadata$trtG1G2 %in% c("NE_control", "NE_exposed"), ]
-#   metadataBP_TC_TT = fullMetadata[fullMetadata$brotherPairID %in% BP &
-#                                     fullMetadata$trtG1G2 %in% c("E_control", "E_exposed"), ]
-#   
-#   ## Make 4 separate uniteCov:
-#   myuniteCovBP_CC_TC = reorganize(methylObj = uniteCovALL_woSexAndUnknowChr,
-#                                   treatment = metadataBP_CC_TC$trtG1G2_NUM, sample.ids = metadataBP_CC_TC$ID)
-#   myuniteCovBP_CT_TT = reorganize(methylObj = uniteCovALL_woSexAndUnknowChr,
-#                                   treatment = metadataBP_CT_TT$trtG1G2_NUM, sample.ids = metadataBP_CT_TT$ID)
-#   myuniteCovBP_CC_CT = reorganize(methylObj = uniteCovALL_woSexAndUnknowChr,
-#                                   treatment = metadataBP_CC_CT$trtG1G2_NUM, sample.ids = metadataBP_CC_CT$ID)
-#   myuniteCovBP_TC_TT = reorganize(methylObj = uniteCovALL_woSexAndUnknowChr,
-#                                   treatment = metadataBP_TC_TT$trtG1G2_NUM, sample.ids = metadataBP_TC_TT$ID)
-#   
-#   ## remove bases where NO fish in this BP has a coverage
-#   myuniteCovBP_CC_TC = methylKit::select(myuniteCovBP_CC_TC, which(!is.na(rowSums(percMethylation(myuniteCovBP_CC_TC)))))
-#   myuniteCovBP_CT_TT = methylKit::select(myuniteCovBP_CT_TT, which(!is.na(rowSums(percMethylation(myuniteCovBP_CT_TT)))))
-#   myuniteCovBP_CC_CT = methylKit::select(myuniteCovBP_CC_CT, which(!is.na(rowSums(percMethylation(myuniteCovBP_CC_CT)))))
-#   myuniteCovBP_TC_TT = methylKit::select(myuniteCovBP_TC_TT, which(!is.na(rowSums(percMethylation(myuniteCovBP_TC_TT)))))
-#   
-#   ## Calculate differential methylation:
-#   ## We select the bases that have q-value<0.01 and percent methylation difference larger than 15%, sex as covariate
-#   DMS_15pc_BP_CC_TC = getDiffMeth(myuniteCov = myuniteCovBP_CC_TC, myMetadata = metadataBP_CC_TC, mccores = 10, mydif = 15)
-#   DMS_15pc_BP_CT_TT = getDiffMeth(myuniteCov = myuniteCovBP_CT_TT, myMetadata = metadataBP_CT_TT, mccores = 10, mydif = 15)
-#   DMS_15pc_BP_CC_CT = getDiffMeth(myuniteCov = myuniteCovBP_CC_CT, myMetadata = metadataBP_CC_CT, mccores = 10, mydif = 15)
-#   DMS_15pc_BP_TC_TT = getDiffMeth(myuniteCov = myuniteCovBP_TC_TT, myMetadata = metadataBP_TC_TT, mccores = 10, mydif = 15)
-#   
-#   ## tile for Differentially methylated REGIONS
-#   tilesBP_CC_TC = tileMethylCounts(myuniteCovBP_CC_TC,win.size=100,step.size=100,cov.bases = 10)
-#   DMR_15pc_BP_CC_TC = getDiffMeth(tilesBP_CC_TC, metadataBP_CC_TC)
-#   tilesBP_CT_TT = tileMethylCounts(myuniteCovBP_CT_TT,win.size=100,step.size=100,cov.bases = 10)
-#   DMR_15pc_BP_CT_TT = getDiffMeth(tilesBP_CT_TT, metadataBP_CT_TT)
-#   tilesBP_CC_CT = tileMethylCounts(myuniteCovBP_CC_CT,win.size=100,step.size=100,cov.bases = 10)
-#   DMR_15pc_BP_CC_CT = getDiffMeth(tilesBP_CC_CT, metadataBP_CC_CT)
-#   tilesBP_TC_TT = tileMethylCounts(myuniteCovBP_TC_TT,win.size=100,step.size=100,cov.bases = 10)
-#   DMR_15pc_BP_TC_TT = getDiffMeth(tilesBP_TC_TT, metadataBP_TC_TT)
-#   
-#   return(list(DMSlist = list(DMS_15pc_BP_CC_TC = DMS_15pc_BP_CC_TC, DMS_15pc_BP_CT_TT = DMS_15pc_BP_CT_TT, DMS_15pc_BP_CC_CT = DMS_15pc_BP_CC_CT, DMS_15pc_BP_TC_TT = DMS_15pc_BP_TC_TT),
-#               DMRlist = list(DMR_15pc_BP_CC_TC = DMR_15pc_BP_CC_TC, DMR_15pc_BP_CT_TT = DMR_15pc_BP_CT_TT, DMR_15pc_BP_CC_CT = DMR_15pc_BP_CC_CT, DMR_15pc_BP_TC_TT = DMR_15pc_BP_TC_TT)))
-# }
-# 
+
 # ## Function to get DMS info
 # myDMSinfo <- function(DMSobject, fromUniteCov){
 #   DMS = paste(DMSobject$chr, DMSobject$start, DMSobject$end)
@@ -679,69 +570,4 @@ myNMDSFUN <- function(dataset, metadata, myseed, byParentTrt=FALSE, trtgp=NA){
 #   return(plot)
 # }
 # 
-# ########
-# ## GO ## 
-# ########
-# makedfGO <- function(annot, gene_universe, effect){
-#   ## Create subuniverse:
-#   sub_universe <- gene_universe %>%
-#     subset(gene_universe$Name %in% unlist(annot$Parent))
-#   
-#   ## Run conditional hypergeometric test:
-#   runTestHypGeom <- function(sub_universe, onto){
-#     ## Constructing a GOHyperGParams objects or KEGGHyperGParams objects from a GeneSetCollection
-#     ## Then run hypergeometric test:
-#     GO_NO_fdr <- hyperGTest(GSEAGOHyperGParams(name="GO_set",
-#                                                geneSetCollection = gsc_universe,
-#                                                geneIds = as.vector(unique(sub_universe[["Name"]])), # gene ids for the selected gene set
-#                                                universeGeneIds = unique(gene_universe$Name),
-#                                                ontology = onto, # A string for GO to use ("BP", "CC", or "MF")
-#                                                pvalueCutoff = 0.05,
-#                                                conditional = TRUE, # see note above
-#                                                testDirection = "over")) # over represented GO terms
-#     
-#     # Use GOEnrich as a wrapper around GOStat for extra FDR comparison
-#     ## Does not solve all issues, but better than nothing. See: https://support.bioconductor.org/p/5571/
-#     GO_fdr <- joinGOEnrichResults(goEnrichTest(gsc=gsc_universe,
-#                                                gene.ids = as.vector(unique(sub_universe[["Name"]])),# genes in selected gene set
-#                                                univ.gene.ids = unique(gene_universe$Name),
-#                                                ontologies = onto, # A string for GO to use ("BP", "CC", or "MF")
-#                                                pvalue.cutoff = 0.05,
-#                                                cond = TRUE, # see note above
-#                                                test.dir = "over"),# over represented GO terms
-#                                   p.adjust.method = "fdr")
-#     
-#     
-#     return(list(GO_NO_fdr=GO_NO_fdr, GO_fdr=GO_fdr))
-#   }
-#   
-#   GO_MF <- runTestHypGeom(sub_universe = sub_universe, onto = "MF")
-#   GO_CC <- runTestHypGeom(sub_universe = sub_universe, onto = "CC")
-#   GO_BP <- runTestHypGeom(sub_universe = sub_universe, onto = "BP")
-#   
-#   # Get percentage of genes over reppresented in universe
-#   dfMFperc = GO_MF$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>% 
-#     dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
-#   dfCCperc = GO_CC$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>% 
-#     dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
-#   dfBPperc = GO_BP$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>% 
-#     dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
-#   
-#   # Add this information to FDR corrected table
-#   GO_MF_all = merge(GO_MF$GO_fdr, dfMFperc)
-#   GO_CC_all = merge(GO_CC$GO_fdr, dfCCperc)
-#   GO_BP_all = merge(GO_BP$GO_fdr, dfBPperc)
-#   
-#   # Merge the df MP and BP
-#   dfGO = rbind(GO_MF_all, GO_CC_all, GO_BP_all)
-#   
-#   dfGO = dfGO %>% mutate(Term = factor(x = GO.term, levels = GO.term),
-#                          Effect = factor(x = effect, levels = effect))
-#   
-#   # Relabel GO group names
-#   dfGO$GO.category[dfGO$GO.category %in% "CC"]="Cellular components"
-#   dfGO$GO.category[dfGO$GO.category %in% "BP"]="Biological processes"
-#   dfGO$GO.category[dfGO$GO.category %in% "MF"]="Molecular functions"
-#   
-#   return(dfGO)
-# }
+

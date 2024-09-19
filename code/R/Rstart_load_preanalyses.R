@@ -70,6 +70,9 @@ install_if_missing <- function(packages, dependencies = TRUE) {
 
 install_if_missing(list.of.packages)
 
+message("if db error, downgrade dplyr")
+# devtools::install_version("dbplyr", version = "2.3.4")
+
 message("Loading CRAN packages...")
 load_packages <- function(package_list) {
     not_loaded <- character()
@@ -139,6 +142,7 @@ install_and_load_github_packages(packages_to_install)
 ## Biocmanager packages 
 bioc_packages <- c("Category", # for hypergeometric GO test
                "WGCNA", # for networks
+               "BiocFileCache", # should solve some db issues
                "genomation", ## for annotation
                "GenomicFeatures",## for annotation
                "GOstats", # for GO analysis

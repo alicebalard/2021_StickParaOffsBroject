@@ -157,48 +157,48 @@ getAnnotDMS <- function(GRangeOBJ, myannotGff3, rerun){
   ## we have annotations for 647 DMS on 548 unique known genes,
   ## and 60 DMS on genes coding for proteins with unknown function (Total= 707 DMS).
   
-  ## Get protein functions from Uniprot
-  
-  ### Keys for all species in uniprot
-  uniprotOrgs = availableUniprotSpecies()
-  
-  ### Function to retrieve the description of the protein function
-  findFunctionProt <-  function(GeneSymbol, Species){
-    ## we will output the protein function and uniprotID
-    res=data.frame(Function=NA, uniprotID=NA)
-    
-    message(paste0("Gene symbol:", GeneSymbol))
-    # return NA for both if unknow protein
-    if (!is.na(GeneSymbol)==T){ 
-      tid = uniprotOrgs[uniprotOrgs$`Official (scientific) name` %in% 
-                          Species,"Taxon Node"]
-      ### Create a UniProt.ws object:
-      up = UniProt.ws(taxId = tid)
-      ### Select the first entry
-      dfdesc = UniProt.ws::select(x = up,  keys = GeneSymbol, 
-                                  keytype = "Gene_Name",
-                                  columns = c("protein_name", "cc_function"))[1,]
-      res$Function = dfdesc$Function..CC.
-      res$uniprotID = dfdesc$Entry
-    }
-    return(res)
-  }
-  
   message(paste0("rerun=", rerun,
                  " : rerun the search of protein function, new list of genes (takes >30min minutes)"))
+  
   if (rerun == T){
+    ## Get protein functions from Uniprot
+    ### Keys for all species in uniprot
+    uniprotOrgs = UniProt.ws::availableUniprotSpecies()
+    
+    ### Function to retrieve the description of the protein function
+    findFunctionProt <-  function(GeneSymbol, Species){
+      ## we will output the protein function and uniprotID
+      res=data.frame(Function=NA, uniprotID=NA)
+      
+      message(paste0("Gene symbol:", GeneSymbol))
+      # return NA for both if unknow protein
+      if (!is.na(GeneSymbol)==T){ 
+        tid = uniprotOrgs[uniprotOrgs$`Official (scientific) name` %in% 
+                            Species,"Taxon Node"]
+        ### Create a UniProt.ws object:
+        up = UniProt.ws(taxId = tid)
+        ### Select the first entry
+        dfdesc = UniProt.ws::select(x = up,  keys = GeneSymbol, 
+                                    keytype = "Gene_Name",
+                                    columns = c("protein_name", "cc_function"))[1,]
+        res$Function = dfdesc$Function..CC.
+        res$uniprotID = dfdesc$Entry
+      }
+      return(res)
+    }
+    
     system.time(
       annotDF_complete <- annotDF %>%
         rowwise() %>%
         dplyr::mutate(Function = findFunctionProt(GeneSymbol, Species)$Function,
-               uniprotID = findFunctionProt(GeneSymbol, Species)$uniprotID) %>%
+                      uniprotID = findFunctionProt(GeneSymbol, Species)$uniprotID) %>%
         data.frame()
     )
-
+    
     ## Clean, manual curation for missing uniprotID
     annotDF_complete$GeneName = trimws(annotDF_complete$GeneName)
     annotDF_complete$GeneSymbol = trimws(annotDF_complete$GeneSymbol)
-
+    
     annotDF_complete = annotDF_complete %>%
       mutate(uniprotID = case_when(
         GeneSymbol == "Galactose-specific lectin nattectin" & Species == "Thalassophryne nattereri" ~ "Q66S03",
@@ -208,22 +208,22 @@ getAnnotDMS <- function(GRangeOBJ, myannotGff3, rerun){
         GeneSymbol == "Alpha-1-antitrypsin homolog" & Species == "Cyprinus carpio" ~ "P32759",
         TRUE ~ uniprotID  # Keep other values unchanged
       ))
-
+    
     ## and save
     saveRDS(annotDF_complete, "../../dataOut/annotDF_complete.RDS")
   } else {
     annotDF_complete = readRDS("../../dataOut/annotDF_complete.RDS")
   }
-
+  
   message(paste0("We have ",
                  sum(is.na(annotDF_complete$uniprotID[!annotDF_complete$Note %in% "Protein of unknown function"])),
                  " gene for which we miss a uniprotID"))
-
+  
   # Order by nDMSperGenekb
   annotDF_complete = annotDF_complete[order(annotDF_complete$nDMSperGenekb, decreasing = T),]
-
+  
   # set rownames NULL
   rownames(annotDF_complete) = NULL
-
+  
   return(annotDF_complete)
 }

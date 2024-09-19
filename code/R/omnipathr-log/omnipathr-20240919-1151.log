@@ -1,0 +1,52 @@
+[2024-09-19 11:51:13] [INFO]    [OmnipathR] Welcome to OmnipathR!
+[2024-09-19 11:51:13] [INFO]    [OmnipathR] Initialized cache: `/data/home/btx915/.cache/OmnipathR`.
+[2024-09-19 11:51:20] [SUCCESS] [OmnipathR] Building GO slim (organism: uniprot_all; aspects: C, F, P; slim: generic). This will take 20-40 min at the first time, and will be saved in the cache for later use.
+[2024-09-19 11:51:20] [INFO]    [OmnipathR] Cache item `285289cfd54cb41a5ef4a91289cefcb72ab00543` version 1: status changed from `unknown` to `started`.
+[2024-09-19 11:51:20] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/285289cfd54cb41a5ef4a91289cefcb72ab00543-1.rds`.
+[2024-09-19 11:51:20] [TRACE]   [OmnipathR] Looking up in cache: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 11:51:20] [INFO]    [OmnipathR] Cache record does not exist: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`
+[2024-09-19 11:51:20] [TRACE]   [OmnipathR] Could not find in cache, initiating download: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 11:51:20] [INFO]    [OmnipathR] Cache item `0d2ebb71683acc82eb5909ef640ec7f03f8d42fb` version 1: status changed from `unknown` to `started`.
+[2024-09-19 11:51:20] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/0d2ebb71683acc82eb5909ef640ec7f03f8d42fb-1.rds`.
+[2024-09-19 11:51:20] [INFO]    [OmnipathR] Retrieving URL: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`
+[2024-09-19 11:51:20] [TRACE]   [OmnipathR] Attempt 1/3: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`
+[2024-09-19 11:51:21] [WARN]    [OmnipathR] Failed to download `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz` (attempt 1/3); error: HTTP error 404.
+[2024-09-19 11:51:26] [TRACE]   [OmnipathR] Attempt 2/3: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`
+[2024-09-19 11:51:26] [WARN]    [OmnipathR] Failed to download `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz` (attempt 2/3); error: HTTP error 404.
+[2024-09-19 11:51:31] [TRACE]   [OmnipathR] Attempt 3/3: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`
+[2024-09-19 11:51:31] [ERROR]   [OmnipathR] Failed to download `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz` (attempt 3/3); error: HTTP error 404.
+[2024-09-19 11:51:43] [SUCCESS] [OmnipathR] Building GO slim (organism: uniprot_all; aspects: C, F, P; slim: generic). This will take 20-40 min at the first time, and will be saved in the cache for later use.
+[2024-09-19 11:51:43] [INFO]    [OmnipathR] Cache item `285289cfd54cb41a5ef4a91289cefcb72ab00543` version 2: status changed from `unknown` to `started`.
+[2024-09-19 11:51:43] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/285289cfd54cb41a5ef4a91289cefcb72ab00543-2.rds`.
+[2024-09-19 11:51:43] [TRACE]   [OmnipathR] Looking up in cache: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 11:51:43] [INFO]    [OmnipathR] No version is available for key `0d2ebb71683acc82eb5909ef640ec7f03f8d42fb` (http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz).
+[2024-09-19 11:51:57] [SUCCESS] [OmnipathR] Building GO slim (organism: uniprot_all; aspects: C, F, P; slim: generic). This will take 20-40 min at the first time, and will be saved in the cache for later use.
+[2024-09-19 11:51:57] [INFO]    [OmnipathR] Cache item `285289cfd54cb41a5ef4a91289cefcb72ab00543` version 3: status changed from `unknown` to `started`.
+[2024-09-19 11:51:57] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/285289cfd54cb41a5ef4a91289cefcb72ab00543-3.rds`.
+[2024-09-19 11:51:57] [TRACE]   [OmnipathR] Looking up in cache: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 11:51:57] [INFO]    [OmnipathR] No version is available for key `0d2ebb71683acc82eb5909ef640ec7f03f8d42fb` (http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz).
+[2024-09-19 11:52:25] [SUCCESS] [OmnipathR] Building GO slim (organism: uniprot_all; aspects: C, F, P; slim: generic). This will take 20-40 min at the first time, and will be saved in the cache for later use.
+[2024-09-19 11:52:25] [INFO]    [OmnipathR] Cache item `285289cfd54cb41a5ef4a91289cefcb72ab00543` version 4: status changed from `unknown` to `started`.
+[2024-09-19 11:52:25] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/285289cfd54cb41a5ef4a91289cefcb72ab00543-4.rds`.
+[2024-09-19 11:52:25] [TRACE]   [OmnipathR] Looking up in cache: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 11:52:25] [INFO]    [OmnipathR] No version is available for key `0d2ebb71683acc82eb5909ef640ec7f03f8d42fb` (http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz).
+[2024-09-19 11:53:24] [SUCCESS] [OmnipathR] Building GO slim (organism: uniprot_all; aspects: C, F, P; slim: generic). This will take 20-40 min at the first time, and will be saved in the cache for later use.
+[2024-09-19 11:53:24] [INFO]    [OmnipathR] Cache item `285289cfd54cb41a5ef4a91289cefcb72ab00543` version 5: status changed from `unknown` to `started`.
+[2024-09-19 11:53:24] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/285289cfd54cb41a5ef4a91289cefcb72ab00543-5.rds`.
+[2024-09-19 11:53:24] [TRACE]   [OmnipathR] Looking up in cache: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 11:53:24] [INFO]    [OmnipathR] No version is available for key `0d2ebb71683acc82eb5909ef640ec7f03f8d42fb` (http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz).
+[2024-09-19 11:53:27] [SUCCESS] [OmnipathR] Building GO slim (organism: uniprot_all; aspects: C, F, P; slim: generic). This will take 20-40 min at the first time, and will be saved in the cache for later use.
+[2024-09-19 11:53:27] [INFO]    [OmnipathR] Cache item `285289cfd54cb41a5ef4a91289cefcb72ab00543` version 6: status changed from `unknown` to `started`.
+[2024-09-19 11:53:27] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/285289cfd54cb41a5ef4a91289cefcb72ab00543-6.rds`.
+[2024-09-19 11:53:27] [TRACE]   [OmnipathR] Looking up in cache: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 11:53:27] [INFO]    [OmnipathR] No version is available for key `0d2ebb71683acc82eb5909ef640ec7f03f8d42fb` (http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz).
+[2024-09-19 11:56:15] [SUCCESS] [OmnipathR] Building GO slim (organism: uniprot_all; aspects: C, F, P; slim: generic). This will take 20-40 min at the first time, and will be saved in the cache for later use.
+[2024-09-19 11:56:15] [INFO]    [OmnipathR] Cache item `285289cfd54cb41a5ef4a91289cefcb72ab00543` version 7: status changed from `unknown` to `started`.
+[2024-09-19 11:56:15] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/285289cfd54cb41a5ef4a91289cefcb72ab00543-7.rds`.
+[2024-09-19 11:56:15] [TRACE]   [OmnipathR] Looking up in cache: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 11:56:15] [INFO]    [OmnipathR] No version is available for key `0d2ebb71683acc82eb5909ef640ec7f03f8d42fb` (http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz).
+[2024-09-19 11:57:31] [SUCCESS] [OmnipathR] Building GO slim (organism: uniprot_all; aspects: C, F, P; slim: generic). This will take 20-40 min at the first time, and will be saved in the cache for later use.
+[2024-09-19 11:57:31] [INFO]    [OmnipathR] Cache item `285289cfd54cb41a5ef4a91289cefcb72ab00543` version 8: status changed from `unknown` to `started`.
+[2024-09-19 11:57:32] [TRACE]   [OmnipathR] Exporting object to RDS: `/data/home/btx915/.cache/OmnipathR/285289cfd54cb41a5ef4a91289cefcb72ab00543-8.rds`.
+[2024-09-19 11:57:32] [TRACE]   [OmnipathR] Looking up in cache: `http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz`.
+[2024-09-19 11:57:32] [INFO]    [OmnipathR] No version is available for key `0d2ebb71683acc82eb5909ef640ec7f03f8d42fb` (http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz).
