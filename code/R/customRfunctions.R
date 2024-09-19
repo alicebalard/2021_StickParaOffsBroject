@@ -21,6 +21,9 @@
 ## PCA functions:
 # myPCA() runs a PCA on CpG sites
 
+# getG2methAtCpGs() Get methylation at list of CpG for all offspring
+
+
 ##############
 
 #the stickleback genome is annotated as chrI, chrII, chrIII ... to chrUn (unknown, includes all scaffolds)
@@ -334,19 +337,45 @@ myPCA <- function(x, incomplete){
   return(list(res.PCA=res.PCA, modSel = modSel, metadata = metadata))
 }
 
-getPCACpG <- function(DMSvec, effect){
-  pos2keep = which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr, uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = " ") %in%
-                     DMSvec)
-  uniteAtDMS = methylKit::select(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, pos2keep)
-  percAtDMS = percMethylation(uniteAtDMS)
+## Get methylation at CpG for offspring
+getG2methAtCpGs <- function(DMSlist){
+   obj=methylKit::select(
+    uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, 
+    which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr, 
+                uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = "_") %in% 
+            DMSlist))
   
-  print(paste(nrow(percAtDMS), "DMS linked with", effect))
+  DMS=paste(obj$chr, obj$start, sep = "_")
+  
+  obj=percMethylation(obj) %>% data.frame 
+  obj$DMS = DMS
+  
+  obj=melt(obj)
+  names(obj)[names(obj)%in% "variable"]="SampleID"
+  names(obj)[names(obj)%in% "value"]="G2methylation"
+  obj=merge(obj, fullMetadata_OFFS[c("SampleID", "brotherPairID", "trtG1G2", "patTrt", "No.Worms", "BCI")])
+  obj$patTrt[obj$patTrt %in% "controlP"]="Control"
+  obj$patTrt[obj$patTrt %in% "infectedP"]="Exposed"
+  
+  return(obj)
+}
+
+
+getPCACpG <- function(DMSvec, effect){
+  # pos2keep = which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr,
+  #                        uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = "_") %in%
+  #                    DMSvec)
+  # uniteAtDMS = methylKit::select(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, pos2keep)
+  # percAtDMS = percMethylation(uniteAtDMS)
+  # 
+  # print(paste(nrow(percAtDMS), "DMS linked with", effect))
   
   # We use missMDA and FactoMineR for imputation of missing data and
   # performing of PCA: (see:
   #
   #                       -   <http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html>
   #                       -   <https://www.youtube.com/watch?v=OOM8_FH6_8o>)
+  
   
   PCA_percAtDMS_imputed <- myPCA(x = t(percAtDMS), incomplete = TRUE)
   
