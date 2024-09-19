@@ -92,7 +92,7 @@ listTermsSelect <- unique(c(dfGO[grep("transcription", dfGO$GO.name),"GO.name"],
 
 ###########
 ## GO plots
-makeGOplot <- function(dfGO){
+makeGOplot <- function(dfGO, posleg="top"){
   dfGO %>%
   dplyr::filter(p.value.adjusted < 0.05) %>% 
   ggplot(aes(x=Effect, y = factor(GO.name))) +
@@ -105,7 +105,7 @@ makeGOplot <- function(dfGO){
   theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
         legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
         legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), # grey box for legend
-        legend.position="top",
+        legend.position=posleg,
         axis.text.y = element_text(size = 8),  # Decrease y-axis text size
         axis.text.x = element_text(size = 8, angle = 45, hjust = 1)  # Increase x-axis text size and rotate
   )+
@@ -121,7 +121,7 @@ makeGOplot(dfGO)
 dev.off()
 
 pdf(GOplot, file = "../../dataOut/fig/Fig3C_GOplot_subset.pdf", width = 7, height = 4)
-makeGOplot(dfGO[dfGO$GO.name %in% listTermsSelect,] )
+makeGOplot(dfGO[dfGO$GO.name %in% listTermsSelect,], posleg = "right")
 dev.off()
 
 message("R09 done. \n")
