@@ -3265,10 +3265,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.53649395"
-     inkscape:cx="755.83331"
+     inkscape:cx="789.38448"
      inkscape:cy="425.91347"
      inkscape:document-units="mm"
-     inkscape:current-layer="g91458"
+     inkscape:current-layer="g11857"
      inkscape:document-rotation="0"
      showgrid="false"
      fit-margin-top="5"
@@ -3638,14 +3638,14 @@
          transform="translate(-48.878856,2.1183325)"><tspan
            x="-118.74972"
            y="554.125"
-           id="tspan7795"><tspan
+           id="tspan7403"><tspan
              style="-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
-             id="tspan7793">Differential DNA methylation </tspan></tspan><tspan
+             id="tspan7401">Differential DNA methylation </tspan></tspan><tspan
            x="-118.74972"
            y="561.18052"
-           id="tspan7799"><tspan
+           id="tspan7407"><tspan
              style="-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
-             id="tspan7797">between offspring groups</tspan></tspan></text>
+             id="tspan7405">between offspring groups</tspan></tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
@@ -6192,7 +6192,7 @@
            id="tspan10707-5-4-69-7-50-6">control</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;word-spacing:0px"
          x="-183.03329"
          y="446.95938"
          id="text32197"><tspan
