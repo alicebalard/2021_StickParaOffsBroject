@@ -116,11 +116,11 @@ makeGOplot <- function(dfGO){
                    labels = function(x) str_wrap(x, width = 30)) # split too long GO names in half
 }
 
-pdf(GOplot, file = "../../dataOut/fig/FigS3_GOplot_complete.pdf", width = 8, height = 4)
+pdf(GOplot, file = "../../dataOut/fig/FigS3_GOplot_complete.pdf", width = 30, height = 4)
 makeGOplot(dfGO)
 dev.off()
 
-pdf(GOplot, file = "../../dataOut/fig/Fig3C_GOplot_subset.pdf", width = 18, height = 4)
+pdf(GOplot, file = "../../dataOut/fig/Fig3C_GOplot_subset.pdf", width = 7, height = 4)
 makeGOplot(dfGO[dfGO$GO.name %in% listTermsSelect,] )
 dev.off()
 
