@@ -44,12 +44,12 @@ rownames(mydimdesc$Dim.1$quanti)
 ### How much of the BCI variance is explained by each variables?
 # BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + PCA1:No.Worms + No.Worms:PAT
 modFULL = lmer(BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-                 PCA1:No.Worms + No.Worms:PAT, data = myPCA_DMS_allDMS$metadata)
+                 No.Worms:PCA1 + No.Worms:PAT, data = myPCA_DMS_allDMS$metadata)
 
 message("R2c= conditional R2 value associated with fixed effects plus the random effects.")
 
 mod_noPAT = lmer(BCI ~ PCA1 + No.Worms + (1 | brotherPairID) + (1 | Sex) + 
-                 PCA1:No.Worms, data = myPCA_DMS_allDMS$metadata)
+                   No.Worms:PCA1, data = myPCA_DMS_allDMS$metadata)
 message(paste0(
   round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPAT)[2])*100,2),
   "% of the variance in associated with the paternal infection"))
@@ -61,12 +61,25 @@ message(paste0(
   "% of the variance in associated with the number of worms"))
 
 mod_noPCA1 = lmer(BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-       No.Worms:PAT, data = myPCA_DMS_allDMS$metadata)
+                    No.Worms:PAT, data = myPCA_DMS_allDMS$metadata)
 message(paste0(
   round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPCA1)[2])*100,2),
   "% of the variance in associated with the first PCA axis"))
 
 ### Plot of the model
+# No.Worms:PAT
+p1 = plot_model(modFULL, type = "pred", terms = c("No.Worms","PAT"), alpha=.4)+ 
+  scale_color_manual(values = setNames(colOffs, NULL)[1:2])+
+  scale_fill_manual(values = setNames(colOffs, NULL)[1:2])
+
+# No.Worms:PAT
+p2 = plot_model(modFULL, type = "pred", terms = c("No.Worms","PCA1 [-10, 10]"))+ 
+  scale_color_manual(values = c("black","red"))+
+  scale_fill_manual(values = c("black","red"))
+
+gridExtra::grid.arrange(p1,p2, ncol=2)
+
+
 phenoMethPlot <- plot(pred,
                       show_data = TRUE, alpha = .1, dot_alpha=1, dot_size = 3, jitter =T) +
   theme_bw() +
@@ -78,12 +91,10 @@ phenoMethPlot <- plot(pred,
 phenoMethPlot
 
 # save
-pdf(file = "../../dataOut/phenotypeMeth/phenoMethPlot_alleffects.pdf", width = 7, height = 5)
+pdf(file = "../../dataOut/fig/Fig4_phenoMethPlot_alleffects.pdf", width = 7, height = 5)
 phenoMethPlot
 dev.off()
 
-# ### TBC here
-# 
 # ########################
 # ### PCA based on all methylation values at DMS positions detected for each effects separately, with imputation of missing values
 # 
