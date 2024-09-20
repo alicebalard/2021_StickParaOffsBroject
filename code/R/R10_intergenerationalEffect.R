@@ -111,21 +111,15 @@ lmtest::lrtest(mod1, mod4)
 
 ### We select mod2
 
-library(emmeans)
-emmp <- emmeans(mod2, pairwise ~ effect, adjust = "tukey")
-summary(emmp, infer=TRUE)$contrast
+# library(emmeans)
+# emmp <- emmeans(mod2, pairwise ~ effect, adjust = "tukey", pbkrtest.limit = 47668)
+# summary(emmp, infer=TRUE)$contrast
 # contrast                                estimate    SE  df asymp.LCL asymp.UCL z.ratio p.value
 # (infection-induced) - intergenerational    -1.05 0.157 Inf     -1.35    -0.739  -6.670  <.0001
 
-dfTukey = summary(emmp, infer=TRUE)$contrast
-dfTukey = dfTukey %>% 
-  dplyr::mutate_if(is.numeric, round, digits = 4)
-
-#                               contrast estimate    SE  df asymp.LCL asymp.UCL z.ratio p.value
-# 1 (infection-induced) - intergenerational  -1.0469 0.157 Inf   -1.3545   -0.7392 -6.6698       0
-
 # Set up modelplot
-modelPlot <- plot_model(mod2, type = "pred", terms = c("G1methylation", "effect"))+
+modelPlot <- plot(ggpredict(mod2, terms =  c("G1methylation", "effect")), show_data = TRUE)
+plot_model(mod2, type = "pred", terms = c("G1methylation", "effect"), show.values = T)+
   geom_abline(slope = 1, linetype = 2)+
   theme_bw()+
   guides(col = "none") +
@@ -190,5 +184,39 @@ cowplot::plot_grid(
   rel_heights = c(0.2, 0.2, 0.6), rel_widths = c(0.6, 0.2, 0.2)
 )
 dev.off()
+
+###############################
+## Check some genes of interest
+ggplot(AB,
+       aes(x=G1methylation, y = G2methylation, col = trtG1G2, group = trtG1G2, fill=trtG1G2))+
+  scale_color_manual(values = colOffs) +
+  scale_fill_manual(values = colOffs) +
+  facet_wrap(effect~trtG1G2, ncol = 4)+
+  geom_point(size = 3, alpha =.1)+ 
+  geom_smooth(method = "lm") +
+  geom_abline(slope = 1, linetype = 2)
+
+plotG1byG2pergene <- function(gene){
+  ggplot(AB[AB$DMS %in% EffectsDF_ANNOT[EffectsDF_ANNOT$GeneSymbol %in% gene,"DMS"],],
+         aes(x=G1methylation, y = G2methylation, col = trtG1G2, group = trtG1G2, fill=trtG1G2))+
+    scale_color_manual(values = colOffs) +
+    scale_fill_manual(values = colOffs) +
+    facet_wrap(effect~trtG1G2, ncol = 2)+
+    geom_point(size = 3, alpha =.3)+ 
+    geom_smooth(method = "lm") +
+    geom_abline(slope = 1, linetype = 2)
+}
+
+## Intergenerational
+plotG1byG2pergene("CD4") # show activation upon paternal infection!
+plotG1byG2pergene("Chd5") # not much
+plotG1byG2pergene("Mosmo") # not much
+plotG1byG2pergene("B3GAT1") # not much
+plotG1byG2pergene("Stk24") # not much
+
+# Infection-induced
+plotG1byG2pergene("Gzf1") # not much
+plotG1byG2pergene("bmp2") # not much
+plotG1byG2pergene("LRFN2") # not much
 
 message("R10 done. \n")

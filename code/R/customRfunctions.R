@@ -19,7 +19,7 @@
 # and returns a GO df
 
 ## PCA functions:
-# myPCA() runs a PCA on CpG sites
+# myPCA_mod() runs a PCA on CpG sites
 
 # getG2methAtCpGs() Get methylation at list of CpG for all offspring
 
@@ -310,7 +310,35 @@ makedfGO <- function(annot, gene_universe, effect, label){
 #########
 ## PCA ##
 #########
-myPCA <- function(x, incomplete){
+## Get methylation at CpG for offspring
+getG2methAtCpGs <- function(DMSlist){
+  obj=methylKit::select(
+    uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, 
+    which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr, 
+                uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = "_") %in% 
+            DMSlist))
+  
+  DMS=paste(obj$chr, obj$start, sep = "_")
+  
+  obj=percMethylation(obj) %>% data.frame 
+  obj$DMS = DMS
+  
+  obj=melt(obj)
+  names(obj)[names(obj)%in% "variable"]="SampleID"
+  names(obj)[names(obj)%in% "value"]="G2methylation"
+  obj=merge(obj, fullMetadata_OFFS[c("SampleID", "brotherPairID", "Sex",
+                                     "trtG1G2", "patTrt", "No.Worms", "BCI")])
+  obj$patTrt[obj$patTrt %in% "controlP"]="Control"
+  obj$patTrt[obj$patTrt %in% "infectedP"]="Exposed"
+  
+  ## Pivot to have one column per DMS
+  obj = obj %>% pivot_wider(names_from = DMS, values_from = G2methylation) %>%
+    data.frame()
+  
+  return(obj)
+}
+
+myPCA_mod <- function(x, incomplete){
   if (incomplete==TRUE){
     # estimate the number of components from incomplete data
     nb <- estim_ncpPCA(x, scale = T)
@@ -336,63 +364,6 @@ myPCA <- function(x, incomplete){
   print(formula(modSel))
   return(list(res.PCA=res.PCA, modSel = modSel, metadata = metadata))
 }
-
-## Get methylation at CpG for offspring
-getG2methAtCpGs <- function(DMSlist){
-   obj=methylKit::select(
-    uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, 
-    which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr, 
-                uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = "_") %in% 
-            DMSlist))
-  
-  DMS=paste(obj$chr, obj$start, sep = "_")
-  
-  obj=percMethylation(obj) %>% data.frame 
-  obj$DMS = DMS
-  
-  obj=melt(obj)
-  names(obj)[names(obj)%in% "variable"]="SampleID"
-  names(obj)[names(obj)%in% "value"]="G2methylation"
-  obj=merge(obj, fullMetadata_OFFS[c("SampleID", "brotherPairID", "trtG1G2", "patTrt", "No.Worms", "BCI")])
-  obj$patTrt[obj$patTrt %in% "controlP"]="Control"
-  obj$patTrt[obj$patTrt %in% "infectedP"]="Exposed"
-  
-  return(obj)
-}
-
-
-getPCACpG <- function(DMSvec, effect){
-  # pos2keep = which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr,
-  #                        uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = "_") %in%
-  #                    DMSvec)
-  # uniteAtDMS = methylKit::select(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP, pos2keep)
-  # percAtDMS = percMethylation(uniteAtDMS)
-  # 
-  # print(paste(nrow(percAtDMS), "DMS linked with", effect))
-  
-  # We use missMDA and FactoMineR for imputation of missing data and
-  # performing of PCA: (see:
-  #
-  #                       -   <http://juliejosse.com/wp-content/uploads/2018/05/DataAnalysisMissingR.html>
-  #                       -   <https://www.youtube.com/watch?v=OOM8_FH6_8o>)
-  
-  
-  PCA_percAtDMS_imputed <- myPCA(x = t(percAtDMS), incomplete = TRUE)
-  
-  # The function dimdesc() can be used to identify the most correlated variables with a given principal component.
-  mydimdesc = dimdesc(PCA_percAtDMS_imputed$res.PCA, axes = c(1,2), proba = 0.05)
-  
-  print(paste(nrow(mydimdesc$Dim.1$quanti), "CpG sites most correlated (p < 0.05) with the first principal component"))
-  print(paste(nrow(mydimdesc$Dim.2$quanti), "CpG sites most correlated (p < 0.05) with the second principal component"))
-  
-  # Extract the values for CpGs associated with the
-  CpGPCA1 = methylKit::select(uniteAtDMS, as.numeric(gsub("V","",rownames(mydimdesc$Dim.1$quanti))))
-  CpGPCA2 = methylKit::select(uniteAtDMS, as.numeric(gsub("V","",rownames(mydimdesc$Dim.2$quanti))))
-  
-  return(list(PCA_percAtDMS_imputed=PCA_percAtDMS_imputed, CpGPCA1=CpGPCA1, CpGPCA2=CpGPCA2))
-}
-
-
 
 #
 # ##########################
@@ -505,98 +476,6 @@ getPCACpG <- function(DMSvec, effect){
 #     names(perc_uniteObj)[names(perc_uniteObj) %in% "X"] = paste0("ave", levels(rawmetadata$trtG1G2)[i])
 #   }
 #   perc_uniteObj = perc_uniteObj[grep("ave", names(perc_uniteObj))]
-# }
-# 
-# ## Manhattan plots function:
-# # GYgynogff a data frame with a "chrom" and a "length" columns 
-# # (NB: here "genome4Manhattan" is specific to my stickleback file)
-# plotManhattanGenesDMS <- function(annotFile, GYgynogff){
-#   annotFile=annotFile %>% 
-#     dplyr::select(c("start.gene", "end.gene", "GeneSymbol", "feature.name", "Note", "chrom",
-#                     "nDMSperGenekb", "ENTREZID", "description", "summary"))%>% unique
-#   
-#   ## Prepare genome for Manhattan plots:
-#   genome4Manhattan = GYgynogff %>%
-#     #genome without chrXIX and unknown re-type:
-#     filter(chrom!="Gy_chrXIX" & chrom!= "Gy_chrUn")%>%
-#     mutate(chrom_nr=chrom %>% deroman(), 
-#            chrom_order=factor(chrom_nr) %>% as.numeric()) %>% arrange(chrom_order) %>%
-#     mutate(gstart=lag(length,default=0) %>% cumsum(), 
-#            gend=gstart+length, 
-#            typeBG=LETTERS[2-(chrom_order%%2)],   
-#            gmid=(gstart+gend)/2)
-#   
-#   # Prepare data and change gene position to start at the good chromosome
-#   data4Manhattan = dplyr::left_join(annotFile, genome4Manhattan) %>% 
-#     dplyr::mutate(posInPlot=((end.gene+start.gene)/2)+gstart)
-#   
-#   # Short name of the gene if we want to plot these as labels:
-#   data4Manhattan$Note = unlist(data4Manhattan$Note)
-#   data4Manhattan$Note = str_extract(data4Manhattan$Note, "(?<=Similar to )(\\w+)")
-#   
-#   # Manhattan plot
-#   plot = ggplot()+
-#     # add grey background every second chromosome
-#     geom_rect(data=genome4Manhattan,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=typeBG), alpha=.2)+
-#     scale_x_continuous(breaks=genome4Manhattan$gmid,labels=genome4Manhattan$chrom %>% str_remove(.,"Gy_chr"),
-#                        position = "top",expand = c(0,0))+
-#     scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none") +
-#     # geom_hline(yintercept = 1)+ # if want to add line break
-#     theme(panel.border = element_rect(colour = "black", fill=NA, size=1))+ # add frame
-#     # scale_y_continuous(breaks = seq(0, 20), expand = expansion(mult = 0.5)) + # increase size under plot for labels
-#     ylab("Number of differentially methylated CpG per gene kb")+ 
-#     geom_point(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGenekb)) +
-#     geom_label_repel(data = data4Manhattan[data4Manhattan$nDMSperGenekb > 1,],
-#                      aes(x=posInPlot, y = nDMSperGenekb, label = Note), max.overlaps = Inf)
-#   return(plot)
-# }
-# 
-# # GYgynogff a data frame with a "chrom" and a "length" columns (NB: here "genome4Manhattan" is specific to my stickleback file)
-# plotManhattanGenesDMS4BP <- function(annotFile, i = 0, GYgynogff, myxlab = NULL, isBPinfo=TRUE){
-#   ## Prepare genome for Manhattan plots:
-#   genome4Manhattan = GYgynogff %>%
-#     #genome without chrXIX and unknown re-type:
-#     filter(chrom!="Gy_chrXIX" & chrom!= "Gy_chrUn")%>%
-#     mutate(chrom_nr=chrom %>% deroman(), 
-#            chrom_order=factor(chrom_nr) %>% as.numeric()) %>% arrange(chrom_order) %>%
-#     mutate(gstart=lag(length,default=0) %>% cumsum(), 
-#            gend=gstart+length, 
-#            typeBG=LETTERS[2-(chrom_order%%2)],   
-#            gmid=(gstart+gend)/2)
-#   
-#   # Prepare data and change gene position to start at the good chromosome
-#   data4Manhattan = dplyr::left_join(annotFile, genome4Manhattan) %>% dplyr::mutate(posInPlot=start+gstart)
-#   
-#   # Short name of the gene if we want to plot these as labels:
-#   data4Manhattan$Note = unlist(data4Manhattan$Note)
-#   data4Manhattan$Note = str_extract(data4Manhattan$Note, "(?<=Similar to )(\\w+)")
-#   
-#   # Manhattan plot
-#   plot = ggplot()+
-#     # add grey background every second chromosome
-#     geom_rect(data=genome4Manhattan,aes(xmin=gstart,xmax=gend,ymin=-Inf,ymax=Inf,fill=typeBG), alpha=.2)+
-#     scale_x_continuous(breaks=genome4Manhattan$gmid,labels=genome4Manhattan$chrom %>% str_remove(.,"Gy_chr"),
-#                        position = "top",expand = c(0,0))+
-#     scale_fill_manual(values=c(A=rgb(.9,.9,.9),B=NA),guide="none") +
-#     # geom_hline(yintercept = 1)+ # if want to add line break
-#     theme(panel.border = element_rect(colour = "black", fill=NA, size=1))+ # add frame
-#     scale_y_continuous(breaks = seq(0, 20), expand = expansion(mult = 0.5)) + # increase size under plot for labels
-#     ylab("Number of differentially methylated CpG per gene kb")
-#   
-#   # add points
-#   if (isBPinfo==TRUE){
-#     plot = plot + 
-#       geom_point(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGenekb, col=as.factor(nbrBP)), size = 2) +
-#       scale_color_manual(values = c('grey', 'red', 'purple', 'blue', 'green'),
-#                          name = "Genes found differentially methylated in N brother pairs:") +
-#       xlab(paste0("Genes with DMS present in at least 4 brother pairs\nComparison: ", vecCompa[i]))
-#   } else {
-#     plot = plot + 
-#       geom_point(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGenekb), size = 2) +
-#       geom_label_repel(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGenekb, label = Note), max.overlaps = Inf)+
-#       xlab(myxlab)
-#   }
-#   return(plot)
 # }
 # 
 

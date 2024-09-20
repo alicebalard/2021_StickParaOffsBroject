@@ -143,6 +143,7 @@ install_and_load_github_packages(packages_to_install)
 bioc_packages <- c("Category", # for hypergeometric GO test
                "WGCNA", # for networks
                "BiocFileCache", # should solve some db issues
+               "ComplexHeatmap", # for heatmaps
                "genomation", ## for annotation
                "GenomicFeatures",## for annotation
                "GOstats", # for GO analysis
@@ -188,6 +189,7 @@ install_and_load_bioc_packages(bioc_packages)
 ## offspring colors for all kind of plots
 ## colOffs <- c("#ffe67f", "#ff6300","#a8caff","#a800d4") ## previous ugly
 colOffs <- c("#a9d6c1ff", "#d1b000ff","#4b8da3ff","#c05a29ff")
+names(colOffs) = c("NE_control", "NE_exposed", "E_control", "E_exposed")
 
 colEffects <- as.vector(palette.colors(palette = "Okabe-Ito")[1:4])
 names(colEffects) <- c("infection induced", "intergenerational", "additive", "interaction")

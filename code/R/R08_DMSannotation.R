@@ -140,7 +140,7 @@ ggplot()+
                      breaks=data4Manhattan[!duplicated(data4Manhattan$chrom),"gmid"],
                      labels=data4Manhattan[!duplicated(data4Manhattan$chrom),"chrom"] %>% str_remove(.,"Gy_chr"),
                      position = "bottom",expand = c(0,0))+
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1))+ # add frame
+  theme(panel.border = element_rect(colour = "black", fill=NA, linewidth=1))+ # add frame
   ylab("Number of differentially methylated CpG per gene kb")+
   scale_y_continuous(breaks = 0:5)+
   geom_point(data = data4Manhattan, aes(x=posInPlot, y = nDMSperGenekb)) +
