@@ -40,10 +40,17 @@ dev.off()
 data.dist = makeDatadistFUN(uniteCovALL_G2_woSexAndUnknowChr)
 
 ## Adonis test: importance of each predictor
-adonis2(data.dist ~ PAT * outcome * Sex * brotherPairID, data = fullMetadata_OFFS)
+adonis2(data.dist ~ PAT * outcome * Sex * brotherPairID, data = fullMetadata_OFFS, 
+        by = "terms")
 
 # Results: family of the father (brotherPairID) explains more than 14% of
 # the variance in methylation.
+#                                 Df SumOfSqs    R2      F    Pr(>F)    
+# PAT                             1 0.002782 0.01470 1.8292  0.001 ***
+# outcome                         1 0.001909 0.01009 1.2552  0.027 *  
+# Sex                             1 0.002418 0.01277 1.5895  0.001 ***
+# brotherPairID                   7 0.028018 0.14805 2.6316  0.001 ***
+# PAT:brotherPairID               7 0.014344 0.07580 1.3473  0.001 ***
 
 # To focus on G1 and G2 treatments, we define the permutation structure
 # considering brother pairs (N = 8), and use a PERMANOVA to test the
@@ -51,12 +58,13 @@ adonis2(data.dist ~ PAT * outcome * Sex * brotherPairID, data = fullMetadata_OFF
 # interactions significantly influencing global methylation.
 perm <- how(nperm = 1000) # 1000 permutations
 setBlocks(perm) <- with(fullMetadata_OFFS, brotherPairID) # define the permutation structure considering brotherPairID and sex
-print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, permutations = perm))
+print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, 
+              permutations = perm, by = "terms"))
 
 # Results:
 # -   1.5% of the variation explained by PAT (R2=0.01470, p \< 0.001)
-# -   1% of the variation explained by outcome (R2=0.01009, p = 0.035)
-# -   1.3% of the variation explained by Sex (R2=0.01277, p = 0.004)
+# -   1% of the variation explained by outcome (R2=0.01009, p = 0.042)
+# -   1.3% of the variation explained by Sex (R2=0.01277, p = 0.011)
 
 ## NMDS
 #### RUN Goodness of fit

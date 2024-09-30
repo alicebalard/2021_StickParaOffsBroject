@@ -15,6 +15,7 @@ EffectsDF_ANNOT= myHomebrewDMSannotation(
 # (namely Rho guanine nucleotide exchange factor 28, Collagen alpha-1, Metabotropic glutamate receptor 7, Titin)
 
 # we have annotations for 647 DMS on 548 unique known genes, and 60 DMS on genes coding for proteins with unknown function (Total= 707 DMS).
+length(unique(EffectsDF_ANNOT$feature.name)) # 608 features
 length(unique(EffectsDF_ANNOT$GeneName)) # 548 known genes
 length(unique(EffectsDF_ANNOT$uniprotID)) # 556 known protein
 length(unique(EffectsDF_ANNOT$Function)) # 493 functions known
@@ -51,18 +52,27 @@ EffectsDF_ANNOT[grep("MAPK", EffectsDF_ANNOT$Function, ignore.case = T),
                 c("uniprotID")] %>% table %>% data.frame() %>% arrange(Freq) # P35400 and B0LT89 have 3 DMS
 EffectsDF_ANNOT[EffectsDF_ANNOT$uniprotID %in% "B0LT89",] # Chd5 gene, Chromatin-remodeling protein that binds DNA through histones and regulates gene transcription, effect INTERGENERATIONAL
 
+write.csv(x = EffectsDF_ANNOT %>% 
+            dplyr::select(feature.name, GeneSymbol, uniprotID, effect, chrom, featureType, Function) %>%
+            data.frame(),
+          file = "../../dataOut/SuppltableS1_DMSgenes.csv", row.names = F)
+
 ## NB 20 genes have DMS in different effects!
 my20genes <- intersect(EffectsDF_ANNOT$feature.name[EffectsDF_ANNOT$effect %in% "INTERGENERATIONAL"],
                        EffectsDF_ANNOT$feature.name[EffectsDF_ANNOT$effect %in% "INFECTION_INDUCED"])
 
-table(EffectsDF_ANNOT[EffectsDF_ANNOT$feature.name %in% my20genes,"uniprotID"])
-# A2A8L5 B0LT89 B5DE93 E7F5E1 O02747 O14763 P35400 P43141 Q6DFV8 Q6KEQ9 Q70EL4 
-# 3      3      2      2      2      2      2      2      2      2      2 
-# Q8BMQ2 Q8BPM0 Q8R5G7 Q99K41 Q9JI18 
-# 2      2      2      2      2 
+df20=EffectsDF_ANNOT[EffectsDF_ANNOT$feature.name %in% my20genes,] %>% 
+  dplyr::group_by(feature.name, chrom, featureType, uniprotID, GeneSymbol,effect, Function) %>%
+  dplyr::summarise(count = n()) %>% 
+  filter(!is.na(GeneSymbol)) %>% 
+  dplyr::select(feature.name, GeneSymbol, uniprotID, effect, chrom, featureType,count, Function) %>% 
+  data.frame()
 
-df20=EffectsDF_ANNOT[EffectsDF_ANNOT$feature.name %in% my20genes,
-                     c("uniprotID", "GeneSymbol", "Species", "Function")]
+names(df20)[names(df20) %in% "effect"] <- "category"
+
+df20$category = tolower(df20$category)
+
+write.csv(x = df20, file = "../../dataOut/SuppltableS2_df20.csv", row.names = F)
 
 df20[grep("immune", df20$Function, ignore.case = T),] # Stk24 x3, AHRx2
 df20[grep("transcription", df20$Function, ignore.case = T),] # cdk12 x2, AHRx2
@@ -151,20 +161,20 @@ ggplot()+
 
 #########################################################
 ## Better than the Manhattan plot: plot along chromosomes
-unique=data.frame(chrom=unique(EffectsDF$chrom),
-                  length=unique(EffectsDF$length))
-
 EffectsDF_ANNOT = EffectsDF_ANNOT %>% 
   mutate(GeneSymbol = ifelse(!is.na(GeneSymbol), GeneSymbol, "unknown"))
 
+## Order chromosomes
+EffectsDF_ANNOT$chrom <- factor(EffectsDF_ANNOT$chrom, levels = GYgynogff$chrom)
+
 message("save plot of the DMS position along the chromosomes in dataOut/fig/Fig3C_positionsAnnotatedGenes.pdf")
 pdf("../../dataOut/fig/Fig3B_positionsAnnotatedGenes.pdf", width = 10, height = 6)
-
 ggplot(EffectsDF_ANNOT) +
-  geom_col(data = unique, aes(x=length, y=chrom), width = .7, fill="#e0ebeb")+ # plot full chromosome
+  geom_col(data = GYgynogff, aes(x=length, y=fct_inorder(chrom)), width = .7, fill="#e0ebeb")+ # plot full chromosome
   geom_tile(aes(x=start, y=chrom, fill=effect, width = 100000, height = .8))+
   geom_label_repel(data = EffectsDF_ANNOT[!duplicated(EffectsDF_ANNOT$feature.name) &
-                                            EffectsDF_ANNOT$nDMSperGene >2,],
+                                            EffectsDF_ANNOT$nDMSperGenekb >0.1 &
+                                            EffectsDF_ANNOT$nDMSperGene>2,],
                    aes(x=start, y = chrom, 
                        label = paste0(GeneSymbol, " (", nDMSperGene, "DMS)"),
                        fill = factor(effect)),
