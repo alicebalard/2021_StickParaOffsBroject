@@ -372,7 +372,7 @@ makeGOplotslim <- function(dfGO, posleg="top"){
   GOplot = dfGOslim %>%
     ggplot(aes(x=Effect, y = Term)) +
     geom_point(aes(size = Percent)) +
-    scale_size_continuous(name = "% of GO terms in this GO slim category", range = c(1,10))+
+    scale_size_continuous(name = "% of GO terms in this GO slim category", range = c(1,8))+
     theme_bw() + ylab("") + xlab("") +
     theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
           legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
