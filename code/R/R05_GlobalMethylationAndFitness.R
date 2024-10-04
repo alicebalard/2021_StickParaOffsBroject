@@ -1,7 +1,7 @@
 ## Global methylation and fitness
 ## A. Balard
 ## September 2024
-## Produces fig S4 dataOut/fig/FigS4_slopeBCIonnbrWorms.pdf
+## Produces fig S3 dataOut/fig/FigS3_slopeBCIonnbrWorms.pdf
 
 # Each script sources the previous script of the pipeline if needed
 source("R04_getDiffMeth_PQLseq_runInCLUSTER.R") 
@@ -68,7 +68,7 @@ mod_Tol <- lmer(BCI ~ No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=fullMetada
 step(mod_Tol, reduce.random = F) # Model found: full model
 
 ## The slope of BCI on nbrworms varies upon treatment
-pdf(file = "../../dataOut/fig/FigS4_slopeBCIonnbrWorms.pdf", width = 7, height = 5)
+pdf(file = "../../dataOut/fig/FigS3_slopeBCIonnbrWorms.pdf", width = 7, height = 5)
 plot(ggpredict(mod_Tol, terms = c("No.Worms", "PAT")), show_data=T, jitter = TRUE, 
      dot_alpha =1, alpha = .5)+
   theme_pubr() + # was overridden by plot ggpredict

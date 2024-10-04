@@ -148,6 +148,7 @@ bioc_packages <- c("Category", # for hypergeometric GO test
                "GenomicFeatures",## for annotation
                "GOstats", # for GO analysis
                "GSEABase",  # for GO term GeneSetCollection
+               "GO.db", # for GO slim retrieving
                "methylKit",
                "qvalue", # for FDR after PQLseq
                "org.Hs.eg.db", # gene annotation from online databases

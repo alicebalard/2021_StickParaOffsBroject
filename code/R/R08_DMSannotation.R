@@ -72,8 +72,6 @@ names(df20)[names(df20) %in% "effect"] <- "category"
 
 df20$category = tolower(df20$category)
 
-write.csv(x = df20, file = "../../dataOut/SuppltableS2_df20.csv", row.names = F)
-
 df20[grep("immune", df20$Function, ignore.case = T),] # Stk24 x3, AHRx2
 df20[grep("transcription", df20$Function, ignore.case = T),] # cdk12 x2, AHRx2
 df20[grep("MAPK", df20$Function, ignore.case = T),] # Stk24 x3, GRM7x2

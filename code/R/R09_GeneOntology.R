@@ -62,66 +62,39 @@ dfGO_infectind = makedfGO(
 
 dfGO = rbind(dfGO_intergen, dfGO_infectind)
 
-# ###############
-# ## Check GO slim terms for easy interpretation 9not very meaningful...)
-# ## GO subsets (also known as GO slims) are condensed versions of the GO containing a subset of the terms. 
-# # dl the GO slim Developed by GO Consortium for the Alliance of Genomes Resources
-# # download.file(url = "https://current.geneontology.org/ontology/subsets/goslim_agr.obo",
-#               # destfile = "../../data/goslim_agr.obo")
-# 
-# slim <- GSEABase::getOBOCollection("../../data/goslim_agr.obo")
-# 
-# GSEABase::goSlim(idSrc = GOCollection(dfGO$GO.term),
-#                  slimCollection = slim, 
-#                  ontology = "BP") %>%  filter(Count !=0)
-# 
-# GSEABase::goSlim(idSrc = GOCollection(dfGO$GO.term),
-#                                slimCollection = slim, 
-#                                ontology = "MF") %>%  filter(Count !=0)
-# 
-# GSEABase::goSlim(idSrc = GOCollection(dfGO$GO.term),
-#                                slimCollection = slim, 
-#                                ontology = "CC") %>%  filter(Count !=0)
+###########
+## GO plots
 
-## Select interesting terms for our study
+pdf(file = "../../dataOut/fig/FigS2_GOplot_complete.pdf", width = 30, height = 4)
+makeGOplot(dfGO)
+dev.off()
+
+## With slim GO terms
+pdf(file = "../../dataOut/fig/Fig3C_GOplot_slim.pdf", width = 7, height = 4)
+makeGOplotslim(dfGO)$GOplot
+dev.off()
+
+dfGOslim=makeGOplotslim(dfGO)$dfGOslim
+
+## Highlight interesting GO terms for our study
 listTermsSelect <- unique(c(dfGO[grep("transcription", dfGO$GO.name),"GO.name"],
                             dfGO[grep("expression", dfGO$GO.name),"GO.name"],
                             dfGO[grep("immun", dfGO$GO.name),"GO.name"],
                             dfGO[grep("methyl", dfGO$GO.name),"GO.name"],
                             dfGO[grep("RNA", dfGO$GO.name),"GO.name"]))
+makeGOplotslim(dfGO[dfGO$GO.name %in% listTermsSelect,])$GOplot
 
-###########
-## GO plots
-makeGOplot <- function(dfGO, posleg="top"){
-  dfGO %>%
-  dplyr::filter(p.value.adjusted < 0.05) %>% 
-  ggplot(aes(x=Effect, y = factor(GO.name))) +
-  geom_point(aes(color = p.value.adjusted, size = genePercent)) +
-  scale_color_gradient(
-    name="adjusted\np-value", low = "red", high = "blue", 
-    limits = c(0, 0.05), breaks = c(0, 0.02, 0.04), labels =c("0", "0.02", "0.04")) +
-  scale_size_continuous(name = "% of genes")+
-  theme_bw() + ylab("") + xlab("") +
-  theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
-        legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
-        legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), # grey box for legend
-        legend.position=posleg,
-        axis.text.y = element_text(size = 8),  # Decrease y-axis text size
-        axis.text.x = element_text(size = 8, angle = 45, hjust = 1)  # Increase x-axis text size and rotate
-  )+
-  facet_grid(.~fct_inorder(GO.category), scales="free",space = "free")+
-  coord_flip() + # flip axes
-  scale_x_discrete(labels = function(x) str_wrap(x, width = 20))+ # split long text
-  scale_y_discrete(limits=rev, # revers axis to have alphabetical order
-                   labels = function(x) str_wrap(x, width = 30)) # split too long GO names in half
-}
+getGo2Goslim("DNA metabolic process", "BP", "intergenerational")
+getGo2Goslim("DNA metabolic process", "BP", "infection-induced")
 
-pdf(file = "../../dataOut/fig/FigS3_GOplot_complete.pdf", width = 30, height = 4)
-makeGOplot(dfGO)
-dev.off()
+getGo2Goslim("response to stimulus", "BP", "intergenerational")
 
-pdf(file = "../../dataOut/fig/Fig3C_GOplot_subset.pdf", width = 7, height = 4)
-makeGOplot(dfGO[dfGO$GO.name %in% listTermsSelect,], posleg = "right")
-dev.off()
+getGo2Goslim("RNA metabolic process", "BP", "intergenerational")
+getGo2Goslim("RNA metabolic process", "BP", "infection-induced")
+
+getGo2Goslim("catalytic activity", "MF", "infection-induced")
+getGo2Goslim("DNA binding", "MF", "intergenerational")
+
+
 
 message("R09 done. \n")

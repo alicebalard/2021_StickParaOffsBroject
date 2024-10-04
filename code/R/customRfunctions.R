@@ -17,12 +17,14 @@
 ## GO functions:
 # makedfGO() takes an annotation df, a gene universe and the name of an effect
 # and returns a GO df
+# makeGOplot() makes a GO plot from dfGO
+# makeGOplotslim() makes a GO plot with slim GO terms from dfGO
+# getGo2Goslim() map a GOslim term to its GO terms
 
 ## PCA functions:
 # myPCA_mod() runs a PCA on CpG sites
 
 # getG2methAtCpGs() Get methylation at list of CpG for all offspring
-
 
 ##############
 
@@ -307,6 +309,99 @@ makedfGO <- function(annot, gene_universe, effect, label){
   return(dfGO)
 }
 
+## make a GO plot from dfGO
+makeGOplot <- function(dfGO, posleg="top"){
+  dfGO %>%
+    dplyr::filter(p.value.adjusted < 0.05) %>% 
+    ggplot(aes(x=Effect, y = factor(GO.name))) +
+    geom_point(aes(color = p.value.adjusted, size = genePercent)) +
+    scale_color_gradient(
+      name="adjusted\np-value", low = "red", high = "blue", 
+      limits = c(0, 0.05), breaks = c(0, 0.02, 0.04), labels =c("0", "0.02", "0.04")) +
+    scale_size_continuous(name = "% of genes")+
+    theme_bw() + ylab("") + xlab("") +
+    theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
+          legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
+          legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), # grey box for legend
+          legend.position=posleg,
+          axis.text.y = element_text(size = 8),  # Decrease y-axis text size
+          axis.text.x = element_text(size = 8, angle = 45, hjust = 1)  # Increase x-axis text size and rotate
+    )+
+    facet_grid(.~fct_inorder(GO.category), scales="free",space = "free")+
+    coord_flip() + # flip axes
+    scale_x_discrete(labels = function(x) str_wrap(x, width = 20))+ # split long text
+    scale_y_discrete(limits=rev, # revers axis to have alphabetical order
+                     labels = function(x) str_wrap(x, width = 30)) # split too long GO names in half
+}
+
+###############
+## Check GO slim terms for easy interpretation
+## GO subsets (also known as GO slims) are condensed versions of the GO containing a subset of the terms.
+# dl the GO slim Developed by GO Consortium for the Alliance of Genomes Resources
+# download.file(url = "https://current.geneontology.org/ontology/subsets/goslim_agr.obo",
+# destfile = "../../data/goslim_agr.obo")
+slim <- GSEABase::getOBOCollection("../../data/goslim_agr.obo")
+
+## make a GO plot with slim GO terms from dfGO
+makeGOplotslim <- function(dfGO, posleg="top"){
+  
+  myfun <- function(myeffect, myGOcat){
+    GSEABase::goSlim(idSrc = GOCollection(dfGO[
+      dfGO$p.value.adjusted < 0.05 & dfGO$Effect %in% myeffect,"GO.term"]), 
+      slimCollection = slim,
+      ontology = myGOcat) %>%  filter(Count !=0) %>%
+      dplyr::mutate(GO.category = myGOcat, Effect = myeffect)
+  }
+  
+  list = list(NULL) ; i=1
+  for (myeffect in unique(dfGO$Effect)){
+    for (myGOcat in c("BP", "CC", "MF")){
+      list[[i]] = myfun(myeffect, myGOcat)
+      i = i+1
+    }
+  }
+  
+  dfGOslim = do.call(rbind, list)
+  
+  ## Make sure the GOslim terms are correct
+  dfGOslim$GOslim=substr(rownames(dfGOslim), 1, 10) # rownames added a "1" to some
+
+  ## Order by percent
+  dfGOslim = dfGOslim[order(dfGOslim$Percent), ]
+  
+  GOplot = dfGOslim %>%
+    ggplot(aes(x=Effect, y = Term)) +
+    geom_point(aes(size = Percent)) +
+    scale_size_continuous(name = "% of GO terms in this GO slim category", range = c(1,10))+
+    theme_bw() + ylab("") + xlab("") +
+    theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
+          legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
+          legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), # grey box for legend
+          legend.position=posleg,
+          axis.text.y = element_text(size = 8),  # Decrease y-axis text size
+          axis.text.x = element_text(size = 8, angle = 45, hjust = 1)  # Increase x-axis text size and rotate
+    )+
+    facet_grid(Effect~fct_inorder(GO.category), scales="free",space = "free")+
+    coord_flip() 
+  return(list(GOplot=GOplot, dfGOslim=dfGOslim))
+}
+
+## map a GOslim term to its GO terms
+getGo2Goslim <- function(Term, cat, effect){
+  x=dfGOslim[dfGOslim$Term %in% Term & 
+               dfGOslim$GO.category %in% cat &
+               dfGOslim$Effect %in% effect,"GOslim"]
+  if(cat=="MF"){
+    map <- GO.db::GOMFOFFSPRING[x]
+  } else if(cat=="BP"){
+    map <- GO.db::GOBPOFFSPRING[x]
+  } else if(cat == "CC"){
+    map <- GO.db::GOCCOFFSPRING[x]
+  }
+  mapped <- as.vector(sapply(map, intersect, ids(GOCollection(dfGO$GO.term))))
+  dfGO$GO.name[dfGO$GO.term %in% mapped]
+}
+
 #########
 ## PCA ##
 #########
@@ -364,118 +459,3 @@ myPCA_mod <- function(x, incomplete){
   print(formula(modSel))
   return(list(res.PCA=res.PCA, modSel = modSel, metadata = metadata))
 }
-
-#
-# ##########################
-# ## Calculate beta values (methylation proportion per CpG site) for the 1001880 positions covered in half G1 and half G2
-# getPMdataset <- function(uniteCov, MD, gener){
-#   PM = methylKit::percMethylation(uniteCov)
-#   
-#   ## Each row is a CpG sites, let's give them a proper "pos" row name
-#   rownames(PM) <- paste(uniteCov$chr, uniteCov$start, uniteCov$end)
-#   
-#   ## Select only the positions corresponding in DMS in G1 comparison control/infected
-#   length(DMS_info_G1$DMS)
-#   PM <- PM[rownames(PM) %in% DMS_info_G1$DMS, ]
-#   nrow(PM) # all good 
-#   
-#   ## Melt
-#   PM <- melt(PM)
-#   
-#   ## Extract chromosome, position, and assign correct names
-#   PM$Chr <- sapply(strsplit(as.character(PM$Var1), " +"), `[`, 1)
-#   PM$Pos <- sapply(strsplit(as.character(PM$Var1), " +"), `[`, 2)
-#   names(PM) <- c("Var1",  "ID",  "BetaValue", "Chr", "Pos")
-#   PM$rankpos <- 1:nrow(PM)
-#   
-#   ## Add treatment, Sex, brotherPairID and clutchID
-#   dfTrt = data.frame(ID = MD$SampleID, Treatment = MD$trtG1G2, Sex = MD$Sex, brotherPairID= MD$brotherPairID, clutch.ID = MD$clutch.ID)
-#   PM = merge(PM, dfTrt)
-#   
-#   if (gener=="parents"){
-#     PM$G1_trt <- PM$Treatment
-#     PM$G2_trt <- NA
-#   } else if (gener=="offspring"){
-#     PM$G1_trt <- sapply(strsplit(as.character(PM$Treatment), "_"), `[`, 1)
-#     PM$G2_trt <- sapply(strsplit(as.character(PM$Treatment), "_"), `[`, 2)
-#     PM$G2_trt[PM$G2_trt %in% "control"] <- "Control"
-#     PM$G2_trt[PM$G2_trt %in% "exposed"] <- "Exposed"
-#     PM$G1_trt[PM$G1_trt %in% "E"] <- "Exposed"
-#     PM$G1_trt[PM$G1_trt %in% "NE"] <- "Control"
-#   }
-#   ## Add the value of the DM in the parental comparison:
-#   names(PM)[names(PM) %in% "Var1"] <- "CpGSite"
-#   PM <- merge(PM, data.frame(CpGSite = DMS_info_G1$DMS, meth.diff.parentals = DMS_info_G1$meth.diff))
-#   
-#   ## Remove NA
-#   PM <- PM[!is.na(PM$BetaValue),]
-#   
-#   ## Add direction methylation diff in parental comparison
-#   PM$hypohyper <- "hypo"
-#   PM$hypohyper[PM$meth.diff.parentals > 0] <- "hyper"
-#   PM$hypohyper <- as.factor(PM$hypohyper)
-#   PM$hypohyper <- factor(PM$hypohyper, levels = c("hypo", "hyper"))
-#   
-#   return(PM)
-# }
-# 
-# ## Additional function for complexUpset to color by degrees
-# query_by_degree = function(data, groups, params_by_degree, ...) {
-#   intersections = unique(ComplexUpset::upset_data(data, groups)$plot_intersections_subset)
-#   lapply(
-#     intersections,
-#     FUN=function(x) {
-#       members = strsplit(x, '-', fixed=TRUE)[[1]]
-#       if (!(length(members) %in% names(params_by_degree))) {
-#         stop(
-#           paste('Missing specification of params for degree', length(members))
-#         )
-#       }
-#       args = c(
-#         list(intersect=members, ...),
-#         params_by_degree[[length(members)]]
-#       )
-#       do.call(ComplexUpset::upset_query, args)
-#     }
-#   )
-# }
-# 
-
-# ## Function to get DMS info
-# myDMSinfo <- function(DMSobject, fromUniteCov){
-#   DMS = paste(DMSobject$chr, DMSobject$start, DMSobject$end)
-#   meth.diff = DMSobject$meth.diff
-#   direction = ifelse(DMSobject$meth.diff > 0, "hyper", "hypo")
-#   percentDMS = length(DMS)/nrow(fromUniteCov)*100
-#   return(list(DMS = DMS, meth.diff = meth.diff, direction = direction, percentDMS = percentDMS))
-# }
-# 
-# # order positions by chromosomes & position
-# reorderByChrom <- function(x){
-#   df = data.frame(fullpos=names(x), beta=x, row.names = NULL)
-#   df$chr = sapply(strsplit(df$fullpos,"\\."), `[`, 1)
-#   df$pos = sapply(strsplit(df$fullpos,"\\."), `[`, 2)
-#   df = df %>%
-#     mutate(chrom_nr=chr %>% deroman(), # deroman is custom, defined in customRfunctions.R
-#            chrom_order=factor(chrom_nr) %>% as.numeric()) %>% 
-#     arrange(chrom_order) 
-#   orderedVec = df$beta
-#   names(orderedVec) = df$fullpos
-#   return(orderedVec)
-# }
-# 
-# # calculate average methylation per treatment group at each position
-# calcAveMeth <- function(perc_uniteObj){
-#   rawmetadata = fullMetadata[match(colnames(perc_uniteObj), fullMetadata$SampleID), ]
-#   
-#   for (i in 1:length(levels(rawmetadata$trtG1G2))){
-#     whichCols = which(colnames(perc_uniteObj) %in% rawmetadata$SampleID[
-#       rawmetadata$trtG1G2 %in% levels(rawmetadata$trtG1G2)[i]])
-#     perc_uniteObj = perc_uniteObj %>% data.frame() %>%
-#       dplyr::mutate(X = rowMeans(dplyr::select(., whichCols), na.rm = T))
-#     names(perc_uniteObj)[names(perc_uniteObj) %in% "X"] = paste0("ave", levels(rawmetadata$trtG1G2)[i])
-#   }
-#   perc_uniteObj = perc_uniteObj[grep("ave", names(perc_uniteObj))]
-# }
-# 
-

@@ -68,6 +68,62 @@ AB_intergenerational = getG1G2methByEffect(
 )
 AB_intergenerational$effect = "intergenerational"
 
+AB_additive = getG1G2methByEffect(
+  DMSeffect = EffectsDF_ANNOT[EffectsDF_ANNOT$effect %in% "ADDITIVE","DMS"]
+)
+AB_additive$effect = "additive"
+
+AB_interaction = getG1G2methByEffect(
+  DMSeffect = EffectsDF_ANNOT[EffectsDF_ANNOT$effect %in% "INTERACTION","DMS"]
+)
+AB_interaction$effect = "interaction"
+
+AB=rbind(AB_intergenerational, AB_infectionInduced, AB_additive, AB_interaction)
+
+## important order for the plots
+AB$effect = factor(AB$effect, levels = c("infection-induced", "intergenerational", "additive", "interaction"))
+
+####################################################
+## Hyp: TGIP for intergenerational DMS -> G2 meth is more correlated to G1 meth if both are infected
+## answer: nope
+mod1=lme4::lmer(G2methylation~G1methylation * trtG1G2 + (1|brotherPairID/SampleID),
+                data=AB_intergenerational)
+mod2=lme4::lmer(G2methylation~G1methylation + trtG1G2 + (1|brotherPairID/SampleID),
+                data=AB_intergenerational)
+mod3=lme4::lmer(G2methylation~G1methylation + (1|brotherPairID/SampleID),
+                data=AB_intergenerational)
+mod4=lme4::lmer(G2methylation~ trtG1G2 + (1|brotherPairID/SampleID),
+                data=AB_intergenerational)
+
+lmtest::lrtest(mod1, mod2)
+## strong effect of interaction
+## effect of G1meth on G2meth, dependent on trt
+
+## Plot
+plot_model(mod1, type = "pred", terms = c("G1methylation", "trtG1G2"))+
+  geom_abline(slope = 1, linetype = 2)+
+  theme_bw()
+
+## and infection-induced?
+mod1=lme4::lmer(G2methylation~G1methylation * trtG1G2 + (1|brotherPairID/SampleID),
+                data=AB_infectionInduced)
+mod2=lme4::lmer(G2methylation~G1methylation + trtG1G2 + (1|brotherPairID/SampleID),
+                data=AB_infectionInduced)
+mod3=lme4::lmer(G2methylation~G1methylation + (1|brotherPairID/SampleID),
+                data=AB_infectionInduced)
+mod4=lme4::lmer(G2methylation~ trtG1G2 + (1|brotherPairID/SampleID),
+                data=AB_infectionInduced)
+
+lmtest::lrtest(mod1, mod2)
+## effect of interaction
+## effect of G1meth on G2meth, dependent on trt
+
+## Plot
+plot_model(mod1, type = "pred", terms = c("G1methylation", "trtG1G2"))+
+  geom_abline(slope = 1, linetype = 2)+
+  theme_bw()
+
+########################################################
 ## See if the correlation is different for both effects
 # When the variables are not continuous but could be ranked then we do not use pearson correlation 
 # coefficient to find the linear relationship, in this case spearman correlation coefficient comes 
@@ -81,19 +137,13 @@ getCorG1G2methByEffect <- function(AB){
 }
 
 # NB: Takes a few minutes to run
-getCorG1G2methByEffect(AB_infectionInduced)
+## getCorG1G2methByEffect(AB_infectionInduced)
 # Spearman's rank correlation rho $ 95% CI (BC 1000)
 # rho = 0.624 [0.617-0.632] 95%CI
 
-getCorG1G2methByEffect(AB_intergenerational)
+## getCorG1G2methByEffect(AB_intergenerational)
 # Spearman's rank correlation rho $ 95% CI (BC 1000)
 # 0.621[0.611-0.63 95%CI]
-
-## And as a regression? We put only this one in the paper, it's the most sophisticated version of Spearman
-AB=rbind(AB_intergenerational, AB_infectionInduced)
-
-## important order for the plots
-AB$effect = factor(AB$effect, levels = c("infection-induced", "intergenerational"))
 
 mod1=lme4::lmer(G2methylation~G1methylation * effect + (1|brotherPairID/SampleID), data=AB)
 mod2=lme4::lmer(G2methylation~G1methylation + effect + (1|brotherPairID/SampleID), data=AB)
@@ -118,8 +168,7 @@ lmtest::lrtest(mod1, mod4)
 # (infection-induced) - intergenerational    -1.05 0.157 Inf     -1.35    -0.739  -6.670  <.0001
 
 # Set up modelplot
-modelPlot <- plot(ggpredict(mod2, terms =  c("G1methylation", "effect")), show_data = TRUE)
-plot_model(mod2, type = "pred", terms = c("G1methylation", "effect"), show.values = T)+
+modelPlot <- plot_model(mod2, type = "pred", terms = c("G1methylation", "effect"))+
   geom_abline(slope = 1, linetype = 2)+
   theme_bw()+
   guides(col = "none") +
@@ -175,7 +224,7 @@ aligned_y_hist <- align_plots(y_hist, modelPlot, align = "h")[[1]]
 aligned_x_dens <- align_plots(x_dens, modelPlot, align = "v")[[1]]
 aligned_y_dens <- align_plots(y_dens, modelPlot, align = "h")[[1]]
 
-pdf(file = "../../dataOut/fig/FigS2_plotmodelG1methG2meth.pdf", width = 12, height = 6)
+pdf(file = "../../dataOut/fig/exFigS2_plotmodelG1methG2meth.pdf", width = 12, height = 6)
 cowplot::plot_grid(
   aligned_x_hist, NULL, NULL,
   aligned_x_dens, NULL, NULL,
@@ -196,27 +245,50 @@ ggplot(AB,
   geom_smooth(method = "lm") +
   geom_abline(slope = 1, linetype = 2)
 
+ggplot(AB, aes(x=trtG1G2, y=G1methylation, col=trtG1G2))+
+  geom_violin()+
+  facet_wrap(.~effect)+
+  scale_color_manual(values = colOffs) 
+
 plotG1byG2pergene <- function(gene){
-  ggplot(AB[AB$DMS %in% EffectsDF_ANNOT[EffectsDF_ANNOT$GeneSymbol %in% gene,"DMS"],],
+  df = AB[AB$DMS %in% EffectsDF_ANNOT[EffectsDF_ANNOT$GeneSymbol %in% gene,"DMS"],]
+  
+  # Find the convex hull of the points being plotted 
+  hull <- df %>% group_by(trtG1G2, DMS) %>% 
+    slice(chull(G1methylation, G2methylation))
+  
+  ## plot
+  ggplot(df,
          aes(x=G1methylation, y = G2methylation, col = trtG1G2, group = trtG1G2, fill=trtG1G2))+
     scale_color_manual(values = colOffs) +
     scale_fill_manual(values = colOffs) +
-    facet_wrap(effect~trtG1G2, ncol = 2)+
-    geom_point(size = 3, alpha =.3)+ 
-    geom_smooth(method = "lm") +
-    geom_abline(slope = 1, linetype = 2)
+    facet_wrap(DMS~., ncol = 2)+
+    # geom_smooth(method = "lm", alpha=.1) +
+    geom_abline(slope = 1, linetype = 2)+
+    # geom_rect(aes(xmin=0, xmax=30, ymin=0, ymax=30), col = "lightgrey", fill = "lightgrey")+
+    # geom_rect(aes(xmin=0, xmax=30, ymin=70, ymax=100), col = "lightgrey", fill = "lightgrey")+
+    # geom_rect(aes(xmin=70, xmax=100, ymin=0, ymax=30), col = "lightgrey", fill = "lightgrey")+
+    # geom_rect(aes(xmin=70, xmax=100, ymin=70, ymax=100), col = "lightgrey", fill = "lightgrey")+
+    geom_point(size = 3, alpha =.5)+
+    geom_polygon(data = hull, alpha = 0.2, 
+                   aes(fill = trtG1G2,colour = trtG1G2))
 }
 
 ## Intergenerational
-plotG1byG2pergene("CD4") # show activation upon paternal infection!
-plotG1byG2pergene("Chd5") # not much
-plotG1byG2pergene("Mosmo") # not much
-plotG1byG2pergene("B3GAT1") # not much
-plotG1byG2pergene("Stk24") # not much
+plotG1byG2pergene("CD4") 
+plotG1byG2pergene("Chd5") 
+plotG1byG2pergene("Mosmo")
+plotG1byG2pergene("B3GAT1")
+plotG1byG2pergene("Stk24")
 
-# Infection-induced
-plotG1byG2pergene("Gzf1") # not much
-plotG1byG2pergene("bmp2") # not much
-plotG1byG2pergene("LRFN2") # not much
+## infection induced
+plotG1byG2pergene("bmp2") 
+plotG1byG2pergene("LRFN2")
+plotG1byG2pergene("Gzf1")
+plotG1byG2pergene("PCDH7")
+plotG1byG2pergene("Rab11fip5")
+plotG1byG2pergene("TRIM16")
+plotG1byG2pergene("ST6GALNAC3")
+plotG1byG2pergene("NDFIP2")
 
 message("R10 done. \n")

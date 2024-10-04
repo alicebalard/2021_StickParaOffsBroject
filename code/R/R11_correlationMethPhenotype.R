@@ -114,7 +114,7 @@ p2 = plot_model(modFULL, type = "pred", terms = c("No.Worms","PCA1 [-10, 10]"))+
   ggtitle("Predicted values of BCI", subtitle = "No.Worms:PCA1 interaction")
 
 # save
-pdf(file = "../../dataOut/fig/FigS5.A_phenoMethPlot_intergenerational.pdf", width = 8, height = 5)
+pdf(file = "../../dataOut/fig/FigS4B_phenoMethPlot_intergenerational.pdf", width = 8, height = 5)
 gridExtra::grid.arrange(p1,p2, ncol=2)
 dev.off()
 
@@ -156,7 +156,7 @@ p2 = plot_model(modFULL, type = "pred", terms = c("No.Worms","PCA1 [-10, 10]"))+
   ggtitle("Predicted values of BCI", subtitle = "No.Worms:PCA1 interaction")
 
 # save
-pdf(file = "../../dataOut/fig/FigS5.B_phenoMethPlot_infectioninduced.pdf", width = 8, height = 5)
+pdf(file = "../../dataOut/fig/FigS4A_phenoMethPlot_infectioninduced.pdf", width = 8, height = 5)
 gridExtra::grid.arrange(p1,p2, ncol=2)
 dev.off()
 
@@ -176,9 +176,9 @@ EffectsDF_ANNOT[EffectsDF_ANNOT$DMS %in% rownames(mydimdesc$Dim.1$quanti),] %>%
   unique -> annotPCA1
 
 annotPCA1$feature.name %>% length #482 genes
- 
+
 write.csv(annotPCA1, "../../dataOut/fig/TableS2_annotPCA1_482genes.csv", row.names = F)
- 
+
 ### GO term for these CpGs
 dfGO_PCA1_482 = makedfGO(
   annot = EffectsDF_ANNOT[EffectsDF_ANNOT$DMS %in% rownames(mydimdesc$Dim.1$quanti),] %>%
@@ -190,5 +190,12 @@ dfGO_PCA1_482 = makedfGO(
 pdf(file = "../../dataOut/fig/FigS6_GOplot_482genesPCA2.pdf", width = 30, height = 4)
 makeGOplot(dfGO_PCA1_482)
 dev.off()
+
+
+
+
+makeGOplotslim(dfGO = dfGO_PCA1_482, myeffect = "PCA1 482 genes")
+
+
 
 message("R11 done. \n")
