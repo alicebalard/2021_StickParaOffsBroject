@@ -323,15 +323,11 @@ makeGOplot <- function(dfGO, posleg="top"){
     theme(legend.box.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
           legend.background = element_rect(fill = "#ebebeb", color = "#ebebeb"),
           legend.key = element_rect(fill = "#ebebeb", color = "#ebebeb"), # grey box for legend
-          legend.position=posleg,
+          legend.position="top",
           axis.text.y = element_text(size = 8),  # Decrease y-axis text size
-          axis.text.x = element_text(size = 8, angle = 45, hjust = 1)  # Increase x-axis text size and rotate
+          axis.text.x = element_text(size = 8, hjust = 1)  # Increase x-axis text size 
     )+
-    facet_grid(.~fct_inorder(GO.category), scales="free",space = "free")+
-    coord_flip() + # flip axes
-    scale_x_discrete(labels = function(x) str_wrap(x, width = 20))+ # split long text
-    scale_y_discrete(limits=rev, # revers axis to have alphabetical order
-                     labels = function(x) str_wrap(x, width = 30)) # split too long GO names in half
+    facet_wrap(.~fct_inorder(GO.category), scales = "free")
 }
 
 ###############
