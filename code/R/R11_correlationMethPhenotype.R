@@ -191,11 +191,11 @@ pdf(file = "../../dataOut/fig/FigS6_GOplot_482genesPCA2.pdf", width = 30, height
 makeGOplot(dfGO_PCA1_482)
 dev.off()
 
+## With slim GO terms
+dfGO_PCA1_482_SLIM = makeGOslim(dfGO = dfGO_PCA1_482)
 
-
-
-makeGOplotslim(dfGO = dfGO_PCA1_482, myeffect = "PCA1 482 genes")
-
-
+## Find genes that seemed important
+EffectsDF_ANNOT[EffectsDF_ANNOT$DMS %in% rownames(mydimdesc$Dim.1$quanti) &
+                  EffectsDF_ANNOT$GeneSymbol %in% "PPFIBP1",]
 
 message("R11 done. \n")

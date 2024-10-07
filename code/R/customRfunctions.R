@@ -343,13 +343,48 @@ makeGOplot <- function(dfGO, posleg="top"){
 slim <- GSEABase::getOBOCollection("../../data/goslim_agr.obo")
 
 ## make a GO plot with slim GO terms from dfGO
-makeGOplotslim <- function(dfGO, posleg="top"){
+makeGOslim <- function(dfGO, posleg="top"){
   
   myfun <- function(myeffect, myGOcat){
-    GSEABase::goSlim(idSrc = GOCollection(dfGO[
-      dfGO$p.value.adjusted < 0.05 & dfGO$Effect %in% myeffect,"GO.term"]), 
-      slimCollection = slim,
-      ontology = myGOcat) %>%  filter(Count !=0) %>%
+    # Create the GOCollection
+    go_collection <- GOCollection(dfGO[
+      dfGO$p.value.adjusted < 0.05 & dfGO$Effect %in% myeffect,"GO.term"])
+    
+    # Perform the GO slim mapping
+    slimdf <- GSEABase::goSlim(idSrc = go_collection, 
+                               slimCollection = slim,
+                               ontology = myGOcat)
+    
+    # Map the original GO terms to the slim terms
+    mappedIds <- function(df, collection, OFFSPRING) {
+      map <- as.list(OFFSPRING[rownames(df)])
+      mapped <- lapply(map, intersect, ids(collection))
+      df[["mapped_go_terms"]] <- vapply(unname(mapped), paste, collapse = ";", character(1L))
+      
+      # Get GO term names
+      go_names <- AnnotationDbi::select(GO.db, keys = unlist(mapped), columns = "TERM", keytype = "GOID")
+      go_names_list <- split(go_names$TERM, go_names$GOID)
+      df[["mapped_go_names"]] <- vapply(mapped, function(x) {
+        paste(go_names_list[x], collapse = ";")
+      }, character(1L))
+      
+      # Get GO slim term full names
+      slim_names <- AnnotationDbi::select(GO.db, keys = rownames(df), columns = "TERM", keytype = "GOID")
+      df[["go_slim_full_name"]] <- slim_names$TERM
+      
+      df
+    }
+    
+    # Use the appropriate OFFSPRING database based on the ontology
+    offspring_db <- switch(myGOcat,
+                           "BP" = GO.db::GOBPOFFSPRING,
+                           "CC" = GO.db::GOCCOFFSPRING,
+                           "MF" = GO.db::GOMFOFFSPRING)
+    
+    slimdf_with_terms <- mappedIds(slimdf, go_collection, offspring_db)
+    
+    slimdf_with_terms %>%
+      filter(Count != 0) %>%
       dplyr::mutate(GO.category = myGOcat, Effect = myeffect)
   }
   
@@ -363,13 +398,15 @@ makeGOplotslim <- function(dfGO, posleg="top"){
   
   dfGOslim = do.call(rbind, list)
   
-  ## Make sure the GOslim terms are correct
-  dfGOslim$GOslim=substr(rownames(dfGOslim), 1, 10) # rownames added a "1" to some
-
   ## Order by percent
   dfGOslim = dfGOslim[order(dfGOslim$Percent), ]
   
-  GOplot = dfGOslim %>%
+  return(dfGOslim)
+}
+
+makeGOslimPlot <- function(dfGOslim, posleg="top"){
+  
+  dfGOslim %>%
     ggplot(aes(x=Effect, y = Term)) +
     geom_point(aes(size = Percent)) +
     scale_size_continuous(name = "% of GO terms in this GO slim category", range = c(1,8))+
@@ -383,23 +420,6 @@ makeGOplotslim <- function(dfGO, posleg="top"){
     )+
     facet_grid(Effect~fct_inorder(GO.category), scales="free",space = "free")+
     coord_flip() 
-  return(list(GOplot=GOplot, dfGOslim=dfGOslim))
-}
-
-## map a GOslim term to its GO terms
-getGo2Goslim <- function(Term, cat, effect){
-  x=dfGOslim[dfGOslim$Term %in% Term & 
-               dfGOslim$GO.category %in% cat &
-               dfGOslim$Effect %in% effect,"GOslim"]
-  if(cat=="MF"){
-    map <- GO.db::GOMFOFFSPRING[x]
-  } else if(cat=="BP"){
-    map <- GO.db::GOBPOFFSPRING[x]
-  } else if(cat == "CC"){
-    map <- GO.db::GOCCOFFSPRING[x]
-  }
-  mapped <- as.vector(sapply(map, intersect, ids(GOCollection(dfGO$GO.term))))
-  dfGO$GO.name[dfGO$GO.term %in% mapped]
 }
 
 #########
