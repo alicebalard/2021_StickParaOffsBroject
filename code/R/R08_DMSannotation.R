@@ -119,12 +119,20 @@ plotGeneTarget <- function(myTargetGene){
     theme(axis.title.x = element_blank(), axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
     labs(title = paste(unique(dfplot$GeneSymbol), ":", dfplot$description),
          subtitle = str_wrap(dfplot$summary, width = 150))
+  print(paste0("distance CpG to TSS: ", dfplot$start_distToTSS))
   plotGeneTarget
 }
   
-plotGeneTarget("CD4")
+plotGeneTarget("Stk24")
+plotGeneTarget("AHR")
+plotGeneTarget("cdk12")
 plotGeneTarget("TRIM16")
-plotGeneTarget("bmp2")
+plotGeneTarget("PPFIBP1")
+plotGeneTarget("SPATA20")
+plotGeneTarget("Alpha-1-antitrypsin homolog")
+## PER2 is twice annotated
+EffectsDF_ANNOT[EffectsDF_ANNOT$GeneSymbol %in% "PER2" & 
+                           EffectsDF_ANNOT$effect %in% "INTERACTION","featureType"]
 
 #### Manhattan plot of the genes in the four main effects
 ## Prepare data and change gene position to start at the good chromosome

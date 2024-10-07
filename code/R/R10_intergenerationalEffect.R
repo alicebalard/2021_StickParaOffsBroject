@@ -236,15 +236,6 @@ dev.off()
 
 ###############################
 ## Check some genes of interest
-ggplot(AB,
-       aes(x=G1methylation, y = G2methylation, col = trtG1G2, group = trtG1G2, fill=trtG1G2))+
-  scale_color_manual(values = colOffs) +
-  scale_fill_manual(values = colOffs) +
-  facet_wrap(effect~trtG1G2, ncol = 4)+
-  geom_point(size = 3, alpha =.1)+ 
-  geom_smooth(method = "lm") +
-  geom_abline(slope = 1, linetype = 2)
-
 ggplot(AB, aes(x=trtG1G2, y=G1methylation, col=trtG1G2))+
   geom_violin()+
   facet_wrap(.~effect)+
@@ -269,9 +260,9 @@ plotG1byG2pergene <- function(gene){
     # geom_rect(aes(xmin=0, xmax=30, ymin=70, ymax=100), col = "lightgrey", fill = "lightgrey")+
     # geom_rect(aes(xmin=70, xmax=100, ymin=0, ymax=30), col = "lightgrey", fill = "lightgrey")+
     # geom_rect(aes(xmin=70, xmax=100, ymin=70, ymax=100), col = "lightgrey", fill = "lightgrey")+
-    geom_point(size = 3, alpha =.5)+
     geom_polygon(data = hull, alpha = 0.2, 
-                   aes(fill = trtG1G2,colour = trtG1G2))
+                 aes(fill = trtG1G2,colour = trtG1G2)) +
+    geom_point(size = 3, alpha =.5)
 }
 
 ## Intergenerational
@@ -290,5 +281,8 @@ plotG1byG2pergene("Rab11fip5")
 plotG1byG2pergene("TRIM16")
 plotG1byG2pergene("ST6GALNAC3")
 plotG1byG2pergene("NDFIP2")
+
+# interaction
+plotG1byG2pergene("SPATA20")
 
 message("R10 done. \n")
