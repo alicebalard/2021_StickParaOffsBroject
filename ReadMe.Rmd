@@ -1,5 +1,5 @@
 ## Alice Balard, Eizaguirre lab, QMUL
-## updated January 2023
+## updated October 2024
 ## Code structure for the project "DNA methylation biomarkers reveal offspring’s disease tolerance can stem from trans-generational paternal effects"
 
 ############## DATA ORGANISATION  ################
@@ -7,51 +7,22 @@
 /data/archive/archive-SBCS-EizaguirreLab/RRBS/StickPara_Broject/00Illumina_RawReads/
 
 [btx915@frontend8:/data/SBCS-EizaguirreLab/Alice/StickParaBroOff/]
+.
 ├── Data
-│   ├── 01TrimmedReads_cutadapt
-│   ├── 02RefGenome
-│   ├── 03Bismark_alignment
-│   ├── 04BSBolt_methCall
-│   ├── 05MethylKit
-│   └── 06GynoGen_functionalAnnotation
-├── GIT_StickParaOffsBroject
-│   ├── code
-│   ├── data
-│   ├── gitignore
-│   └── ReadMe.Rmd
-└── QualityControl
-    ├── QC00_RawReads_fastqc
-    └── QC01_TrimmedReads_fastqc
-
-########## BASH SCRIPTS (within GIT_StickParaOffsBroject/code) ################
-├── miniBashTools
-├── misc
-├── R
-├── run_gynofuncal.stdout
-├── S00_multiQC_generateReports.sh
-├── S01_fastqc.sh
-├── S02.1_adapterTrim_cutadapt.sh
-├── S02.2_fastqcTrimmed.sh
-├── S03.1_BSBolt_index.sh
-├── S03.2_BSBolt_align.sh
-├── S03.3_BSBolt_SortIndexBam.sh
-├── S03.4_BSBolt_MethCall_forloop.sh
-├── S03.5_prepareBSBoltOutput.sh # prepare BSBolt for further R steps, cut by CG, CHH etc.
-└── S04_GynoGen_functionalAnnotation.sh # add blastp gene names and gene ontology to Miles & Kostas gynogen genome
-
-########## R SCRIPTS (within GIT_StickParaOffsBroject/code/R) ################
-
-├── customRfunctions.R
-├── homebrewDMSannotation.R
-├── librariesLoading.R
-├── R00_rawDataCleaning.R
-├── R01_calculateSequencingStats.R
-├── R02_prepBSBOLTForMethylkit_runInCLUSTER.R
-├── R03_prepObjectMethylkit_runInCLUSTER.R
-├── R04_getDifferentialMethylation_runInCLUSTER.R
-├── R05_GlobalMethylationAndFitness.R
-├── R06_GlobalMethylationProfile.R
-├── R07_DMSeffects.R
-├── R08_DMSannotation.R
-├── R09_CorrelationPCAmethPhenotype.R
-└── R10_TopDownDMSparentsInG2.R
+│   ├── 01TrimmedReads_cutadapt
+│   ├── 02RefGenome
+│   ├── 03Bismark_alignment
+│   ├── 04BSBolt_methCall
+│   ├── 05MethylKit
+│   ├── 06GynoGen_functionalAnnotation
+│   ├── 07RelatednessMatrix
+│   └── 08PQLseq
+├── QualityControl
+│   ├── QC00_RawReads_fastqc
+│   └── QC01_TrimmedReads_fastqc
+└── StickParaOffsBroject --> git directory
+    ├── code
+    ├── data
+    ├── dataOut
+    ├── gitignore
+    └── ReadMe.Rmd
