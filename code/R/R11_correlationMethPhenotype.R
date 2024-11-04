@@ -57,19 +57,57 @@ message(paste0(
   "% of the variance in associated with the first PCA axis"))
 
 ### Plot of the model
-# No.Worms:PAT
-p1 = plot_model(modFULL, type = "pred", terms = c("No.Worms","PAT"), alpha=.4)+ 
-  scale_color_manual(values = setNames(colOffs, NULL)[1:2])+
-  scale_fill_manual(values = setNames(colOffs, NULL)[1:2])+
-  ylab("Body Condition Index") + xlab("Number of worms")+
-  ggtitle("Predicted values of BCI", subtitle = "No.Worms:paternal treatment interaction")
+makeplotModel <- function(modFULL, mymin){
+  # No.Worms:PAT
+  pred_data <- ggpredict(modFULL, terms = c("No.Worms", "PAT"))
+  
+  dfobs = myPCA_DMS_allDMS$metadata
+  dfobs$x = dfobs$No.Worms
+  dfobs$predicted = dfobs$BCI
+  dfobs$group = dfobs$PAT
+  
+  p1 = ggplot(pred_data, aes(x = x, y = predicted, fill = group, color = group)) +
+    geom_line(aes(group = group)) +
+    geom_ribbon(aes(ymin = conf.low, ymax = conf.high, group = group),
+                alpha = 0.2, linetype = "blank")+
+    geom_jitter(data=dfobs, aes(fill = group), size = 3,
+                height = 0, width = .1)+
+    labs(x = "Number of Worms", y = "Body Condition Index", 
+         color = "PAT", fill = "PAT") +
+    ggtitle("Predicted and observed values of BCI", 
+            subtitle = "No.Worms:paternal treatment interaction")+
+    scale_color_manual(values = setNames(colOffs, NULL)[1:2])+
+    scale_fill_manual(values = setNames(colOffs, NULL)[1:2])+
+    ylim(mymin,300)  # Set y-axis limits
+  
+  # No.Worms:PCA1
+  pred_data <- ggpredict(modFULL, terms = c("No.Worms", "PCA1 [-18, 13]"))
+  pred_data$group <- as.numeric(as.character(pred_data$group))
+  
+  dfobs = myPCA_DMS_allDMS$metadata
+  dfobs$x = dfobs$No.Worms
+  dfobs$predicted = dfobs$BCI
+  dfobs$group = dfobs$PCA1
+  
+  p2 = ggplot(pred_data, aes(x = x, y = predicted, fill = group, color = group)) +
+    geom_line(aes(group = group)) +
+    geom_ribbon(aes(ymin = conf.low, ymax = conf.high, group = group),
+                alpha = 0.2, linetype = "blank")+
+    geom_jitter(data=dfobs, aes(fill = group), size = 3,
+                height = 0, width = .1)+
+    labs(x = "Number of Worms", y = "Body Condition Index", 
+         color = "PCA1", fill = "PCA1") +
+    ggtitle("Predicted and observed values of BCI", 
+            subtitle = "No.Worms:PCA1 interaction")+
+    scale_color_gradient(low = "black", high = "red")+
+    scale_fill_gradient(low = "black", high = "red")+
+    ylim(mymin,300)  # Set y-axis limits
+  
+  return(list(p1=p1, p2=p2))
+}
 
-# No.Worms:PAT
-p2 = plot_model(modFULL, type = "pred", terms = c("No.Worms","PCA1 [-10, 10]"))+ 
-  scale_color_manual(values = c("black","red"))+
-  scale_fill_manual(values = c("black","red"))+
-  ylab("Body Condition Index") + xlab("Number of worms")+
-  ggtitle("Predicted values of BCI", subtitle = "No.Worms:PCA1 interaction")
+p1 = makeplotModel(modFULL, mymin=-380)$p1
+p2 = makeplotModel(modFULL, mymin=-380)$p2
 
 # save
 pdf(file = "../../dataOut/fig/Fig4_phenoMethPlot_alleffects.pdf", width = 8, height = 5)
@@ -99,19 +137,8 @@ modFULL = lmer(BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) +
                  No.Worms:PCA1 + No.Worms:PAT, data = myPCA_DMS_intergenerational$metadata)
 
 ### Plot of the model
-# No.Worms:PAT
-p1 = plot_model(modFULL, type = "pred", terms = c("No.Worms","PAT"), alpha=.4)+ 
-  scale_color_manual(values = setNames(colOffs, NULL)[1:2])+
-  scale_fill_manual(values = setNames(colOffs, NULL)[1:2])+
-  ylab("Body Condition Index") + xlab("Number of worms")+
-  ggtitle("Predicted values of BCI", subtitle = "No.Worms:paternal treatment interaction")
-
-# No.Worms:PAT
-p2 = plot_model(modFULL, type = "pred", terms = c("No.Worms","PCA1 [-10, 10]"))+ 
-  scale_color_manual(values = c("black","red"))+
-  scale_fill_manual(values = c("black","red"))+
-  ylab("Body Condition Index") + xlab("Number of worms")+
-  ggtitle("Predicted values of BCI", subtitle = "No.Worms:PCA1 interaction")
+p1 = makeplotModel(modFULL, mymin=-500)$p1
+p2 = makeplotModel(modFULL,mymin=-500)$p2
 
 # save
 pdf(file = "../../dataOut/fig/FigS4B_phenoMethPlot_intergenerational.pdf", width = 8, height = 5)
@@ -141,19 +168,8 @@ modFULL = lmer(BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) +
                  No.Worms:PCA1 + No.Worms:PAT, data = myPCA_DMS_infectioninduced$metadata)
 
 ### Plot of the model
-# No.Worms:PAT
-p1 = plot_model(modFULL, type = "pred", terms = c("No.Worms","PAT"), alpha=.4)+ 
-  scale_color_manual(values = setNames(colOffs, NULL)[1:2])+
-  scale_fill_manual(values = setNames(colOffs, NULL)[1:2])+
-  ylab("Body Condition Index") + xlab("Number of worms")+
-  ggtitle("Predicted values of BCI", subtitle = "No.Worms:paternal treatment interaction")
-
-# No.Worms:PAT
-p2 = plot_model(modFULL, type = "pred", terms = c("No.Worms","PCA1 [-10, 10]"))+ 
-  scale_color_manual(values = c("black","red"))+
-  scale_fill_manual(values = c("black","red"))+
-  ylab("Body Condition Index") + xlab("Number of worms")+
-  ggtitle("Predicted values of BCI", subtitle = "No.Worms:PCA1 interaction")
+p1 = makeplotModel(modFULL, mymin=-500)$p1
+p2 = makeplotModel(modFULL,mymin=-500)$p2
 
 # save
 pdf(file = "../../dataOut/fig/FigS4A_phenoMethPlot_infectioninduced.pdf", width = 8, height = 5)
