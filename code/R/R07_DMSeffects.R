@@ -25,7 +25,7 @@ myqval = 0.05
 mydif = 5
 
 message(paste0("We define a threshold for DMS: q-value > ", myqval, 
-               " , diffence of methylation > ", mydif, "%"))
+               " , difference of methylation > ", mydif, "%"))
 
 makeVolcano = function(fit){
   ggplot()+
@@ -211,6 +211,61 @@ chisq.test(df[c("nbrDMS", "nbrCpG")])
 df %>% arrange(percent) %>% mutate(perc = round(percent*100,2))
 # from 0.05% of the CpG sequenced (chromosome XIV) to 0.11% (chromosome V)
 
+#######################
+## Same question but split by effect: 
+## Are the positions of DMS for both IG & INT on chromosomes random? Comparison with sequenced CpGs which are not DMS
+a1=table(paste(sapply(strsplit(EffectsDF$pos[EffectsDF$effect %in% "INFECTION_INDUCED"], "_"), `[`, 1),
+              sapply(strsplit(EffectsDF$pos[EffectsDF$effect %in% "INFECTION_INDUCED"], "_"), `[`, 2), 
+              sep = "_"))
+
+a2=table(paste(sapply(strsplit(EffectsDF$pos[EffectsDF$effect %in% "INTERGENERATIONAL"], "_"), `[`, 1),
+               sapply(strsplit(EffectsDF$pos[EffectsDF$effect %in% "INTERGENERATIONAL"], "_"), `[`, 2), 
+               sep = "_"))
+
+b=table(paste(sapply(strsplit(allCpG, "_"), `[`, 1), sapply(strsplit(allCpG, "_"), `[`, 2), sep = "_"))
+
+a1=as.data.frame(a1)
+names(a1)=c("chr", "nbrDMS_infind")
+
+a2=as.data.frame(a2)
+names(a2)=c("chr", "nbrDMS_interg")
+
+b=as.data.frame(b)
+names(b)=c("chr", "nbrCpG")
+
+df=merge(merge(a1,a2), b)
+
+## distribution of DMS along chromosomes?
+M <- as.table(cbind(df$nbrDMS_infind, df$nbrDMS_interg, df$nbrCpG))
+dimnames(M) <- list(chr = df$chr,
+                    cat = c("DMS_infind", "DMS_interg", "CpG"))
+chisq.test(M)
+# Pearson's Chi-squared test
+# 
+# data:  M
+# X-squared = 74.756, df = 38, p-value = 0.0003433
+chisq.posthoc.test(M, method = "bonferroni")
+
+## significantly higher number of infection-induced DMS at chromosome XVIII (P=0.018),
+## and significantly higher number of intergenerational DMS at chromosome XX (P=8e-04*)
+
+# We compared the distribution of DMS on the chromosomes using a chisquare test with number 
+# of infection-induced DMS, number of intergenerational DMS and total number of CpG 
+# sequenced as columns and chromosome as rows, followed by ebbertd/chisq.posthoc.test
+# with Bonferroni correction.
+
+df = df %>% mutate(percDMS_interg=nbrDMS_interg/nbrCpG, percDMS_infind=nbrDMS_infind/nbrCpG)
+
+df2 <- df %>%
+  pivot_longer(
+    cols = c(percDMS_interg, percDMS_infind),
+    names_to = "category",
+    values_to = "value"
+  ) %>% data.frame()
+
+df2$chromosome <- gsub("Gy_chr", "", df2$chr)
+
+###################
 #### Plot sup fig 1
 donutDF = ChiTable1 %>% dplyr::mutate(feature = row.names(ChiTable1), percDMS=DMS/sum(DMS)*100, percCpG=allCpG/sum(allCpG)*100) %>%
   dplyr::select("feature", "percDMS", "percCpG") %>% melt
@@ -223,10 +278,13 @@ P1 <- ggplot(donutDF, aes(x = variable, y = value, fill = feature)) +
   annotate("text", x = 3.8, y = 0, label = "DMS")+
   annotate("text", x = 1, y = 0, label = "all CpGs")
 
-P2 <- ggplot(df, aes(x=chromosome, y=percent))+
-  geom_bar(stat = "identity", col= "black", fill="black")+
+col = colEffects[c("infection induced", "intergenerational")]
+names(col) = NULL
+P2 <- ggplot(df2, aes(x=chromosome, y=value, group = category, fill = category))+
+  geom_bar(stat = "identity", col= "black", position = "dodge")+
   ylab("Percentage of DMS among CpG sequenced")+
-  scale_y_continuous(labels=scales::percent)
+  scale_y_continuous(labels=scales::percent)+
+  scale_fill_manual(values = col)
 
 message("Save figure S1 in dataOut/fig/FigS1_featuresCpGandDMS.pdf")
 pdf(file = "../../dataOut/fig/FigS1_featuresCpGandDMS.pdf", width = 8, height = 6)
