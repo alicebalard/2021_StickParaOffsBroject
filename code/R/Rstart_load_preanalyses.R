@@ -18,6 +18,7 @@ list.of.packages <- c(
   "ggplot2",
   "ggpubr", ## to merge ggplot2 plots
   "ggrepel",
+  "ggvenn",
   "goeveg", # find the best number of dimensions for NMDS
   "ggsignif", ## for significance bars on ggplot
   "ggVennDiagram",## Venn diagram in ggplot
@@ -191,6 +192,8 @@ install_and_load_bioc_packages(bioc_packages)
 ## colOffs <- c("#ffe67f", "#ff6300","#a8caff","#a800d4") ## previous ugly
 colOffs <- c("#a9d6c1ff", "#d1b000ff","#4b8da3ff","#c05a29ff")
 names(colOffs) = c("NE_control", "NE_exposed", "E_control", "E_exposed")
+
+colOffsNoname <- c("#a9d6c1ff", "#d1b000ff","#4b8da3ff","#c05a29ff")
 
 colEffects <- as.vector(palette.colors(palette = "Okabe-Ito")[1:4])
 names(colEffects) <- c("infection induced", "intergenerational", "additive", "interaction")

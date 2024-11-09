@@ -46,12 +46,12 @@ adonis2(data.dist ~ PAT * outcome * Sex * brotherPairID, data = fullMetadata_OFF
 # Results: family of the father (brotherPairID) explains more than 14% of
 # the variance in methylation.
 #                                 Df SumOfSqs    R2      F    Pr(>F)    
-# PAT                             1 0.002782 0.01470 1.8292  0.001 ***
-# outcome                         1 0.001909 0.01009 1.2552  0.027 *  
-# Sex                             1 0.002418 0.01277 1.5895  0.001 ***
-# brotherPairID                   7 0.028018 0.14805 2.6316  0.001 ***
-# PAT:brotherPairID               7 0.014344 0.07580 1.3473  0.001 ***
-
+#   PAT                             1 0.002782 0.01470 1.8292  0.001 ***
+#   outcome                         1 0.001909 0.01009 1.2552  0.034 *  
+#   Sex                             1 0.002418 0.01277 1.5895  0.003 ** 
+#   brotherPairID                   7 0.028018 0.14805 2.6316  0.001 ***
+#   PAT:brotherPairID               7 0.014344 0.07580 1.3473  0.001 ***
+  
 # To focus on G1 and G2 treatments, we define the permutation structure
 # considering brother pairs (N = 8), and use a PERMANOVA to test the
 # hypothesis that paternal treatment, offspring treatment and their
@@ -61,10 +61,14 @@ setBlocks(perm) <- with(fullMetadata_OFFS, brotherPairID) # define the permutati
 print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, 
               permutations = perm, by = "terms"))
 
+#   PAT               1 0.002782 0.01470 1.6344 0.000999 ***
+#   outcome           1 0.001909 0.01009 1.1216 0.038961 *  
+#   Sex               1 0.002418 0.01277 1.4203 0.005994 ** 
+
 # Results:
-# -   1.5% of the variation explained by PAT (R2=0.01470, p \< 0.001)
-# -   1% of the variation explained by outcome (R2=0.01009, p = 0.042)
-# -   1.3% of the variation explained by Sex (R2=0.01277, p = 0.011)
+# -   1.5% of the variation explained by PAT (R2=0.01470, F=1.63, p < 0.001)
+# -   1% of the variation explained by outcome (R2=0.01009, F=1.12, p = 0.054)
+# -   1.3% of the variation explained by Sex (R2=0.01277, F=1.42, p = 0.011)
 
 ## NMDS
 #### RUN Goodness of fit

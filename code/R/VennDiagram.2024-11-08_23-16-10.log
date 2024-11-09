@@ -1,0 +1,13 @@
+INFO [2024-11-08 23:16:10] $x
+INFO [2024-11-08 23:16:10] list(row.names(CC.TC_pass), row.names(CT.TT_pass), row.names(CC.CT_pass), 
+INFO [2024-11-08 23:16:10]     row.names(TC.TT_pass))
+INFO [2024-11-08 23:16:10] 
+INFO [2024-11-08 23:16:10] $category.names
+INFO [2024-11-08 23:16:10] c("CC.TC", "CT.TT", "CC.CT", "TC.TT")
+INFO [2024-11-08 23:16:10] 
+INFO [2024-11-08 23:16:10] $filename
+INFO [2024-11-08 23:16:10] NULL
+INFO [2024-11-08 23:16:10] 
+INFO [2024-11-08 23:16:10] $output
+INFO [2024-11-08 23:16:10] [1] TRUE
+INFO [2024-11-08 23:16:10] 

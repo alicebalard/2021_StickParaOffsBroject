@@ -1,0 +1,13 @@
+INFO [2024-11-08 23:17:00] $x
+INFO [2024-11-08 23:17:00] list(row.names(CC.TC_pass), row.names(CT.TT_pass), row.names(CC.CT_pass), 
+INFO [2024-11-08 23:17:00]     row.names(TC.TT_pass))
+INFO [2024-11-08 23:17:00] 
+INFO [2024-11-08 23:17:00] $category.names
+INFO [2024-11-08 23:17:00] c("CC.TC", "CT.TT", "CC.CT", "TC.TT")
+INFO [2024-11-08 23:17:00] 
+INFO [2024-11-08 23:17:00] $filename
+INFO [2024-11-08 23:17:00] [1] "../../dataOut/fig/VennPairwiseTestsDMS.png"
+INFO [2024-11-08 23:17:00] 
+INFO [2024-11-08 23:17:00] $output
+INFO [2024-11-08 23:17:00] [1] TRUE
+INFO [2024-11-08 23:17:00] 

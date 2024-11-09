@@ -35,7 +35,7 @@ deroman <- function(x){ x %>% str_remove(.,"Gy_chr") %>%
              as.integer() %>% as.character() %>% str_pad(.,2,"left",0))
 }
 
-makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam, nbrk){
+makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam, nbrk, rect = T){
   ## Reorder metadata by sample ID, as OBJ methylkit!
   metadata = metadata[order(as.numeric(gsub("S", "", metadata$SampleID))),]
   
@@ -47,9 +47,6 @@ makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam, nbrk)
   ## To add color bars:
   # Generate color palette
   pal = qualpalr::qualpal(55, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
-  ## Family
-  fam <- factor(metadata$Family)
-  col_fam <- pal$hex[1:length(unique(metadata$Family))][fam]
   ## Treatment
   trt <- factor(metadata$outcome)
   col_trt <- c("grey", "red")[trt]
@@ -60,10 +57,6 @@ makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam, nbrk)
   brotherPairID <- factor(metadata$brotherPairID)
   x = length(levels(brotherPairID))
   col_brotherPairID <- sample(pal$hex, x)[brotherPairID]
-  ## Clutch ID
-  # clutch <- factor(metadata$clutch.ID)
-  # x = length(levels(clutch))
-  # col_clutch <- sample(pal$hex, x)[clutch]
   
   ## Make dendrogram
   mydendro <- clusterSamples(OBJ, dist="correlation", method="ward", plot=FALSE)
@@ -73,9 +66,11 @@ makePrettyMethCluster <- function(OBJ, metadata, my.cols.trt, my.cols.fam, nbrk)
   dend %>% plot(main=paste(OBJ@context, "methylation clustering\n",
                            "Distance method: correlation; Clustering method: ward.D"),
                 font.main = 1, cex.main = .8, ylab = "Height", nodePar = list(lab.cex = 0.6, pch = c(NA, NA)))
-  dend %>% rect.dendrogram(k=nbrk, border = 8, lty = 5, lwd = 2)
-  colored_bars(cbind(col_trt, col_trtPAT, brotherPairID, col_fam), dend, y_shift = -0.1, #col_clutch
-               rowLabels = c("G2 treatment", "G1 treatment", "G1 family",  "G0 family")) #"Clutch"
+  if(rect){
+    dend %>% rect.dendrogram(k=nbrk, border = 8, lty = 5, lwd = 2)  
+  }
+  colored_bars(cbind(col_trt, col_trtPAT, brotherPairID), dend, y_shift = -0.1, #col_clutch
+               rowLabels = c("G2 treatment", "G1 treatment", "G1 family")) #"Clutch"
 }
 
 ######################
@@ -89,7 +84,9 @@ makePercentMetMat <- function(dataset){
   # and a standard deviation below 0.3, that is, noninformative
   # sites across individuals, were excluded from the cluster analyses"
   SD=apply(perc.meth,1, sd, na.rm = TRUE)
-  perc.meth <- perc.meth[-which(SD<0.3),]
+  if (length((which(SD<0.3)))!=0){
+    perc.meth = perc.meth[-which(SD<0.3),]  
+  }
   x=t(perc.meth)
   return(x)
 }

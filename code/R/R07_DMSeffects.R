@@ -54,6 +54,13 @@ CC.CT_pass = fit_G2_CC.CT[fit_G2_CC.CT$converged==T & fit_G2_CC.CT$qvalue <= myq
 TC.TT_pass = fit_G2_TC.TT[fit_G2_TC.TT$converged==T & fit_G2_TC.TT$qvalue <= myqval & 
                             (fit_G2_TC.TT$aveDiffMeth_ab>mydif | fit_G2_TC.TT$aveDiffMeth_ab< -mydif),]
 
+## Venn diagram to see 
+ggvenn(data = list(CC.TC=row.names(CC.TC_pass), CT.TT=row.names(CT.TT_pass), 
+                   CC.CT=row.names(CC.CT_pass),TC.TT=row.names(TC.TT_pass)), 
+       fill_color = c("#EFC000FF", "#EFC000FF", "#CD534CFF", "#CD534CFF"),
+       stroke_size = 0.5, set_name_size = 4
+)
+
 PATERNAL_DMS = rbind(CC.TC_pass, CT.TT_pass) %>% dplyr::select(chrom,start,end, pos)
 row.names(PATERNAL_DMS) = NULL
 PATERNAL_DMS[duplicated(PATERNAL_DMS)] ## no duplicates
@@ -128,7 +135,7 @@ message(paste0("We identified ", sum(table(EffectsDF$effect)), " DMS out of ",
                round(table(EffectsDF$effect)[3]/sum(table(EffectsDF$effect))*100,2), "%), ",
                table(EffectsDF$effect)[4], " interaction (", 
                round(table(EffectsDF$effect)[4]/sum(table(EffectsDF$effect))*100,2), "%)"))
-               
+
 ## Add chromosome length and relative position for future plots
 EffectsDF <- merge(EffectsDF, GYgynogff[c("chrom", "length", "gstart", "gend")])
 
@@ -215,8 +222,8 @@ df %>% arrange(percent) %>% mutate(perc = round(percent*100,2))
 ## Same question but split by effect: 
 ## Are the positions of DMS for both IG & INT on chromosomes random? Comparison with sequenced CpGs which are not DMS
 a1=table(paste(sapply(strsplit(EffectsDF$pos[EffectsDF$effect %in% "INFECTION_INDUCED"], "_"), `[`, 1),
-              sapply(strsplit(EffectsDF$pos[EffectsDF$effect %in% "INFECTION_INDUCED"], "_"), `[`, 2), 
-              sep = "_"))
+               sapply(strsplit(EffectsDF$pos[EffectsDF$effect %in% "INFECTION_INDUCED"], "_"), `[`, 2), 
+               sep = "_"))
 
 a2=table(paste(sapply(strsplit(EffectsDF$pos[EffectsDF$effect %in% "INTERGENERATIONAL"], "_"), `[`, 1),
                sapply(strsplit(EffectsDF$pos[EffectsDF$effect %in% "INTERGENERATIONAL"], "_"), `[`, 2), 
@@ -290,5 +297,251 @@ message("Save figure S1 in dataOut/fig/FigS1_featuresCpGandDMS.pdf")
 pdf(file = "../../dataOut/fig/FigS1_featuresCpGandDMS.pdf", width = 8, height = 6)
 cowplot::plot_grid(P1, P2, nrow = 2, labels = c("A", "B"))
 dev.off()
+
+##############################################
+## How do the sample split by DMS methylation?
+
+## Dendrogram of the DMS
+# NB: missing data. We replace them by the average for the clutch, offspring, paternal trt
+replace_missing_and_remove_nas <- function(myeffect) {
+  
+  # Read meth file
+  meth_base = uniteCovHALF_G2_woSexAndUnknowChrOVERLAP[
+    which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr,
+                uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start) %in%
+            paste(EffectsDF$chr[EffectsDF$effect %in% myeffect],
+                  EffectsDF$start[EffectsDF$effect %in% myeffect]))]
+  
+  if (nrow(meth_base) == 0) {
+    stop("No sites found for the specified effect")
+  }
+  
+  # Read metadata file
+  metadata = data.frame(
+    sample_id = fullMetadata_OFFS$SampleID,
+    group = paste(fullMetadata_OFFS$clutch.ID, fullMetadata_OFFS$outcome, sep="_"),
+    stringsAsFactors = FALSE)
+  
+  # Ensure sample IDs in metadata match those in meth_base object
+  if (!all(getSampleID(meth_base) %in% metadata$sample_id)) {
+    stop("Sample IDs in metadata do not match those in methylBase object")
+  }
+  
+  # Extract percent methylation matrix
+  meth_matrix <- percMethylation(meth_base)
+  print(paste("Dimensions of meth_matrix:", paste(dim(meth_matrix), collapse="x")))
+  
+  print(paste("Number of rows with at least one NA:",
+              sum(apply(meth_matrix, 1, function(row) any(is.na(row))))))
+  
+  # Extract coverage matrix
+  coverage_matrix <- getData(meth_base)[, grep("coverage", colnames(getData(meth_base)))]
+  
+  # Iterate through each sample
+  for (sample in getSampleID(meth_base)) {
+    # Get group for current sample
+    group <- metadata$group[metadata$sample_id == sample]
+    
+    # Find other samples in the same group
+    group_samples <- metadata$sample_id[metadata$group == group]
+    
+    # Get column indices for the current sample and its group
+    sample_col <- which(getSampleID(meth_base) == sample)
+    group_cols <- which(getSampleID(meth_base) %in% group_samples)
+    
+    # Find missing values in the current sample
+    missing_indices <- which(is.na(meth_matrix[, sample_col]))
+    
+    if (length(missing_indices) > 0) {
+      # Calculate group average for missing values
+      group_averages <- rowMeans(meth_matrix[missing_indices, group_cols, drop=FALSE], na.rm = TRUE)
+      
+      # Replace missing values with group averages
+      meth_matrix[missing_indices, sample_col] <- group_averages
+      
+      # Set coverage to 1 for imputed values (to avoid division by zero later)
+      coverage_matrix[missing_indices, sample_col] <- 1
+    }
+  }
+  
+  # Remove rows that still contain NAs
+  rows_to_keep <- complete.cases(meth_matrix)
+  meth_matrix_clean <- meth_matrix[rows_to_keep, ]
+  coverage_matrix_clean <- coverage_matrix[rows_to_keep, ]
+  
+  print(paste("Number of rows without NAs after reconstruction:", sum(rows_to_keep)))
+  
+  # Calculate new numCs and numTs
+  numCs_matrix <- round(meth_matrix_clean * coverage_matrix_clean / 100)
+  numTs_matrix <- coverage_matrix_clean - numCs_matrix
+  
+  # Create a new data frame with the required columns
+  new_data <- data.frame(
+    chr = meth_base$chr[rows_to_keep],
+    start = meth_base$start[rows_to_keep],
+    end = meth_base$end[rows_to_keep],
+    strand = meth_base$strand[rows_to_keep]
+  )
+  
+  # Add coverage, numCs, and numTs columns
+  for (i in 1:ncol(coverage_matrix_clean)) {
+    new_data[paste0("coverage", i)] <- coverage_matrix_clean[, i]
+    new_data[paste0("numCs", i)] <- numCs_matrix[, i]
+    new_data[paste0("numTs", i)] <- numTs_matrix[, i]
+  }
+  
+  # Create a new methylBase object
+  new_meth_base <- new("methylBase",
+                       new_data,
+                       sample.ids = getSampleID(meth_base),
+                       assembly = meth_base@assembly,
+                       context = meth_base@context,
+                       treatment = meth_base@treatment,
+                       coverage.index = grep("coverage", colnames(new_data)),
+                       numCs.index = grep("numCs", colnames(new_data)),
+                       numTs.index = grep("numTs", colnames(new_data)),
+                       destranded = meth_base@destranded,
+                       resolution = meth_base@resolution)
+  
+  return(list(meth_matrix_clean=meth_matrix_clean, new_meth_base=new_meth_base))
+}
+
+new_meth_base_INTERGENERATIONAL <- replace_missing_and_remove_nas("INTERGENERATIONAL")
+
+makePrettyMethCluster(new_meth_base_INTERGENERATIONAL$new_meth_base, fullMetadata_OFFS,
+                      my.cols.fam = c(1:4), nbrk = 8, rect = F)
+
+new_meth_base_INFECTION_INDUCED <- replace_missing_and_remove_nas("INFECTION_INDUCED")
+
+makePrettyMethCluster(new_meth_base_INFECTION_INDUCED$new_meth_base, fullMetadata_OFFS,
+                      my.cols.fam = c(1:4), nbrk = 8, rect = F)
+
+new_meth_base_DMS <- replace_missing_and_remove_nas(unique(EffectsDF$effect))
+
+makePrettyMethCluster(new_meth_base_DMS$new_meth_base, fullMetadata_OFFS,
+                      my.cols.fam = c(1:4), nbrk = 8, rect = F)
+
+#####################################################################
+## Adonis tests: impact of different variables on methylation pattern
+
+makePERMANOVAandNMDS <- function(perc.meth){
+  set.seed(1234)
+  # RM sites with low variation
+  SD=apply(perc.meth,1, sd, na.rm = TRUE)
+  if (length((which(SD<0.3)))!=0){
+    perc.meth = perc.meth[-which(SD<0.3),]  
+  }
+  x=t(perc.meth)
+  # creates a distance matrix. Method: Bray-Curtis, package vegan
+  data.dist = as.matrix((vegdist(x, "bray", upper = FALSE)))
+  
+  ## Adonis test: importance of each predictor
+  perm <- how(nperm = 1000) # 1000 permutations
+  setBlocks(perm) <- with(fullMetadata_OFFS, brotherPairID) # define the permutation structure considering brotherPairID and sex
+  print(adonis2(data.dist ~ PAT * outcome * Sex, data = fullMetadata_OFFS, 
+                permutations = perm, by = "terms"))
+  
+  #### RUN Goodness of fit
+  dim = dimcheckMDS(
+    data.dist,
+    distance = "bray",
+    k = 7,
+    trymax = 100,
+    autotransform = TRUE
+  )
+  k = as.numeric(max(names(dim)[dim>0.1]))
+  
+  #Create NMDS based on bray-curtis distances - metaMDS finds the
+  # most stable NMDS solution by randomly starting from different points in your data
+  NMDS <- metaMDS(comm = data.dist, distance = "bray", maxit=1000, k = k)
+  #check to see stress of NMDS
+  mystressplot <- stressplot(NMDS)
+  #extract plotting coordinates
+  MDS1 = NMDS$points[,1] ; MDS2 = NMDS$points[,2] ; MDS3 = NMDS$points[,3]
+  #create new data table (important for later hulls finding)
+  # with plotting coordinates and variables to test (dim 1,2,3)
+  
+  NMDS_dt = data.table::data.table(MDS1 = MDS1, MDS2 = MDS2, MDS3 = MDS3,
+                                   ID = fullMetadata_OFFS$SampleID,
+                                   trtG1G2=as.factor(fullMetadata_OFFS$trtG1G2),
+                                   PAT=as.factor(fullMetadata_OFFS$PAT),
+                                   outcome=as.factor(fullMetadata_OFFS$outcome),
+                                   Sex = as.factor(fullMetadata_OFFS$Sex),
+                                   brotherPairID = as.factor(fullMetadata_OFFS$brotherPairID))
+  
+  #### start sub fun
+  makeNMDSplots <- function(dim, myvar){
+    if (dim == "1_2"){
+      dima=1; dimb=2
+    } else if (dim == "1_3"){
+      dima=1; dimb=3
+    } else if (dim == "2_3"){
+      dima=2; dimb=3
+    }
+    
+    if (myvar == "PAT"){
+      mycols = c("black","yellow"); myshape = c(21,22)
+    } else if (myvar == "outcome"){
+      mycols = c("grey","red"); myshape = c(21,22)
+    } else if (myvar == "trtG1G2"){
+      mycols = colOffsNoname; myshape = c(21,21,21,21)
+    }
+    
+    # generating convex hulls splitted by myvar in my metadata:
+    hulls <- NMDS_dt[, .SD[chull(get(paste0("MDS", dima)), get(paste0("MDS", dimb)))], by = get(myvar)]
+    
+    myNMDSplot <- ggplot(NMDS_dt,
+                         aes_string(x=paste0("MDS",dima), y=paste0("MDS",dimb))) +
+      geom_polygon(data = hulls, aes_string(fill=myvar), alpha=0.3) +
+      scale_color_manual(values = mycols)+
+      scale_fill_manual(values = mycols)+
+      geom_point(aes_string(fill=myvar, shape=myvar), size = 3, alpha = .6) +
+      #  geom_label(aes(label=row.names(NMDS2)))+
+      scale_shape_manual(values = myshape) +
+      theme(legend.title=element_blank(), legend.position = "top")
+    
+    return(myNMDSplot)
+  }
+  
+  figure <-  ggarrange(makeNMDSplots(dim= "1_2", myvar = "PAT"),
+                       makeNMDSplots(dim= "1_3", myvar = "PAT"),
+                       makeNMDSplots(dim= "2_3", myvar = "PAT"),
+                       makeNMDSplots(dim= "1_2", myvar = "outcome"),
+                       makeNMDSplots(dim= "1_3", myvar = "outcome"),
+                       makeNMDSplots(dim= "2_3", myvar = "outcome"),
+                       ncol = 3, nrow = 2)
+  
+  figure2 <-  ggarrange(makeNMDSplots(dim= "1_2", myvar = "trtG1G2"),
+                        makeNMDSplots(dim= "1_3", myvar = "trtG1G2"),
+                        makeNMDSplots(dim= "2_3", myvar = "trtG1G2"),
+                        ncol = 3, nrow = 1)
+  
+  return(figure2)
+}
+
+MDSplot1 <- makePERMANOVAandNMDS(new_meth_base_INTERGENERATIONAL$meth_matrix_clean)
+
+#  Paternal treatment explains 7.9% of the variance of methylation at intergenerational
+#  DMS (R2=0.079, F=10.05, P<0.001), 
+# interaction paternal and offspring treatment 6% (R2=0.06, F=7.77, P<0.01),
+# sex 1.7% (R2=0.017, F=2.21, P=0.03),
+#  offspring treatment 1.2% (R2=0.012, F=1.51, P=0.03)
+
+
+MDSplot2 <- makePERMANOVAandNMDS(new_meth_base_INFECTION_INDUCED$meth_matrix_clean)
+#  offspring treatment explains 6.2% of the variance of methylation at 
+# infection-induced DMS (R2=0.062, F=7.64, P<0.001),
+# interaction paternal and offspring treatment 6% (R2=0.06, F=6.77, P<0.001),
+# paternal treatment 1% (R2=0.01, F=1.41, P=0.03)
+
+cowplot::plot_grid(MDSplot1, MDSplot2,
+                   nrow = 2, labels = c("Intergenerational DMS (67 complete cases after mean imputation)",
+                                        "Infection-induced DMS (113 complete cases after mean imputation)"))
+
+## MDS1 a bit discriminatory between NE_control and E_control
+## MDS2 is VERY discriminatory between NE_exposed and E_exposed (no overlap)
+
+# MDS1 a bit discriminant between E_control and E_exposed
+# MDS3 is very discriminant between NE_control and NE_exposed
 
 message("R07 done.\n")
