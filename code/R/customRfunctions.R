@@ -537,7 +537,7 @@ plotModBCI_PCA <- function(model, resMod_PCA, Signifterms){
     labs(x = Signifterms[1], y = "Body Condition Index", 
          color = "PAT", fill = "PAT") +
     ggtitle("Predicted and observed values of BCI", 
-            subtitle = paste0("interaction", Signifterms[1], ":paternal treatment"))+
+            subtitle = paste0("interaction ", Signifterms[1], ":paternal treatment"))+
     scale_color_manual(values = setNames(colOffs, NULL)[1:2])+
     scale_fill_manual(values = colOffs)
   

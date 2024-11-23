@@ -37,8 +37,9 @@ plotScreePlot(resPCA.allDMS)
 ## Mainly 3 first component, 4,5 a bit, then big drop
 
 ## PCA plot
-fig4a <- myPlotPCA(resPCA.allDMS, resMod_PCA.allDMS)
-fig4a
+fig4a <- myPlotPCA(resPCA.allDMS, resMod_PCA.allDMS) + 
+  ggtitle("Individuals PCA based on all DMS")
+fig4a 
 
 ### How much of the BCI variance is explained by each variables?
 #   BCI ~ PCA1 + PAT + (1 | brotherPairID) + (1 | Sex) + PCA1:PAT
@@ -62,7 +63,8 @@ message(paste0(
 plotModBCI_PCA_allDMS = plotModBCI_PCA(modFULL, resMod_PCA.allDMS, Signifterms = c("PCA1", "PAT"))
 
 plotModBCI_PCA_allDMS$p1
-fig4d <- plotModBCI_PCA_allDMS$p2
+fig4d <- plotModBCI_PCA_allDMS$p2+ 
+  ggtitle("Predicted and observed BCI based on PCA1 at all DMS")
 fig4d
 
 #########################
@@ -89,7 +91,8 @@ plotScreePlot(resPCA.intergenerationalDMS)
 ## Mainly 3 first component, 4,5 a bit, then big drop
 
 ## PCA plot
-fig4b <- myPlotPCA(resPCA.intergenerationalDMS, resMod_PCA.intergenerationalDMS)
+fig4b <- myPlotPCA(resPCA.intergenerationalDMS, resMod_PCA.intergenerationalDMS)+ 
+  ggtitle("Individuals PCA based on intergenerational DMS")
 fig4b
 
 ### How much of the BCI variance is explained by each variables?
@@ -114,7 +117,8 @@ plotModBCI_PCA_intergenerationalDMS = plotModBCI_PCA(
   modFULL, resMod_PCA.intergenerationalDMS, Signifterms = c("PCA2", "PAT"))
 
 plotModBCI_PCA_intergenerationalDMS$p1
-fig4e <- plotModBCI_PCA_intergenerationalDMS$p2
+fig4e <- plotModBCI_PCA_intergenerationalDMS$p2 + 
+  ggtitle("Predicted and observed BCI based on PCA2 at intergenerational DMS")
 fig4e
 
 #########################
@@ -142,7 +146,8 @@ plotScreePlot(resPCA.infectionInducedDMS)
 ## Mainly 3 first component, 4,5 a bit, then big drop
 
 ## PCA plot
-fig4c <- myPlotPCA(resPCA.infectionInducedDMS, resMod_PCA.infectionInducedDMS)
+fig4c <- myPlotPCA(resPCA.infectionInducedDMS, resMod_PCA.infectionInducedDMS)+ 
+  ggtitle("Individuals PCA based on infection-induced DMS")
 fig4c
 
 ### How much of the BCI variance is explained by each variables?
@@ -167,11 +172,12 @@ plotModBCI_PCA_infectionInducedDMS = plotModBCI_PCA(
   modFULL, resMod_PCA.infectionInducedDMS, Signifterms = c("PCA1", "PAT"))
 
 plotModBCI_PCA_infectionInducedDMS$p1
-fig4f <- plotModBCI_PCA_infectionInducedDMS$p2
-
+fig4f <- plotModBCI_PCA_infectionInducedDMS$p2  + 
+  ggtitle("Predicted and observed BCI based on PCA1 at infection-induced DMS")
+fig4f
 
 # save
-pdf(file = "../../dataOut/fig/Fig4_phenoMethPlot.pdf", width = 12, height = 6)
+pdf(file = "../../dataOut/fig/Fig4_phenoMethPlot.pdf", width = 15, height = 10)
 gridExtra::grid.arrange(fig4a + theme(legend.position = c(0.8, 0.2)),
                         fig4b + theme(legend.position = "none"),
                         fig4c + theme(legend.position = "none"),
