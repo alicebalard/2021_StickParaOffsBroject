@@ -535,9 +535,7 @@ plotModBCI_PCA <- function(model, resMod_PCA, Signifterms){
     geom_jitter(data=dfobs, aes(fill = trtG1G2), size = 3, pch=21,col="black",
                 height = 0, width = .1) +
     labs(x = Signifterms[1], y = "Body Condition Index", 
-         color = "PAT", fill = "PAT") +
-    ggtitle("Predicted and observed values of BCI", 
-            subtitle = paste0("interaction ", Signifterms[1], ":paternal treatment"))+
+         color = "PAT", fill = "PAT")+
     scale_color_manual(values = setNames(colOffs, NULL)[1:2])+
     scale_fill_manual(values = colOffs)
   
