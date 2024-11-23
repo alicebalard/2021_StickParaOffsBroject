@@ -22,9 +22,12 @@
 # getGo2Goslim() map a GOslim term to its GO terms
 
 ## PCA functions:
-# myPCA_mod() runs a PCA on CpG sites
-
 # getG2methAtCpGs() Get methylation at list of CpG for all offspring
+# getResPCA() run PCA with imputation of missing data
+# getModPCA() test model from PCA
+# plotScreePlot() get scree plot
+# myPlotPCA() plot PCA
+# plotModBCI_PCA() plot the model
 
 ##############
 
@@ -443,10 +446,20 @@ getG2methAtCpGs <- function(DMSlist){
   obj = obj %>% pivot_wider(names_from = DMS, values_from = G2methylation) %>%
     data.frame()
   
+  ## reorder by sample original level
+  obj = obj[order(obj$SampleID, levels(obj$SampleID)),]
+  
   return(obj)
 }
 
-myPCA_mod <- function(x, incomplete){
+getResPCA <- function(x, incomplete = T){
+  
+  ## make samples as row names
+  x = x %>% `rownames<-`(.[,1]) %>% 
+    dplyr::select(matches("Gy_chr"))
+  ## check samples order
+  print("Samples order:") ; print(head(rownames(x)))
+  
   if (incomplete==TRUE){
     # estimate the number of components from incomplete data
     nb <- estim_ncpPCA(x, scale = T)
@@ -456,19 +469,77 @@ myPCA_mod <- function(x, incomplete){
   }
   # 2. run PCA
   res.PCA = FactoMineR::PCA(x, scale.unit = T, graph = FALSE) # perform PCA
-  metadata = fullMetadata_OFFS
-  # check that the sample names are in the same order
-  ifelse(table(rownames(res.PCA$ind$coord) == metadata$SampleID), "sample names are in the same order", "ERROR in PCA sample names order")
-  # 3. extract axes 1, 2
-  metadata$PCA1 = res.PCA$ind$coord[,1] # axis 1
-  metadata$PCA2 = res.PCA$ind$coord[,2] # axis 2
-  # 4. Correlation with parasite load/BCI
-  mod = lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+  return(res.PCA)
+}
+
+getModPCA <- function(res.PCA){
+  # extract axes 1, 2
+  dfPCA = data.frame(PCA1=res.PCA$ind$coord[,1], # axis 1
+                     PCA2=res.PCA$ind$coord[,2], # axis 2
+                     SampleID = row.names(res.PCA$ind$coord))
+  # add metadata
+  dfPCA = merge(dfPCA, fullMetadata_OFFS)                     
+  ## reorder samples following PCA
+  dfPCA = dfPCA[match(rownames(res.PCA$ind$coord), dfPCA$SampleID),]
+  
+  ## check samples order
+  print("Samples order:") ; print(head(dfPCA$SampleID))
+  
+  # Correlation with parasite load/BCI
+  mod = lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), 
+             data=dfPCA)
+  
+  print(lmerTest::step(mod, reduce.random = F))
+  
   ## Model selection:
   modSel = lmer(formula = attr(attr(lmerTest::step(mod, reduce.random = F), "drop1"), "heading")[3],
-                data=metadata, REML = F)
-  print(lmerTest::step(mod, reduce.random = F))
-  print("The chosen model is:")
-  print(formula(modSel))
-  return(list(res.PCA=res.PCA, modSel = modSel, metadata = metadata))
+                data=dfPCA, REML = F)
+  
+  return(list(modSel = modSel, metadata = dfPCA))
+}
+
+plotScreePlot <- function(resPCA){
+  barplot(resPCA$eig[, 2], names.arg=1:nrow(resPCA.allDMS$eig), 
+          main = "Variances",
+          xlab = "Principal Components",
+          ylab = "Percentage of variances",
+          col ="steelblue")
+  # Add connected line segments to the plot
+  lines(x = 1:nrow(resPCA$eig), resPCA.allDMS$eig[, 2], 
+        type="b", pch=19, col = "red")
+}
+
+myPlotPCA <- function(resPCA, resMod_PCA){
+  fviz_pca_ind(resPCA, label="none", 
+               habillage=resMod_PCA$metadata$trtG1G2,
+               pointsize =3, addEllipses=TRUE)+
+    scale_color_manual(values = colOffs)+
+    scale_fill_manual(values = colOffs)
+}
+
+plotModBCI_PCA <- function(model, resMod_PCA, Signifterms){
+  p1 = plot_model(modFULL)
+  
+  ## predicted and observed data
+  pred_data <- ggpredict(modFULL, terms = Signifterms)  
+  dfobs = resMod_PCA$metadata
+  dfobs$x = dfobs[[Signifterms[1]]]
+  dfobs$predicted = dfobs$BCI
+  dfobs$group = dfobs$PAT
+  dfobs$trtG1G2 = dfobs$trtG1G2
+  
+  p2 = ggplot(pred_data, aes(x = x, y = predicted)) +
+    geom_line(aes(linetype = group)) +
+    geom_ribbon(aes(ymin = conf.low, ymax = conf.high, group = group),
+                alpha = 0.2, linetype = "blank", fill = "grey")+
+    geom_jitter(data=dfobs, aes(fill = trtG1G2), size = 3, pch=21,col="black",
+                height = 0, width = .1) +
+    labs(x = Signifterms[1], y = "Body Condition Index", 
+         color = "PAT", fill = "PAT") +
+    ggtitle("Predicted and observed values of BCI", 
+            subtitle = paste0("interaction", Signifterms[1], ":paternal treatment"))+
+    scale_color_manual(values = setNames(colOffs, NULL)[1:2])+
+    scale_fill_manual(values = colOffs)
+  
+  return(list(p1=p1, p2=p2))
 }

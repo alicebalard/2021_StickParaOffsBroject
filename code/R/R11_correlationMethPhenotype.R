@@ -19,237 +19,166 @@ message("R11 starting...\n")
 ### PCA based on all methylation values at DMS positions detected for all effects, with imputation of missing values
 DMS_allDMS_meth_pheno = getG2methAtCpGs(EffectsDF_ANNOT$DMS)
 
-## Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
 ## PCA of the methylation
-myPCA_DMS_allDMS = DMS_allDMS_meth_pheno %>% `rownames<-`(.[,1]) %>% 
-  dplyr::select(matches("Gy_chr")) %>% 
-  as.matrix %>% myPCA_mod(incomplete = T)
+resPCA.allDMS = getResPCA(DMS_allDMS_meth_pheno)
 
-############
-## Print PCA
-barplot(myPCA_DMS_allDMS$res.PCA$eig[, 2], names.arg=1:nrow(myPCA_DMS_allDMS$res.PCA$eig), 
-        main = "Variances",
-        xlab = "Principal Components",
-        ylab = "Percentage of variances",
-        col ="steelblue")
-# Add connected line segments to the plot
-lines(x = 1:nrow(myPCA_DMS_allDMS$res.PCA$eig), myPCA_DMS_allDMS$res.PCA$eig[, 2], 
-      type="b", pch=19, col = "red")
-## Mainly 3 first component, 4,5 a bit, then big drop
-
-pcaplot0 <-fviz_pca_ind(myPCA_DMS_allDMS$res.PCA, label="none", 
-             habillage=fullMetadata_OFFS$trtG1G2[
-               match(rownames(myPCA_DMS_allDMS$res.PCA$ind$coord), fullMetadata_OFFS$SampleID)], 
-             pointsize =3, addEllipses=TRUE)+
-  scale_color_manual(values = colOffs)+
-  scale_fill_manual(values = colOffs)
-pcaplot0
+## Run model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+resMod_PCA.allDMS = getModPCA(resPCA.allDMS)
 
 ##############
 # Model found:
-# BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + PCA1:No.Worms + No.Worms:PAT
-#                         Eliminated  Sum Sq Mean Sq NumDF DenDF F value   Pr(>F)   
-# PCA1:No.Worms                   0 13362.9 13362.9     1   105  4.0190 0.047563 * 
-# No.Worms:PAT                    0 23271.6 23271.6     1   105  6.9992 0.009408 **
+#   BCI ~ PCA1 + PAT + (1 | brotherPairID) + (1 | Sex) + PCA1:PAT
+
+#     Eliminated  Sum Sq Mean Sq NumDF DenDF F value Pr(>F)   
+# PCA1:PAT    0 23868.7 23868.7     1   107  7.3048 0.0080 **
+
+## Scree plot
+plotScreePlot(resPCA.allDMS)
+## Mainly 3 first component, 4,5 a bit, then big drop
+
+## PCA plot
+fig4a <- myPlotPCA(resPCA.allDMS, resMod_PCA.allDMS)
+fig4a
 
 ### How much of the BCI variance is explained by each variables?
-# BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + PCA1:No.Worms + No.Worms:PAT
-modFULL = lmer(BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-                 No.Worms:PCA1 + No.Worms:PAT, data = myPCA_DMS_allDMS$metadata)
-
+#   BCI ~ PCA1 + PAT + (1 | brotherPairID) + (1 | Sex) + PCA1:PAT
+modFULL = lmer(BCI ~ PCA1 + PAT + (1 | brotherPairID) + (1 | Sex) + 
+                 PCA1:PAT, data = resMod_PCA.allDMS$metadata)
 message("R2c= conditional R2 value associated with fixed effects plus the random effects.")
 
-mod_noPAT = lmer(BCI ~ PCA1 + No.Worms + (1 | brotherPairID) + (1 | Sex) + 
-                   No.Worms:PCA1, data = myPCA_DMS_allDMS$metadata)
+mod_noPAT = lmer(BCI ~ PCA1 + (1 | brotherPairID) + (1 | Sex),
+                 data = resMod_PCA.allDMS$metadata)
 message(paste0(
   round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPAT)[2])*100,2),
   "% of the variance in associated with the paternal infection"))
 
-mod_noWorms = lmer(BCI ~ PCA1 + PAT + (1 | brotherPairID) + (1 | Sex), 
-                   data = myPCA_DMS_allDMS$metadata)
-message(paste0(
-  round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noWorms)[2])*100,2),
-  "% of the variance in associated with the number of worms"))
-
-mod_noPCA1 = lmer(BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-                    No.Worms:PAT, data = myPCA_DMS_allDMS$metadata)
+mod_noPCA1 = lmer(BCI ~ PAT + (1 | brotherPairID) + (1 | Sex),
+                  data = resMod_PCA.allDMS$metadata)
 message(paste0(
   round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPCA1)[2])*100,2),
   "% of the variance in associated with the first PCA axis"))
 
-### Plot of the model
-makeplotModel <- function(modFULL, mymin){
-  # No.Worms:PAT
-  pred_data <- ggpredict(modFULL, terms = c("No.Worms", "PAT"))
-  
-  dfobs = myPCA_DMS_allDMS$metadata
-  dfobs$x = dfobs$No.Worms
-  dfobs$predicted = dfobs$BCI
-  dfobs$group = dfobs$PAT
-  
-  p1 = ggplot(pred_data, aes(x = x, y = predicted, fill = group, color = group)) +
-    geom_line(aes(group = group)) +
-    geom_ribbon(aes(ymin = conf.low, ymax = conf.high, group = group),
-                alpha = 0.2, linetype = "blank")+
-    geom_jitter(data=dfobs, aes(fill = group), size = 3,
-                height = 0, width = .1)+
-    labs(x = "Number of Worms", y = "Body Condition Index", 
-         color = "PAT", fill = "PAT") +
-    ggtitle("Predicted and observed values of BCI", 
-            subtitle = "No.Worms:paternal treatment interaction")+
-    scale_color_manual(values = setNames(colOffs, NULL)[1:2])+
-    scale_fill_manual(values = setNames(colOffs, NULL)[1:2])+
-    ylim(mymin,300)  # Set y-axis limits
-  
-  # No.Worms:PCA1
-  pred_data <- ggpredict(modFULL, terms = c("No.Worms", "PCA1 [-18, 13]"))
-  pred_data$group <- as.numeric(as.character(pred_data$group))
-  
-  dfobs = myPCA_DMS_allDMS$metadata
-  dfobs$x = dfobs$No.Worms
-  dfobs$predicted = dfobs$BCI
-  dfobs$group = dfobs$PCA1
-  
-  p2 = ggplot(pred_data, aes(x = x, y = predicted, fill = group, color = group)) +
-    geom_line(aes(group = group)) +
-    geom_ribbon(aes(ymin = conf.low, ymax = conf.high, group = group),
-                alpha = 0.2, linetype = "blank")+
-    geom_jitter(data=dfobs, aes(fill = group), size = 3,
-                height = 0, width = .1)+
-    labs(x = "Number of Worms", y = "Body Condition Index", 
-         color = "PCA1", fill = "PCA1") +
-    ggtitle("Predicted and observed values of BCI", 
-            subtitle = "No.Worms:PCA1 interaction")+
-    scale_color_gradient(low = "black", high = "red")+
-    scale_fill_gradient(low = "black", high = "red")+
-    ylim(mymin,300)  # Set y-axis limits
-  
-  return(list(p1=p1, p2=p2))
-}
+### Plot of the model 
+plotModBCI_PCA_allDMS = plotModBCI_PCA(modFULL, resMod_PCA.allDMS, Signifterms = c("PCA1", "PAT"))
 
-p1 = makeplotModel(modFULL, mymin=-380)$p1
-p2 = makeplotModel(modFULL, mymin=-380)$p2
-
-# save
-pdf(file = "../../dataOut/fig/Fig4_phenoMethPlot_alleffects.pdf", width = 12, height = 5)
-gridExtra::grid.arrange(p1,p2, ncol=2)
-dev.off()
+plotModBCI_PCA_allDMS$p1
+fig4d <- plotModBCI_PCA_allDMS$p2
+fig4d
 
 #########################
 ## ONLY intergenerational
-## PCA1:worms close to significant!
-
 ### PCA based on all methylation values at DMS positions detected for all effects, with imputation of missing values
-DMS_intergenerational_meth_pheno = getG2methAtCpGs(EffectsDF_ANNOT$DMS[
+DMS_intergenerationalDMS_meth_pheno = getG2methAtCpGs(EffectsDF_ANNOT$DMS[
   EffectsDF_ANNOT$effect %in% "INTERGENERATIONAL"])
 
-## Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
 ## PCA of the methylation
-myPCA_DMS_intergenerational = DMS_intergenerational_meth_pheno %>% `rownames<-`(.[,1]) %>% 
-  dplyr::select(matches("Gy_chr")) %>% 
-  as.matrix %>% myPCA_mod(incomplete = T)
+resPCA.intergenerationalDMS = getResPCA(DMS_intergenerationalDMS_meth_pheno)
 
-############
-## Print PCA
-barplot(myPCA_DMS_intergenerational$res.PCA$eig[, 2], 
-        names.arg=1:nrow(myPCA_DMS_intergenerational$res.PCA$eig), 
-        main = "Variances",
-        xlab = "Principal Components",
-        ylab = "Percentage of variances",
-        col ="steelblue")
-# Add connected line segments to the plot
-lines(x = 1:nrow(myPCA_DMS_intergenerational$res.PCA$eig), 
-      myPCA_DMS_intergenerational$res.PCA$eig[, 2], 
-      type="b", pch=19, col = "red")
-## Mainly 2 first components, 3,4 a bit, then big drop
+## Run model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+resMod_PCA.intergenerationalDMS = getModPCA(resPCA.intergenerationalDMS)
 
-pcaplot1 <- fviz_pca_ind(myPCA_DMS_intergenerational$res.PCA, label="none", 
-             habillage=fullMetadata_OFFS$trtG1G2[
-               match(rownames(myPCA_DMS_intergenerational$res.PCA$ind$coord), 
-                     fullMetadata_OFFS$SampleID)], 
-             pointsize =3, addEllipses=TRUE)+
-  scale_color_manual(values = colOffs)+
-  scale_fill_manual(values = colOffs)+
-  ggtitle("Individuals - PCA of intergenerational DMS")
-pcaplot1
-
-#############
+##############
 # Model found:
-# BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
-# PCA1:No.Worms                  11 10636.8 10636.8     1   105  3.1309 0.07972 .
+#   BCI ~ PCA2 + PAT + (1 | brotherPairID) + (1 | Sex) + PCA2:PAT
 
-## NB: not the model selected! but to compare with the overall
-modFULL = lmer(BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-                 No.Worms:PCA1 + No.Worms:PAT, data = myPCA_DMS_intergenerational$metadata)
+#     Eliminated  Sum Sq Mean Sq NumDF DenDF F value Pr(>F)   
+# PCA2:PAT     0 29923.5 29923.5     1   107  9.5262 0.002579 **
+  
+## Scree plot
+plotScreePlot(resPCA.intergenerationalDMS)
+## Mainly 3 first component, 4,5 a bit, then big drop
 
-### Plot of the model
-p1 = makeplotModel(modFULL, mymin=-500)$p1
-p2 = makeplotModel(modFULL,mymin=-500)$p2
+## PCA plot
+fig4b <- myPlotPCA(resPCA.intergenerationalDMS, resMod_PCA.intergenerationalDMS)
+fig4b
 
-# save
-pdf(file = "../../dataOut/fig/FigS4B_phenoMethPlot_intergenerational.pdf", width = 8, height = 5)
-gridExtra::grid.arrange(p1,p2, ncol=2)
-dev.off()
+### How much of the BCI variance is explained by each variables?
+modFULL = lmer(BCI ~ PCA2 + PAT + (1 | brotherPairID) + (1 | Sex) + 
+                 PCA2:PAT, data = resMod_PCA.intergenerationalDMS$metadata)
+message("R2c= conditional R2 value associated with fixed effects plus the random effects.")
+
+mod_noPAT = lmer(BCI ~ PCA2 + (1 | brotherPairID) + (1 | Sex),
+                 data = resMod_PCA.intergenerationalDMS$metadata)
+message(paste0(
+  round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPAT)[2])*100,2),
+  "% of the variance in associated with the paternal infection"))
+
+mod_noPCA2 = lmer(BCI ~ PAT + (1 | brotherPairID) + (1 | Sex),
+                  data = resMod_PCA.intergenerationalDMS$metadata)
+message(paste0(
+  round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPCA1)[2])*100,2),
+  "% of the variance in associated with the second PCA axis"))
+
+### Plot of the model 
+plotModBCI_PCA_intergenerationalDMS = plotModBCI_PCA(
+  modFULL, resMod_PCA.intergenerationalDMS, Signifterms = c("PCA2", "PAT"))
+
+plotModBCI_PCA_intergenerationalDMS$p1
+fig4e <- plotModBCI_PCA_intergenerationalDMS$p2
+fig4e
 
 #########################
-## ONLY infection-induced 
-## PCA1:worms very far from significant!
-
+## ONLY infection-induced
 ### PCA based on all methylation values at DMS positions detected for all effects, with imputation of missing values
-DMS_infectioninduced_meth_pheno = getG2methAtCpGs(EffectsDF_ANNOT$DMS[
+DMS_infectionInducedDMS_meth_pheno = getG2methAtCpGs(EffectsDF_ANNOT$DMS[
   EffectsDF_ANNOT$effect %in% "INFECTION_INDUCED"])
 
-## Make PCA and model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
 ## PCA of the methylation
-myPCA_DMS_infectioninduced = DMS_infectioninduced_meth_pheno %>% `rownames<-`(.[,1]) %>% 
-  dplyr::select(matches("Gy_chr")) %>% 
-  as.matrix %>% myPCA_mod(incomplete = T)
+resPCA.infectionInducedDMS = getResPCA(DMS_infectionInducedDMS_meth_pheno)
 
-############
-## Print PCA
-barplot(myPCA_DMS_infectioninduced$res.PCA$eig[, 2], 
-        names.arg=1:nrow(myPCA_DMS_infectioninduced$res.PCA$eig), 
-        main = "Variances",
-        xlab = "Principal Components",
-        ylab = "Percentage of variances",
-        col ="steelblue")
-# Add connected line segments to the plot
-lines(x = 1:nrow(myPCA_DMS_infectioninduced$res.PCA$eig), 
-      myPCA_DMS_infectioninduced$res.PCA$eig[, 2], 
-      type="b", pch=19, col = "red")
-## Mainly 2 first components, 3,4,5 a bit, then big drop
+## Run model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+resMod_PCA.infectionInducedDMS = getModPCA(resPCA.infectionInducedDMS)
 
-pcaplot2 <- fviz_pca_ind(myPCA_DMS_infectioninduced$res.PCA, label="none", 
-             habillage=fullMetadata_OFFS$trtG1G2[
-               match(rownames(myPCA_DMS_infectioninduced$res.PCA$ind$coord), 
-                     fullMetadata_OFFS$SampleID)], 
-             pointsize =3, addEllipses=TRUE)+
-  scale_color_manual(values = colOffs)+
-  scale_fill_manual(values = colOffs)+
-  ggtitle("Individuals - PCA of infection-induced DMS")
-pcaplot2
-
-#############
+##############
 # Model found:
-# BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
-# PCA1:No.Worms                   8  3346.5  3346.5     1   102  0.9859 0.32311  
+#   BCI ~ PCA1 + PAT + (1 | brotherPairID) + (1 | Sex) 
 
-## NB: not the model selected! but to compare with the overall
-modFULL = lmer(BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + 
-                 No.Worms:PCA1 + No.Worms:PAT, data = myPCA_DMS_infectioninduced$metadata)
+#     Eliminated  Sum Sq Mean Sq NumDF DenDF F value Pr(>F)   
+# PCA1                            0  58946   58946     1   108 17.4717 5.943e-05 ***
+# PAT                             0  42725   42725     1   108 12.6635 0.0005554 ***
 
-### Plot of the model
-p1 = makeplotModel(modFULL, mymin=-500)$p1
-p2 = makeplotModel(modFULL,mymin=-500)$p2
+## Scree plot
+plotScreePlot(resPCA.infectionInducedDMS)
+## Mainly 3 first component, 4,5 a bit, then big drop
+
+## PCA plot
+fig4c <- myPlotPCA(resPCA.infectionInducedDMS, resMod_PCA.infectionInducedDMS)
+fig4c
+
+### How much of the BCI variance is explained by each variables?
+modFULL = lmer(BCI ~ PCA1 + PAT + (1 | brotherPairID) + (1 | Sex), 
+                 data = resMod_PCA.infectionInducedDMS$metadata)
+message("R2c= conditional R2 value associated with fixed effects plus the random effects.")
+
+mod_noPAT = lmer(BCI ~ PCA1 + (1 | brotherPairID) + (1 | Sex),
+                 data = resMod_PCA.infectionInducedDMS$metadata)
+message(paste0(
+  round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPAT)[2])*100,2),
+  "% of the variance in associated with the paternal infection"))
+
+mod_noPCA1 = lmer(BCI ~ PAT + (1 | brotherPairID) + (1 | Sex),
+                  data = resMod_PCA.infectionInducedDMS$metadata)
+message(paste0(
+  round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPCA1)[2])*100,2),
+  "% of the variance in associated with the first PCA axis"))
+
+### Plot of the model 
+plotModBCI_PCA_infectionInducedDMS = plotModBCI_PCA(
+  modFULL, resMod_PCA.infectionInducedDMS, Signifterms = c("PCA1", "PAT"))
+
+plotModBCI_PCA_infectionInducedDMS$p1
+fig4f <- plotModBCI_PCA_infectionInducedDMS$p2
+
 
 # save
-pdf(file = "../../dataOut/fig/FigS4A_phenoMethPlot_infectioninduced.pdf", width = 8, height = 5)
-gridExtra::grid.arrange(p1,p2, ncol=2)
-dev.off()
-
-# save PCA plots
-pdf(file = "../../dataOut/fig/Figxx_PCAplots.pdf", width = 10, height = 6)
-gridExtra::grid.arrange(pcaplot0,pcaplot1,pcaplot2, ncol=2)
+pdf(file = "../../dataOut/fig/Fig4_phenoMethPlot.pdf", width = 12, height = 6)
+gridExtra::grid.arrange(fig4a + theme(legend.position = c(0.8, 0.2)),
+                        fig4b + theme(legend.position = "none"),
+                        fig4c + theme(legend.position = "none"),
+                        fig4d + guides(fill = "none", linetype = guide_legend()),
+                        fig4e + guides(fill = "none", linetype = guide_legend()),
+                        fig4f + guides(fill = "none", linetype = guide_legend()),
+                        ncol=3)
 dev.off()
 
 ###################################
