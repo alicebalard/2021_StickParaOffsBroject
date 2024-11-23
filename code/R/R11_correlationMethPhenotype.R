@@ -25,6 +25,27 @@ myPCA_DMS_allDMS = DMS_allDMS_meth_pheno %>% `rownames<-`(.[,1]) %>%
   dplyr::select(matches("Gy_chr")) %>% 
   as.matrix %>% myPCA_mod(incomplete = T)
 
+############
+## Print PCA
+barplot(myPCA_DMS_allDMS$res.PCA$eig[, 2], names.arg=1:nrow(myPCA_DMS_allDMS$res.PCA$eig), 
+        main = "Variances",
+        xlab = "Principal Components",
+        ylab = "Percentage of variances",
+        col ="steelblue")
+# Add connected line segments to the plot
+lines(x = 1:nrow(myPCA_DMS_allDMS$res.PCA$eig), myPCA_DMS_allDMS$res.PCA$eig[, 2], 
+      type="b", pch=19, col = "red")
+## Mainly 3 first component, 4,5 a bit, then big drop
+
+pcaplot0 <-fviz_pca_ind(myPCA_DMS_allDMS$res.PCA, label="none", 
+             habillage=fullMetadata_OFFS$trtG1G2[
+               match(rownames(myPCA_DMS_allDMS$res.PCA$ind$coord), fullMetadata_OFFS$SampleID)], 
+             pointsize =3, addEllipses=TRUE)+
+  scale_color_manual(values = colOffs)+
+  scale_fill_manual(values = colOffs)
+pcaplot0
+
+##############
 # Model found:
 # BCI ~ PCA1 + No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + PCA1:No.Worms + No.Worms:PAT
 #                         Eliminated  Sum Sq Mean Sq NumDF DenDF F value   Pr(>F)   
@@ -128,6 +149,31 @@ myPCA_DMS_intergenerational = DMS_intergenerational_meth_pheno %>% `rownames<-`(
   dplyr::select(matches("Gy_chr")) %>% 
   as.matrix %>% myPCA_mod(incomplete = T)
 
+############
+## Print PCA
+barplot(myPCA_DMS_intergenerational$res.PCA$eig[, 2], 
+        names.arg=1:nrow(myPCA_DMS_intergenerational$res.PCA$eig), 
+        main = "Variances",
+        xlab = "Principal Components",
+        ylab = "Percentage of variances",
+        col ="steelblue")
+# Add connected line segments to the plot
+lines(x = 1:nrow(myPCA_DMS_intergenerational$res.PCA$eig), 
+      myPCA_DMS_intergenerational$res.PCA$eig[, 2], 
+      type="b", pch=19, col = "red")
+## Mainly 2 first components, 3,4 a bit, then big drop
+
+pcaplot1 <- fviz_pca_ind(myPCA_DMS_intergenerational$res.PCA, label="none", 
+             habillage=fullMetadata_OFFS$trtG1G2[
+               match(rownames(myPCA_DMS_intergenerational$res.PCA$ind$coord), 
+                     fullMetadata_OFFS$SampleID)], 
+             pointsize =3, addEllipses=TRUE)+
+  scale_color_manual(values = colOffs)+
+  scale_fill_manual(values = colOffs)+
+  ggtitle("Individuals - PCA of intergenerational DMS")
+pcaplot1
+
+#############
 # Model found:
 # BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
 # PCA1:No.Worms                  11 10636.8 10636.8     1   105  3.1309 0.07972 .
@@ -159,6 +205,31 @@ myPCA_DMS_infectioninduced = DMS_infectioninduced_meth_pheno %>% `rownames<-`(.[
   dplyr::select(matches("Gy_chr")) %>% 
   as.matrix %>% myPCA_mod(incomplete = T)
 
+############
+## Print PCA
+barplot(myPCA_DMS_infectioninduced$res.PCA$eig[, 2], 
+        names.arg=1:nrow(myPCA_DMS_infectioninduced$res.PCA$eig), 
+        main = "Variances",
+        xlab = "Principal Components",
+        ylab = "Percentage of variances",
+        col ="steelblue")
+# Add connected line segments to the plot
+lines(x = 1:nrow(myPCA_DMS_infectioninduced$res.PCA$eig), 
+      myPCA_DMS_infectioninduced$res.PCA$eig[, 2], 
+      type="b", pch=19, col = "red")
+## Mainly 2 first components, 3,4,5 a bit, then big drop
+
+pcaplot2 <- fviz_pca_ind(myPCA_DMS_infectioninduced$res.PCA, label="none", 
+             habillage=fullMetadata_OFFS$trtG1G2[
+               match(rownames(myPCA_DMS_infectioninduced$res.PCA$ind$coord), 
+                     fullMetadata_OFFS$SampleID)], 
+             pointsize =3, addEllipses=TRUE)+
+  scale_color_manual(values = colOffs)+
+  scale_fill_manual(values = colOffs)+
+  ggtitle("Individuals - PCA of infection-induced DMS")
+pcaplot2
+
+#############
 # Model found:
 # BCI ~ No.Worms + PAT + (1 | brotherPairID) + (1 | Sex) + No.Worms:PAT
 # PCA1:No.Worms                   8  3346.5  3346.5     1   102  0.9859 0.32311  
@@ -174,6 +245,11 @@ p2 = makeplotModel(modFULL,mymin=-500)$p2
 # save
 pdf(file = "../../dataOut/fig/FigS4A_phenoMethPlot_infectioninduced.pdf", width = 8, height = 5)
 gridExtra::grid.arrange(p1,p2, ncol=2)
+dev.off()
+
+# save PCA plots
+pdf(file = "../../dataOut/fig/Figxx_PCAplots.pdf", width = 8, height = 5)
+gridExtra::grid.arrange(pcaplot0,pcaplot1,pcaplot2, ncol=2)
 dev.off()
 
 ###################################
