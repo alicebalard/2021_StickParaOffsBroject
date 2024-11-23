@@ -243,12 +243,12 @@ p1 = makeplotModel(modFULL, mymin=-500)$p1
 p2 = makeplotModel(modFULL,mymin=-500)$p2
 
 # save
-pdf(file = "../../dataOut/fig/FigS4A_phenoMethPlot_infectioninduced.pdf", width = 8, height = 5)
+pdf(file = "../../dataOut/fig/FigS4A_phenoMethPlot_infectioninduced.pdf", width = 10, height = 5)
 gridExtra::grid.arrange(p1,p2, ncol=2)
 dev.off()
 
 # save PCA plots
-pdf(file = "../../dataOut/fig/Figxx_PCAplots.pdf", width = 8, height = 5)
+pdf(file = "../../dataOut/fig/Figxx_PCAplots.pdf", width = 10, height = 6)
 gridExtra::grid.arrange(pcaplot0,pcaplot1,pcaplot2, ncol=2)
 dev.off()
 
