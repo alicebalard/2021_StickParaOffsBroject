@@ -131,7 +131,7 @@ p1 = makeplotModel(modFULL, mymin=-380)$p1
 p2 = makeplotModel(modFULL, mymin=-380)$p2
 
 # save
-pdf(file = "../../dataOut/fig/Fig4_phenoMethPlot_alleffects.pdf", width = 8, height = 5)
+pdf(file = "../../dataOut/fig/Fig4_phenoMethPlot_alleffects.pdf", width = 12, height = 5)
 gridExtra::grid.arrange(p1,p2, ncol=2)
 dev.off()
 
@@ -243,7 +243,7 @@ p1 = makeplotModel(modFULL, mymin=-500)$p1
 p2 = makeplotModel(modFULL,mymin=-500)$p2
 
 # save
-pdf(file = "../../dataOut/fig/FigS4A_phenoMethPlot_infectioninduced.pdf", width = 10, height = 5)
+pdf(file = "../../dataOut/fig/FigS4A_phenoMethPlot_infectioninduced.pdf", width = 8, height = 5)
 gridExtra::grid.arrange(p1,p2, ncol=2)
 dev.off()
 
