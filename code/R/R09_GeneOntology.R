@@ -79,12 +79,135 @@ pdf(file = "../../dataOut/fig/Fig3C_GOplot_slim.pdf", width = 7, height = 4)
 makeGOslimPlot(dfGOslim)
 dev.off()
 
+###########################
 ## Notes on important terms
-dfGOslim[grep("transc", dfGOslim$go_slim_full_name),]
-dfGOslim[grep("transc", dfGOslim$mapped_go_names),]
+getNumGO <- function(list) {
+  print("Count infection-induced:")
+  print(sum(dfGO[grepl(paste(list, collapse = "|"),
+                 dfGO$GO.name) & dfGO$Effect %in% "infection-induced","Count"]))
+  print("Size infection-induced:")
+  print(sum(dfGO[grepl(paste(list, collapse = "|"),
+                 dfGO$GO.name) & dfGO$Effect %in% "infection-induced","Size"]))
+  print("Count intergenerational:")
+  print(sum(dfGO[grepl(paste(list, collapse = "|"),
+                 dfGO$GO.name) & dfGO$Effect %in% "intergenerational","Count"]))
+  print("Size intergenerational:")
+  print(sum(dfGO[grepl(paste(list, collapse = "|"),
+                 dfGO$GO.name) & dfGO$Effect %in% "intergenerational","Size"]))}
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "protein metabolic process", "mapped_go_names"]
+getNumGO(c("N-terminal protein myristoylation",
+           "N-terminal peptidyl-methionine acetylation",
+           "N-terminal protein amino acid modification",
+           "positive regulation of protein modification process",
+           "positive regulation of cyclin-dependent protein serine/threonine kinase activity",
+           "protein ufmylation"))
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "immune system process", "mapped_go_names"]
+getNumGO(c("antigen processing and presentation of endogenous antigen",
+           "antigen processing and presentation of endogenous peptide antigen via MHC class I",
+           "antigen processing and presentation of peptide antigen"))
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "catalytic activity", "mapped_go_names"]
+getNumGO(c("galactosylceramide sulfotransferase activity",
+"prenylcysteine oxidase activity", "helicase activity", "protein tyrosine phosphatase activity",
+"sulfotransferase activity", "procollagen-proline 3-dioxygenase activity",
+"ATP-dependent chromatin remodeler activity", "sulfuric ester hydrolase activity",
+"protoheme IX farnesyltransferase activity", "N-acyltransferase activity",
+"oxidative DNA demethylase activity", "hyaluronan synthase activity", "UFM1 ligase activity",
+"fatty-acyl-CoA reductase (alcohol-forming) activity"))
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "signaling receptor activity", "mapped_go_names"]
+getNumGO(c("G protein-coupled receptor activity", "parathyroid hormone receptor activity"))
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "protein-containing complex", "mapped_go_names"]
+getNumGO(c("transcription factor TFIIIC complex","kinesin complex","EARP complex",
+           "NatC complex", "Nem1-Spo7 phosphatase complex", "LUBAC complex"))
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "cellular component organization", "mapped_go_names"]
+getNumGO(c("regulation of neuron projection development",
+  "regulation of cell projection organization",
+  "phospholipid translocation", 
+  "regulation of dendrite morphogenesis",
+  "positive regulation of axonogenesis",
+  "regulation of membrane lipid distribution", 
+  "plasma membrane bounded cell projection organization"))
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "developmental process", "mapped_go_names"]
+getNumGO(c("positive regulation of cell development",
+  "regulation of neuron projection development",
+  "neuron differentiation",
+  "cell morphogenesis involved in neuron differentiation",
+  "regulation of dendrite morphogenesis",
+  "regulation of neurogenesis",
+  "positive regulation of axonogenesis",
+  "positive regulation of nervous system development"))
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "transporter activity", "mapped_go_names"]
+getNumGO(c("phosphate ion transmembrane transporter activity",
+  "phospholipid transporter activity", "cation transmembrane transporter activity",
+  "calcium ion transmembrane transporter activity",
+  "antiporter activity","P-type ion transporter activity",
+  "large conductance calcium-activated potassium channel activity", "intramembrane lipid transporter activity")
+  )
+
+
+########
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "cell differentiation", "mapped_go_names"]
+
+dfGO[grepl(paste(c("positive regulation of cell development",
+                   "regulation of neuron projection development",
+                   "neuron differentiation",
+                   "cell morphogenesis involved in neuron differentiation",
+                   "regulation of dendrite morphogenesis",
+                   "regulation of neurogenesis",
+                   "positive regulation of axonogenesis"), collapse = "|"),
+           dfGO$GO.name),"Size"] %>% sum
+dfGO[grepl(paste(c("positive regulation of cell development",
+                   "regulation of neuron projection development",
+                   "neuron differentiation",
+                   "cell morphogenesis involved in neuron differentiation",
+                   "regulation of dendrite morphogenesis",
+                   "regulation of neurogenesis",
+                   "positive regulation of axonogenesis"), collapse = "|"), 
+           dfGO$GO.name),"Count"] %>% sum
+
+
+
+# infection-induced: antigen processing and presentation of endogenous antigen;antigen processing and presentation of endogenous peptide antigen via MHC class I;antigen processing and presentation of peptide antigen
+dfGO[grep("antigen", dfGO$GO.name), ]
+
+
 
 dfGOslim[dfGOslim$go_slim_full_name %in% "immune system process", ]
 # infection-induced: antigen processing and presentation of endogenous antigen;antigen processing and presentation of endogenous peptide antigen via MHC class I;antigen processing and presentation of peptide antigen
+dfGO[grep("antigen", dfGO$GO.name), ]
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "DNA binding", "mapped_go_names"]
+dfGO[grep("RNA polymerase II cis-regulatory region sequence-specific DNA binding", dfGO$GO.name), ]
+dfGO[grep("ATP-dependent DNA/DNA annealing activity", dfGO$GO.name), ]
+
+dfGOslim[dfGOslim$go_slim_full_name %in% "cell differentiation", "mapped_go_names"]
+
+dfGO[grep("positive regulation of cell development", dfGO$GO.name), "Count"]+
+  dfGO[grep("regulation of neuron projection development", dfGO$GO.name), "Count"]+
+  sum(dfGO[grep("neuron differentiation", dfGO$GO.name), "Count"])+
+  dfGO[grep("regulation of dendrite morphogenesis", dfGO$GO.name), "Count"]+
+  dfGO[grep("regulation of neurogenesis", dfGO$GO.name), "Count"]+
+  dfGO[grep("positive regulation of axonogenesis", dfGO$GO.name), "Count"]/
+  
+  (dfGO[grep("positive regulation of cell development", dfGO$GO.name), "Size"]+
+     dfGO[grep("regulation of neuron projection development", dfGO$GO.name), "Size"]+
+     sum(dfGO[grep("neuron differentiation", dfGO$GO.name), "Size"])+
+     dfGO[grep("regulation of dendrite morphogenesis", dfGO$GO.name), "Size"]+
+     dfGO[grep("regulation of neurogenesis", dfGO$GO.name), "Size"]+
+     dfGO[grep("positive regulation of axonogenesis", dfGO$GO.name), "Size"])
+## 13% (14/126)
+
+dfGOslim[grep("transc", dfGOslim$go_slim_full_name),]
+dfGOslim[grep("transc", dfGOslim$mapped_go_names),]
+
 
 dfGOslim[dfGOslim$go_slim_full_name %in% "DNA binding", ]
 # intergenerational: "RNA polymerase II cis-regulatory region sequence-specific DNA binding", "ATP-dependent DNA/DNA annealing activity"

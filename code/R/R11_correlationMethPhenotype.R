@@ -64,62 +64,9 @@ plotModBCI_PCA_allDMS = plotModBCI_PCA(modFULL, resMod_PCA.allDMS, Signifterms =
 
 plotModBCI_PCA_allDMS$p1
 fig4d <- plotModBCI_PCA_allDMS$p2+ 
-  ggtitle("Predicted and observed BCI based on PCA1 at all DMS")
+  ggtitle("Predicted and observed BCI", 
+          sub = "PCA1 of all DMS:paternal treatment")
 fig4d
-
-#########################
-## ONLY intergenerational
-### PCA based on all methylation values at DMS positions detected for all effects, with imputation of missing values
-DMS_intergenerationalDMS_meth_pheno = getG2methAtCpGs(EffectsDF_ANNOT$DMS[
-  EffectsDF_ANNOT$effect %in% "INTERGENERATIONAL"])
-
-## PCA of the methylation
-resPCA.intergenerationalDMS = getResPCA(DMS_intergenerationalDMS_meth_pheno)
-
-## Run model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
-resMod_PCA.intergenerationalDMS = getModPCA(resPCA.intergenerationalDMS)
-
-##############
-# Model found:
-#   BCI ~ PCA2 + PAT + (1 | brotherPairID) + (1 | Sex) + PCA2:PAT
-
-#     Eliminated  Sum Sq Mean Sq NumDF DenDF F value Pr(>F)   
-# PCA2:PAT     0 29923.5 29923.5     1   107  9.5262 0.002579 **
-  
-## Scree plot
-plotScreePlot(resPCA.intergenerationalDMS)
-## Mainly 3 first component, 4,5 a bit, then big drop
-
-## PCA plot
-fig4b <- myPlotPCA(resPCA.intergenerationalDMS, resMod_PCA.intergenerationalDMS)+ 
-  ggtitle("Individuals PCA based on intergenerational DMS")
-fig4b
-
-### How much of the BCI variance is explained by each variables?
-modFULL = lmer(BCI ~ PCA2 + PAT + (1 | brotherPairID) + (1 | Sex) + 
-                 PCA2:PAT, data = resMod_PCA.intergenerationalDMS$metadata)
-message("R2c= conditional R2 value associated with fixed effects plus the random effects.")
-
-mod_noPAT = lmer(BCI ~ PCA2 + (1 | brotherPairID) + (1 | Sex),
-                 data = resMod_PCA.intergenerationalDMS$metadata)
-message(paste0(
-  round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPAT)[2])*100,2),
-  "% of the variance in associated with the paternal infection"))
-
-mod_noPCA2 = lmer(BCI ~ PAT + (1 | brotherPairID) + (1 | Sex),
-                  data = resMod_PCA.intergenerationalDMS$metadata)
-message(paste0(
-  round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPCA1)[2])*100,2),
-  "% of the variance in associated with the second PCA axis"))
-
-### Plot of the model 
-plotModBCI_PCA_intergenerationalDMS = plotModBCI_PCA(
-  modFULL, resMod_PCA.intergenerationalDMS, Signifterms = c("PCA2", "PAT"))
-
-plotModBCI_PCA_intergenerationalDMS$p1
-fig4e <- plotModBCI_PCA_intergenerationalDMS$p2 + 
-  ggtitle("Predicted and observed BCI based on PCA2 at intergenerational DMS")
-fig4e
 
 #########################
 ## ONLY infection-induced
@@ -146,13 +93,13 @@ plotScreePlot(resPCA.infectionInducedDMS)
 ## Mainly 3 first component, 4,5 a bit, then big drop
 
 ## PCA plot
-fig4c <- myPlotPCA(resPCA.infectionInducedDMS, resMod_PCA.infectionInducedDMS)+ 
+fig4b <- myPlotPCA(resPCA.infectionInducedDMS, resMod_PCA.infectionInducedDMS)+ 
   ggtitle("Individuals PCA based on infection-induced DMS")
-fig4c
+fig4b
 
 ### How much of the BCI variance is explained by each variables?
 modFULL = lmer(BCI ~ PCA1 + PAT + (1 | brotherPairID) + (1 | Sex), 
-                 data = resMod_PCA.infectionInducedDMS$metadata)
+               data = resMod_PCA.infectionInducedDMS$metadata)
 message("R2c= conditional R2 value associated with fixed effects plus the random effects.")
 
 mod_noPAT = lmer(BCI ~ PCA1 + (1 | brotherPairID) + (1 | Sex),
@@ -172,12 +119,68 @@ plotModBCI_PCA_infectionInducedDMS = plotModBCI_PCA(
   modFULL, resMod_PCA.infectionInducedDMS, Signifterms = c("PCA1", "PAT"))
 
 plotModBCI_PCA_infectionInducedDMS$p1
-fig4f <- plotModBCI_PCA_infectionInducedDMS$p2  + 
-  ggtitle("Predicted and observed BCI based on PCA1 at infection-induced DMS")
+fig4e <- plotModBCI_PCA_infectionInducedDMS$p2  + 
+  ggtitle("Predicted and observed BCI", 
+          sub = "PCA1 of infection-induced DMS+paternal treatment")
+fig4e
+
+#########################
+## ONLY intergenerational
+### PCA based on all methylation values at DMS positions detected for all effects, with imputation of missing values
+DMS_intergenerationalDMS_meth_pheno = getG2methAtCpGs(EffectsDF_ANNOT$DMS[
+  EffectsDF_ANNOT$effect %in% "INTERGENERATIONAL"])
+
+## PCA of the methylation
+resPCA.intergenerationalDMS = getResPCA(DMS_intergenerationalDMS_meth_pheno)
+
+## Run model lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), data=metadata)
+resMod_PCA.intergenerationalDMS = getModPCA(resPCA.intergenerationalDMS)
+
+##############
+# Model found:
+#   BCI ~ PCA2 + PAT + (1 | brotherPairID) + (1 | Sex) + PCA2:PAT
+
+#     Eliminated  Sum Sq Mean Sq NumDF DenDF F value Pr(>F)   
+# PCA2:PAT     0 29923.5 29923.5     1   107  9.5262 0.002579 **
+  
+## Scree plot
+plotScreePlot(resPCA.intergenerationalDMS)
+## Mainly 3 first component, 4,5 a bit, then big drop
+
+## PCA plot
+fig4c <- myPlotPCA(resPCA.intergenerationalDMS, resMod_PCA.intergenerationalDMS)+ 
+  ggtitle("Individuals PCA based on intergenerational DMS")
+fig4c
+
+### How much of the BCI variance is explained by each variables?
+modFULL = lmer(BCI ~ PCA2 + PAT + (1 | brotherPairID) + (1 | Sex) + 
+                 PCA2:PAT, data = resMod_PCA.intergenerationalDMS$metadata)
+message("R2c= conditional R2 value associated with fixed effects plus the random effects.")
+
+mod_noPAT = lmer(BCI ~ PCA2 + (1 | brotherPairID) + (1 | Sex),
+                 data = resMod_PCA.intergenerationalDMS$metadata)
+message(paste0(
+  round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPAT)[2])*100,2),
+  "% of the variance in associated with the paternal infection"))
+
+mod_noPCA2 = lmer(BCI ~ PAT + (1 | brotherPairID) + (1 | Sex),
+                  data = resMod_PCA.intergenerationalDMS$metadata)
+message(paste0(
+  round((MuMIn::r.squaredGLMM(modFULL)[2] - MuMIn::r.squaredGLMM(mod_noPCA1)[2])*100,2),
+  "% of the variance in associated with the second PCA axis"))
+
+### Plot of the model 
+plotModBCI_PCA_intergenerationalDMS = plotModBCI_PCA(
+  modFULL, resMod_PCA.intergenerationalDMS, Signifterms = c("PCA2", "PAT"))
+
+plotModBCI_PCA_intergenerationalDMS$p1
+fig4f <- plotModBCI_PCA_intergenerationalDMS$p2 + 
+  ggtitle("Predicted and observed BCI", 
+          sub = "PCA2 of intergenerational DMS:paternal treatment")
 fig4f
 
 # save
-pdf(file = "../../dataOut/fig/Fig4_phenoMethPlot.pdf", width = 15, height = 10)
+pdf(file = "../../dataOut/fig/Fig4_phenoMethPlot.pdf", width = 16, height = 10)
 gridExtra::grid.arrange(fig4a + theme(legend.position = c(0.8, 0.2)),
                         fig4b + theme(legend.position = "none"),
                         fig4c + theme(legend.position = "none"),
@@ -191,7 +194,7 @@ dev.off()
 ## Check the most interesting genes
 
 # The function dimdesc() can be used to identify the most correlated variables with a given principal component.
-mydimdesc = dimdesc(myPCA_DMS_allDMS$res.PCA, axes = c(1,2), proba = 0.05)
+mydimdesc = dimdesc(resPCA.allDMS, axes = c(1,2), proba = 0.05)
 
 print(paste(nrow(mydimdesc$Dim.1$quanti), "CpG sites most correlated (p < 0.05) with the first principal component"))
 print(paste(nrow(mydimdesc$Dim.2$quanti), "CpG sites most correlated (p < 0.05) with the second principal component"))
