@@ -6,8 +6,8 @@
 #$ -j y
 #$ -N runR04
 #$ -m e
-#$ -o /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/R/bash4R/run_R04_getDiffMeth_PQLseq.stdout
-#$ -e /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/R/bash4R/run_R04_getDiffMeth_PQLseq.stderr
+#$ -o /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/R/bash4R/run_R04_getDiffMeth_PQLseq_G1.stdout
+#$ -e /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/R/bash4R/run_R04_getDiffMeth_PQLseq_G1.stderr
 
 module load R/4.2.2
 

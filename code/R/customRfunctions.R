@@ -498,7 +498,7 @@ getModPCA <- function(res.PCA){
   return(list(modSel = modSel, metadata = dfPCA))
 }
 
-getModPCA2 <- function(res.PCA){
+getModPCA_bygroup <- function(res.PCA){
   # extract axes 1, 2
   dfPCA = data.frame(PCA1=res.PCA$ind$coord[,1], # axis 1
                      PCA2=res.PCA$ind$coord[,2], # axis 2
@@ -512,7 +512,7 @@ getModPCA2 <- function(res.PCA){
   print("Samples order:") ; print(head(dfPCA$SampleID))
   
   # Correlation with parasite load/BCI
-  mod = lmer(BCI ~ PCA1*PCA2*offsTrt*patTrt + (1|brotherPairID)+ (1|Sex), 
+  mod = lmer(BCI ~ PCA1*PCA2*No.Worms + (1|brotherPairID)+ (1|Sex), 
              data=dfPCA)
   
   print(lmerTest::step(mod, reduce.random = F))

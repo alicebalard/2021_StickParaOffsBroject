@@ -228,5 +228,66 @@ dfGO_PCA1_482_SLIM = makeGOslim(dfGO = dfGO_PCA1_482)
 EffectsDF_ANNOT[EffectsDF_ANNOT$DMS %in% rownames(mydimdesc$Dim.1$quanti) &
                   EffectsDF_ANNOT$GeneSymbol %in% "PPFIBP1",]
 
+###################################################################
+## Is the correlation still present within each treatment group? ##
+###################################################################
+
+###########################
+## Infection-induced DMS ##
+###########################
+
+DMS_infectionInducedDMS_meth_pheno_NE_exposed <- DMS_infectionInducedDMS_meth_pheno[
+  DMS_infectionInducedDMS_meth_pheno$trtG1G2 %in% "NE_exposed",]
+DMS_infectionInducedDMS_meth_pheno_E_exposed <- DMS_infectionInducedDMS_meth_pheno[
+  DMS_infectionInducedDMS_meth_pheno$trtG1G2 %in% "E_exposed",]
+
+## PCA of the methylation
+resPCA.infectionInducedDMS_NE_exposed = getResPCA(DMS_infectionInducedDMS_meth_pheno_NE_exposed)
+resPCA.infectionInducedDMS_E_exposed = getResPCA(DMS_infectionInducedDMS_meth_pheno_E_exposed)
+
+ModPCA_NE_exposed_infectionInducedDMS_NE_exposed <- getModPCA_bygroup(resPCA.infectionInducedDMS_NE_exposed)
+## not significant
+
+ModPCA_NE_exposed_infectionInducedDMS_E_exposed <- getModPCA_bygroup(resPCA.infectionInducedDMS_E_exposed)
+## Nothing
+
+#######################
+## Intergenerational ##
+#######################
+
+DMS_intergenerationalDMS_meth_pheno_NE_exposed <- DMS_intergenerationalDMS_meth_pheno[
+  DMS_intergenerationalDMS_meth_pheno$trtG1G2 %in% "NE_exposed",]
+DMS_intergenerationalDMS_meth_pheno_E_exposed <- DMS_intergenerationalDMS_meth_pheno[
+  DMS_intergenerationalDMS_meth_pheno$trtG1G2 %in% "E_exposed",]
+
+## PCA of the methylation
+resPCA.intergenerationalDMS_NE_exposed = getResPCA(
+  DMS_intergenerationalDMS_meth_pheno_NE_exposed)
+resPCA.intergenerationalDMS_E_exposed = getResPCA(
+  DMS_intergenerationalDMS_meth_pheno_E_exposed)
+
+ModPCA_NE_exposed_intergenerationalDMS_NE_exposed <- getModPCA_bygroup(resPCA.intergenerationalDMS_NE_exposed)
+# No.Worms:PCA1               0 5128.0  5128.0     1 12.627  7.5007 0.017276 * 
+#   PCA1:PCA2                   0 7287.5  7287.5     1 13.149 10.6593 0.006068 **
+
+ModPCA_NE_exposed_intergenerationalDMS_E_exposed <- getModPCA_bygroup(resPCA.intergenerationalDMS_E_exposed)
+## Nothing
+
+p1 <- plot_model(ModPCA_NE_exposed_intergenerationalDMS_NE_exposed$modSel) + 
+   ggtitle("Body Condition Index")
+ 
+p2 <- plot_model(ModPCA_NE_exposed_intergenerationalDMS_NE_exposed$modSel,
+                 type = "int")[[1]]+
+  ylab("Body Condition Index")+
+  xlab("Number of worms")
+
+p3 <- plot_model(ModPCA_NE_exposed_intergenerationalDMS_NE_exposed$modSel,
+                 type = "int")[[2]] +
+  ylab("Body Condition Index")
+
+pdf(file = "../../dataOut/fig/FigS4_modelInNE_infected.pdf", width = 5, height = 10)
+cowplot::plot_grid(p1, cowplot::plot_grid(p2, p3, ncol = 2), ncol = 1, rel_heights = c(1.5,2))
+dev.off()
+
 message("R11 done. \n")
 
