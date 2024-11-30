@@ -4,13 +4,43 @@ source("R09_GeneOntology.R")
 message("R10 starting...\n")
 
 ## Are the parental DMS found in offspring DMS? In which effect? Likely infection-induced!
+load("../../gitignore/bigdata/PQLseq/fitPQLseqG1_fit_G1_C.T.RData")
+
+## Select based on threshold in R07
+C.T_pass = fit_G1_C.T[fit_G1_C.T$converged==T & fit_G1_C.T$qvalue <= myqval & 
+                        (fit_G1_C.T$aveDiffMeth_ab>mydif | fit_G1_C.T$aveDiffMeth_ab< -mydif),]
+
+hist(fit_G1_C.T$aveDiffMeth_ab)
+## no difference above 5%
+
+C.T_pass = fit_G1_C.T[fit_G1_C.T$converged==T & fit_G1_C.T$qvalue <= myqval,]
 
 ## Venn diagram of overlaps
+ggvenn(data = list(C.T=row.names(C.T_pass),
+                   intergen=EffectsDF$pos[EffectsDF$effect %in% "INTERGENERATIONAL"],
+                   infind=EffectsDF$pos[EffectsDF$effect %in% "INFECTION_INDUCED"]), 
+       fill_color = c("blue", "#EFC000FF", "#CD534CFF"),
+       stroke_size = 0.5, set_name_size = 4
+)
 
 
+## Select based on threshold
+ggvenn(data = 
+         list(C.T = fit_G1_C.T[fit_G1_C.T$converged==T & fit_G1_C.T$qvalue <= myqval,"pos"],
+              G1 = c(fit_G2_CC.TC[fit_G2_CC.TC$converged==T & fit_G2_CC.TC$qvalue <= myqval,"pos"],
+                     fit_G2_CT.TT[fit_G2_CT.TT$converged==T & fit_G2_CT.TT$qvalue <= myqval,"pos"]),
+              G2 = c(fit_G2_CC.CT[fit_G2_CC.CT$converged==T & fit_G2_CC.CT$qvalue <= myqval,"pos"],
+                     fit_G2_TC.TT[fit_G2_TC.TT$converged==T & fit_G2_TC.TT$qvalue <= myqval,"pos"])))
 
-## produces dataOut/fig/FigS2_plotmodelG1methG2meth
+## Which 8 positions are differentially methylated in all 3 cases?
+full =c(unique(fit_G1_C.T[fit_G1_C.T$converged==T & fit_G1_C.T$qvalue <= myqval,"pos"]),
+        unique(c(fit_G2_CC.TC[fit_G2_CC.TC$converged==T & fit_G2_CC.TC$qvalue <= myqval,"pos"],
+                 fit_G2_CT.TT[fit_G2_CT.TT$converged==T & fit_G2_CT.TT$qvalue <= myqval,"pos"])),
+        unique(c(fit_G2_CC.CT[fit_G2_CC.CT$converged==T & fit_G2_CC.CT$qvalue <= myqval,"pos"],
+                 fit_G2_TC.TT[fit_G2_TC.TT$converged==T & fit_G2_TC.TT$qvalue <= myqval,"pos"])))
 
+DMS8AllComp <- myHomebrewDMSannotation(
+  DMSvec = names(table(full))[table(full) == 3], myannotBed12 = annotBed12, myannotGff3 = annotGff3, rerun = FALSE)
 
 #######################################################
 ## Hyp: PATERNAL EFFECT ONLY CpG persist despite G2 trt
@@ -34,15 +64,15 @@ getG1G2methByEffect <- function(DMSeffect){
     which(paste(uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$chr,
                 uniteCovHALF_G2_woSexAndUnknowChrOVERLAP$start, sep = "_") %in%
             DMSeffect))
-
+  
   # Methylation values:
   DMS=paste(A$chr, A$start, sep = "_")
-
+  
   A=percMethylation(A) %>% data.frame
   A$DMS = DMS
   B=percMethylation(B) %>% data.frame
   B$DMS = DMS
-
+  
   # Prep G1 df
   A=melt(A)
   names(A)[names(A)%in% "variable"]="SampleID"
@@ -50,7 +80,7 @@ getG1G2methByEffect <- function(DMSeffect){
   A=merge(A, fullMetadata_PAR[c("SampleID", "brotherPairID", "trtG1G2")])
   names(A)[names(A)%in% "trtG1G2"]="patTrt"
   A=A[!names(A)%in% "SampleID"] # rm sample ID for fathers, as only one per BP
-
+  
   # Prep G2 df
   B=melt(B)
   names(B)[names(B)%in% "variable"]="SampleID"
@@ -58,9 +88,9 @@ getG1G2methByEffect <- function(DMSeffect){
   B=merge(B, fullMetadata_OFFS[c("SampleID", "brotherPairID", "trtG1G2", "patTrt")])
   B$patTrt[B$patTrt %in% "controlP"]="Control"
   B$patTrt[B$patTrt %in% "infectedP"]="Exposed"
-
+  
   AB=merge(A, B)
-
+  
   # Rm NA
   AB=AB[!is.na(AB$G1methylation) & !is.na(AB$G2methylation), ]
   return(AB)

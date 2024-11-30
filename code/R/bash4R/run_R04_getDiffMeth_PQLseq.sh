@@ -1,7 +1,7 @@
 #!/bin/bash
-#$ -pe smp 10
+#$ -pe smp 5
 #$ -l h_vmem=5G
-#$ -l h_rt=240:0:0
+#$ -l h_rt=15:0:0
 #$ -cwd
 #$ -j y
 #$ -N runR04
@@ -9,8 +9,12 @@
 #$ -o /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/R/bash4R/run_R04_getDiffMeth_PQLseq_G1.stdout
 #$ -e /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/R/bash4R/run_R04_getDiffMeth_PQLseq_G1.stderr
 
+echo "Job started at: $(date)"
+
 module load R/4.2.2
 
 cd /data/SBCS-EizaguirreLab/Alice/StickParaBroOff/StickParaOffsBroject/code/R
 
 Rscript R04_getDiffMeth_PQLseq_runInCLUSTER.R
+
+echo "Job finished at: $(date)"

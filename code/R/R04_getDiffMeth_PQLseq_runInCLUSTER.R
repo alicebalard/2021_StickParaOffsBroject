@@ -19,7 +19,7 @@ blas_set_num_threads(1)
 omp_set_num_threads(1)
 
 ## New function made by Charley
-source("/data/SBCS-EizaguirreLab/Turtle_WGBS/00_Scripts/Functions/Custom_PQLseq_Function.R")
+source("Custom_PQLseq_Function_CharleyYenQMUL.R")
 
 # Set up environment for custom function: 
 # https://stackoverflow.com/questions/24331690/modify-package-function
@@ -217,14 +217,14 @@ if (run == T){
     fit_G2_CT.TT = addChrPos(fit_G2_CT.TT)
     fit_G2_TC.TT = addChrPos(fit_G2_TC.TT)
     
-    save(fit_G2_CC.CT = fit_G2_CC.CT, file = "../../dataOut/fitPQLseqG2_fit_G2_CC.CT.RData")
-    save(fit_G2_CC.TC = fit_G2_CC.TC, file = "../../dataOut/fitPQLseqG2_fit_G2_CC.TC.RData")
-    save(fit_G2_CT.TT = fit_G2_CT.TT, file = "../../dataOut/fitPQLseqG2_fit_G2_CT.TT.RData")
-    save(fit_G2_TC.TT = fit_G2_TC.TT, file = "../../dataOut/fitPQLseqG2_fit_G2_TC.TT.RData")
+    save(fit_G2_CC.CT = fit_G2_CC.CT, file = "../../gitignore/bigdata/PQLseq/fitPQLseqG2_fit_G2_CC.CT.RData")
+    save(fit_G2_CC.TC = fit_G2_CC.TC, file = "../../gitignore/bigdata/PQLseq/fitPQLseqG2_fit_G2_CC.TC.RData")
+    save(fit_G2_CT.TT = fit_G2_CT.TT, file = "../../gitignore/bigdata/PQLseq/fitPQLseqG2_fit_G2_CT.TT.RData")
+    save(fit_G2_TC.TT = fit_G2_TC.TT, file = "../../gitignore/bigdata/PQLseq/fitPQLseqG2_fit_G2_TC.TT.RData")
 }
 
 ## and parents
-run = T
+run = F
 if (run == T){
   fit_G1_C.T = getDiffMeth_PQLseq(uniteCovHALF_G1_woSexAndUnknowChrOVERLAP, 1, 4)
   
@@ -239,7 +239,7 @@ if (run == T){
   }
   
   fit_G1_C.T = addChrPos(fit_G1_C.T)
-   save(fit_G2_TC.TT = fit_G2_TC.TT, file = "../../dataOut/fitPQLseqG1_fit_G1_C.T.RData")
+   save(fit_G1_C.T = fit_G1_C.T, file = "../../gitignore/bigdata/PQLseq/fitPQLseqG1_fit_G1_C.T.RData")
 }
 
 message("R04 done.\n")
