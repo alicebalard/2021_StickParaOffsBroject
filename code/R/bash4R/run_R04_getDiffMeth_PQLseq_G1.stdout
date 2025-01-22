@@ -1,0 +1,219 @@
+Job started at: Fri Nov 29 06:06:43 GMT 2024
+Loading R/4.2.2
+  Loading requirement: gcc/12.1.0
+Install CRAN packages if missing, and load CRAN packages...
+All CRAN packages are already installed.
+
+if db error, downgrade dplyr
+Loading CRAN packages...
+All packages loaded successfully.
+
+Install github packages if missing, and load github packages...
+All packages loaded successfully.
+
+Loading bioconductor packages...
+
+All packages loaded successfully.
+
+Load functions needed in the analyses...
+done.
+
+Load annotation files: GYgynogff containing length of each gynogen chromosomes, annotBed12 and annotGff3 for the full annotation...
+Reading the table...
+Calculating intron coordinates...
+Calculating exon coordinates...
+Calculating TSS coordinates...
+Calculating promoter coordinates...
+Outputting the final GRangesList...
+
+done.
+
+R00 starting...
+
+R00 done.
+
+R01 starting...
+
+[1] "Number of raw reads:"
+[1] 11.02197
+[1] "+/-"
+[1] 0.3834343
+[1] "Mapping efficiency with BSBolt in %:"
+[1] 85.6287
+[1] "+/-"
+[1] 0.5071501
+[1] "Number of individuals considered:"
+[1] 127
+[1] "including parents and offspring:"
+
+  O   P 
+111  16 
+R01 done.
+
+R02 starting...
+
+R02 done. 
+
+R03 starting...
+
+R03 done. 
+
+Warning message:
+replacing previous import 'Biostrings::pattern' by 'grid::pattern' when loading 'genomation' 
+R04 starting...
+
+[1] TRUE
+[1] TRUE
+Comparison between group  1  and  4
+## number of total individuals:  16 
+## number of total genes/sites:  1002565 
+## number of adjusted covariates:  0 
+# fitting binomial mixed model ... 
+859163 CpG sites converged out of 1002565 sites
+Error in save(fit_G2_TC.TT = fit_G2_TC.TT, file = "../../dataOut/fitPQLseqG1_fit_G1_C.T.RData") : 
+  object 'fit_G2_TC.TT' not found
+Execution halted
+Job finished at: Fri Nov 29 11:07:19 GMT 2024
+Job started at: Fri Nov 29 11:50:03 GMT 2024
+Loading R/4.2.2
+  Loading requirement: gcc/12.1.0
+Install CRAN packages if missing, and load CRAN packages...
+All CRAN packages are already installed.
+
+if db error, downgrade dplyr
+Loading CRAN packages...
+All packages loaded successfully.
+
+Install github packages if missing, and load github packages...
+All packages loaded successfully.
+
+Loading bioconductor packages...
+
+All packages loaded successfully.
+
+Load functions needed in the analyses...
+done.
+
+Load annotation files: GYgynogff containing length of each gynogen chromosomes, annotBed12 and annotGff3 for the full annotation...
+Reading the table...
+Calculating intron coordinates...
+Calculating exon coordinates...
+Calculating TSS coordinates...
+Calculating promoter coordinates...
+Outputting the final GRangesList...
+
+done.
+
+R00 starting...
+
+R00 done.
+
+R01 starting...
+
+[1] "Number of raw reads:"
+[1] 11.02197
+[1] "+/-"
+[1] 0.3834343
+[1] "Mapping efficiency with BSBolt in %:"
+[1] 85.6287
+[1] "+/-"
+[1] 0.5071501
+[1] "Number of individuals considered:"
+[1] 127
+[1] "including parents and offspring:"
+
+  O   P 
+111  16 
+R01 done.
+
+R02 starting...
+
+R02 done. 
+
+R03 starting...
+
+R03 done. 
+
+Warning message:
+replacing previous import 'Biostrings::pattern' by 'grid::pattern' when loading 'genomation' 
+R04 starting...
+
+[1] TRUE
+[1] TRUE
+/data/containers/R/4.2.2-gcc12/Rscript: line 11: 108554 Killed                  apptainer exec -B /data/containers/R/4.2.2-gcc12/Rprofile.site:/opt/R/4.2.2/lib/R/etc/Rprofile.site /data/containers/R/4.2.2-gcc12/rstudio_2022.12.0-353_r422_gcc12_centos7.sif /usr/local/bin/Rscript "$@"
+Job finished at: Fri Nov 29 11:51:51 GMT 2024
+Job started at: Fri Nov 29 19:44:27 GMT 2024
+Loading R/4.2.2
+  Loading requirement: gcc/12.1.0
+Install CRAN packages if missing, and load CRAN packages...
+All CRAN packages are already installed.
+
+if db error, downgrade dplyr
+Loading CRAN packages...
+All packages loaded successfully.
+
+Install github packages if missing, and load github packages...
+All packages loaded successfully.
+
+Loading bioconductor packages...
+
+All packages loaded successfully.
+
+Load functions needed in the analyses...
+done.
+
+Load annotation files: GYgynogff containing length of each gynogen chromosomes, annotBed12 and annotGff3 for the full annotation...
+Reading the table...
+Calculating intron coordinates...
+Calculating exon coordinates...
+Calculating TSS coordinates...
+Calculating promoter coordinates...
+Outputting the final GRangesList...
+
+done.
+
+R00 starting...
+
+R00 done.
+
+R01 starting...
+
+[1] "Number of raw reads:"
+[1] 11.02197
+[1] "+/-"
+[1] 0.3834343
+[1] "Mapping efficiency with BSBolt in %:"
+[1] 85.6287
+[1] "+/-"
+[1] 0.5071501
+[1] "Number of individuals considered:"
+[1] 127
+[1] "including parents and offspring:"
+
+  O   P 
+111  16 
+R01 done.
+
+R02 starting...
+
+R02 done. 
+
+R03 starting...
+
+R03 done. 
+
+Warning message:
+replacing previous import 'Biostrings::pattern' by 'grid::pattern' when loading 'genomation' 
+R04 starting...
+
+[1] TRUE
+[1] TRUE
+Comparison between group  1  and  4
+## number of total individuals:  16 
+## number of total genes/sites:  1002565 
+## number of adjusted covariates:  0 
+# fitting binomial mixed model ... 
+859164 CpG sites converged out of 1002565 sites
+R04 done.
+
+Job finished at: Sat Nov 30 01:08:36 GMT 2024

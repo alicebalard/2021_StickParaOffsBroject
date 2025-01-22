@@ -283,11 +283,11 @@ makedfGO <- function(annot, gene_universe, effect, label){
   
   # Get percentage of genes over represented in universe
   dfMFperc = GO_MF$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>%
-    dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
+    dplyr::select(c("Term", "genePercent","Count", "Size")) %>% dplyr::rename(GO.name=Term)
   dfCCperc = GO_CC$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>%
-    dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
+    dplyr::select(c("Term", "genePercent","Count", "Size")) %>% dplyr::rename(GO.name=Term)
   dfBPperc = GO_BP$GO_NO_fdr %>% summary() %>% mutate(genePercent = Count/Size*100) %>%
-    dplyr::select(c("Term", "genePercent")) %>% dplyr::rename(GO.name=Term)
+    dplyr::select(c("Term", "genePercent","Count", "Size")) %>% dplyr::rename(GO.name=Term)
   
   # Add this information to FDR corrected table
   GO_MF_all = merge(GO_MF$GO_fdr, dfMFperc)
@@ -487,6 +487,32 @@ getModPCA <- function(res.PCA){
   
   # Correlation with parasite load/BCI
   mod = lmer(BCI ~ PCA1*PCA2*No.Worms*PAT + (1|brotherPairID)+ (1|Sex), 
+             data=dfPCA)
+  
+  print(lmerTest::step(mod, reduce.random = F))
+  
+  ## Model selection:
+  modSel = lmer(formula = attr(attr(lmerTest::step(mod, reduce.random = F), "drop1"), "heading")[3],
+                data=dfPCA, REML = F)
+  
+  return(list(modSel = modSel, metadata = dfPCA))
+}
+
+getModPCA_bygroup <- function(res.PCA){
+  # extract axes 1, 2
+  dfPCA = data.frame(PCA1=res.PCA$ind$coord[,1], # axis 1
+                     PCA2=res.PCA$ind$coord[,2], # axis 2
+                     SampleID = row.names(res.PCA$ind$coord))
+  # add metadata
+  dfPCA = merge(dfPCA, fullMetadata_OFFS)                     
+  ## reorder samples following PCA
+  dfPCA = dfPCA[match(rownames(res.PCA$ind$coord), dfPCA$SampleID),]
+  
+  ## check samples order
+  print("Samples order:") ; print(head(dfPCA$SampleID))
+  
+  # Correlation with parasite load/BCI
+  mod = lmer(BCI ~ PCA1*PCA2*No.Worms + (1|brotherPairID)+ (1|Sex), 
              data=dfPCA)
   
   print(lmerTest::step(mod, reduce.random = F))

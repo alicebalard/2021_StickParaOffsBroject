@@ -4,6 +4,7 @@ source("R07_DMSeffects.R")
 ## Produces: 
 ## dataOut/fig/Fig3A_DMSgroupsVenn_geneLevel.pdf
 ## dataOut/fig/Fig3B_positionsAnnotatedGenes.pdf
+## dataOut/dataOut/SuppltableS1_DMSgenes.csv
 
 ## Annotate the different DMS groups:
 
@@ -87,9 +88,6 @@ EffectsDF_ANNOT = EffectsDF_ANNOT %>%
   dplyr::mutate(nDMSperGeneKb = EffectsDF_ANNOT$nDMSperGene / EffectsDF_ANNOT$geneLengthkb) %>%
   arrange(desc(nDMSperGeneKb)) %>% #arrange in descending order
   dplyr::select(c(names(EffectsDF_ANNOT)[!names(EffectsDF_ANNOT) %in% "Function"], "Function")) # reorder columns with summary at the end
-
-# Write out
-write.csv(EffectsDF_ANNOT, file = "../../dataOut/fig/TableS1_EffectsDF_ANNOT.csv", row.names = F)
 
 #### Focus on gene CD4 & TRIM16
 plotGeneTarget <- function(myTargetGene){
@@ -195,6 +193,29 @@ ggplot(EffectsDF_ANNOT) +
   guides(fill = guide_legend(position = "inside"))+
   theme(legend.position.inside = c(0.85, 0.75))
 dev.off()
+
+
+TabS1 <- EffectsDF_ANNOT %>% 
+  dplyr::select(feature.name, GeneSymbol, uniprotID, effect, chrom, start,featureType, Function) %>%
+  data.frame()
+
+table(unique(TabS1[grep("immun", TabS1$Function),c("effect", "GeneSymbol")])[["effect"]])
+# INFECTION_INDUCED INTERGENERATIONAL          ADDITIVE       INTERACTION 
+# 20                16                 0                 1
+
+table(unique(TabS1[grep("sperm", TabS1$Function),c("effect", "GeneSymbol")])[["effect"]])
+TabS1[grep("sperm", TabS1$Function),]
+# 4 genes with "sperm" intergenerational DMS and 1 for infection induced 
+# esp. Chd5 Chromatin-remodeling protein that binds DNA through histones and regulates gene transcription
+# In spermatogenesis, it probably regulates histone hyperacetylation and the replacement of histones by transition proteins in chromatin, a crucial step in the condensation of spermatid chromatin and the production of functional spermatozoa 
+
+table(unique(TabS1[grep("segregation", TabS1$Function),c("effect", "GeneSymbol")])[["effect"]])
+TabS1[grep("segregation", TabS1$Function),c("effect", "GeneSymbol")]
+# 5 genes with "segregation" intergenerational DMS and 1 for infection induced (VCX3B)
+
+####################################################
+## Explore the top 10 genes based on the effect size
+EffectsDF %>% head
 
 message("R08 done.\n")
 
