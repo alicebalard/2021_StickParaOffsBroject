@@ -5,7 +5,7 @@
    viewBox="0 0 382.75916 211.38136"
    version="1.1"
    id="svg8"
-   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    sodipodi:docname="Figure1.svg"
    inkscape:export-filename="/home/alice/Documents/2021_StickParaOffsBroject/dataOut/final/Figure1.png"
    inkscape:export-xdpi="96"
@@ -3265,8 +3265,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.53649395"
-     inkscape:cx="789.38448"
-     inkscape:cy="425.91347"
+     inkscape:cx="791.24844"
+     inkscape:cy="429.64138"
      inkscape:document-units="mm"
      inkscape:current-layer="g11857"
      inkscape:document-rotation="0"
@@ -3275,13 +3275,15 @@
      fit-margin-left="5"
      fit-margin-right="5"
      fit-margin-bottom="5"
-     inkscape:window-width="1210"
-     inkscape:window-height="656"
+     inkscape:window-width="1920"
+     inkscape:window-height="1043"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      showguides="false"
-     inkscape:pagecheckerboard="0" />
+     inkscape:pagecheckerboard="0"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1" />
   <metadata
      id="metadata5">
     <rdf:RDF>
@@ -3638,14 +3640,16 @@
          transform="translate(-48.878856,2.1183325)"><tspan
            x="-118.74972"
            y="554.125"
-           id="tspan7403"><tspan
+           id="tspan7012"><tspan
              style="-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
-             id="tspan7401">Differential DNA methylation </tspan></tspan><tspan
+             id="tspan7008">Differential DNA methylation </tspan><tspan
+             style="-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
+             id="tspan7010">between </tspan></tspan><tspan
            x="-118.74972"
-           y="561.18052"
-           id="tspan7407"><tspan
+           y="561.18056"
+           id="tspan7016"><tspan
              style="-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
-             id="tspan7405">between offspring groups</tspan></tspan></text>
+             id="tspan7014">offspring groups</tspan></tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:7.05556px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
@@ -6192,13 +6196,13 @@
            id="tspan10707-5-4-69-7-50-6">control</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;word-spacing:0px"
+         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
          x="-183.03329"
          y="446.95938"
          id="text32197"><tspan
            sodipodi:role="line"
            id="tspan32195"
-           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:0.264583"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
            x="-183.03329"
            y="446.95938">A.</tspan></text>
       <text
@@ -6209,7 +6213,7 @@
          id="text32197-7"><tspan
            sodipodi:role="line"
            id="tspan32195-11"
-           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:0.264583"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
            x="5.0709801"
            y="447.09891">C.</tspan></text>
       <text
@@ -6220,7 +6224,7 @@
          id="text32197-3"><tspan
            sodipodi:role="line"
            id="tspan32195-1"
-           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:0.264583"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
            x="-184.08203"
            y="557.67877">B.</tspan></text>
       <path
