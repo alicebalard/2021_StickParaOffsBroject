@@ -10,7 +10,7 @@ source("R07_DMSeffects.R")
 
 ## NB: set rerun = T when change list to reload (>30min!)
 EffectsDF_ANNOT= myHomebrewDMSannotation(
-  DMSvec = EffectsDF$pos, myannotBed12 = annotBed12, myannotGff3 = annotGff3, rerun = FALSE)
+  DMSvec = EffectsDF$pos, myannotBed12 = annotBed12, myannotGff3 = annotGff3, rerun = F)
 
 # NB: Some positions have the same GeneName but different GeneSymbol, if they were annotated from different species
 # (namely Rho guanine nucleotide exchange factor 28, Collagen alpha-1, Metabotropic glutamate receptor 7, Titin)
@@ -19,7 +19,7 @@ EffectsDF_ANNOT= myHomebrewDMSannotation(
 length(unique(EffectsDF_ANNOT$feature.name)) # 608 features
 length(unique(EffectsDF_ANNOT$GeneName)) # 548 known genes
 length(unique(EffectsDF_ANNOT$uniprotID)) # 556 known protein
-length(unique(EffectsDF_ANNOT$Function)) # 493 functions known
+length(unique(EffectsDF_ANNOT$Function)) # 494 functions known
 
 ## Add the effect detected in the previous script by merging
 EffectsDF_ANNOT$pos = EffectsDF_ANNOT$DMS
